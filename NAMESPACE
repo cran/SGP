@@ -1,0 +1,12 @@
+.onLoad <- function(lib,pkg) {
+    require(splines)
+    require(quantreg)
+    load(SGP)
+}
+
+export(
+    "studentGrowthPercentiles",
+    "studentGrowthProjections"
+)
+
+
