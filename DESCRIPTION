@@ -1,0 +1,17 @@
+Package: SGP
+Version: 0.0-1
+Date: 2008-10-16
+Title: Student Growth Percentile and Percentile Growth Projection/Trajectory Functions
+Depends: R (>= 2.7.0), splines, quantreg
+Author: Damian W. Betebenner <dbetebenner@nciea.org>,
+        with contributions from Jonathan Weeks, Jinnie Choi, Xin Wei, and Hi Shin Shim
+Maintainer: Damian W. Betebenner <dbetebenner@nciea.org>
+Description: Functions to calculate growth percentile and projections for students using large scale, longitudinal assessment data. 
+	These norm referenced growth values are presently used in some state testing and accountability systems. The functions use 
+	quantile regression techniques package to estimate the conditional density associated with each students achievement history. 
+	Student Growth Projections (i.e., percentile growth trajectories) are calculated using the coefficient matrices derived from 
+	the quantile regression analyses and help to identify what it will take for students to reach future achievement targets.
+LazyLoad: Yes
+LazyData: Yes
+License: Creative Commons Attribution + ShareAlike (by-sa)
+Packaged: Thu Oct 16 13:51:06 2008; damian
