@@ -1,11 +1,11 @@
 \name{sgpData}
 \alias{sgpData}
 \docType{data}
-\title{Longitudinal Test Data}
+\title{Longitudinal Assessment Data}
 \description{
 A dataset comprising a subset of four years of state assessment data suitable for student growth percentile
 and percentile growth projection/trajectory analyses. The dataset is used in examples provided in the documentation
-for the studentGrowthPercentile and studentGrowthProjection functions and serves as a model for user construction 
+for the studentGrowthPercentile and studentGrowthProjection functions and serves as an exemplar for user construction 
 of their own datasets for growth percentile analyses. 
 }
 \usage{data(sgpData)}

@@ -8,6 +8,7 @@ function(student.data,
                 print.other.gp=FALSE, 
                 rq.method="br", 
                 convert.0and100=TRUE,
+                percuts.digits=2,
                 save.matrices=TRUE,
                 sgp.function.labels){
 
@@ -71,8 +72,8 @@ get_gp_boundaries <- function(grade, subject, priors){
 }
 
 create_gp_knots_and_boundaries <- function(scores, grade, subject) {
-                                         assign(paste("knots_", subject, "_g", grade, sep=""), round(as.vector(quantile(scores, probs=c(.2, .4, .6, .8), na.rm=T))), inherits=TRUE)
-                                         assign(paste("boundaries_", subject, "_g", grade, sep=""), round(as.vector(range(scores, na.rm=T))), inherits=TRUE)
+                                         assign(paste("knots_", subject, "_g", grade, sep=""), round(as.vector(quantile(scores, probs=c(.2, .4, .6, .8), na.rm=T)), digits=3), inherits=TRUE)
+                                         assign(paste("boundaries_", subject, "_g", grade, sep=""), round(extendrange(scores, f=0.01), digits=3), inherits=TRUE)
                                          save(list=paste("knots_", subject, "_g", grade, sep=""), file=paste("Knots_Boundaries/knots_", subject, "_g", grade, ".Rdata", sep=""))
                                          save(list=paste("boundaries_", subject, "_g", grade, sep=""), file=paste("Knots_Boundaries/boundaries_", subject, "_g", grade, ".Rdata", sep=""))
 }
@@ -201,7 +202,7 @@ for (i in 1:num.prior) {
 
 for (i in 1:num.prior) {
 	tmp <- eval(parse(text=paste("predict(qr.", prefix[i], "order)", sep="")))
-	tmp <- round(t(apply(tmp, 1, function(x) smooth.row(x))), digits=1)
+	tmp <- round(t(apply(tmp, 1, function(x) smooth.row(x))), digits=5)
 	assign(paste("predict.", prefix[i], "order", sep=""), tmp)
 }
 
@@ -301,7 +302,7 @@ if (print.other.gp == FALSE) growth.frame <- data.frame(ID=growth.frame$ID, SGP=
 
 if (!is.null(percentile.cuts)){
 percuts_best <- t(apply(percuts.frame, 1, return.best.sgp.percuts, numpercentilecuts=length(percentile.cuts)))
-percuts_best <- round(percuts_best)
+percuts_best <- round(percuts_best, digits=percuts.digits)
 colnames(percuts_best) <- paste("CUT", as.character(percentile.cuts), sep="")
 growth.frame <- data.frame(growth.frame, percuts_best)
 }

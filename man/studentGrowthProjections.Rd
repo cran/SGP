@@ -15,7 +15,9 @@ studentGrowthProjections(student.data,
                          num.prior.scores, 
                          subset.grade, 
                          chunk.size = 10000, 
-                         convert.0and100 = "TRUE")
+                         convert.0and100 = "TRUE",
+                         percentile.trajectories=c(10, 35, 50, 65, 90),
+                         projcuts.digits=2)
 }
 
 \arguments{
@@ -79,17 +81,25 @@ studentGrowthProjections(student.data,
   supplied are analyzed without any sub-setting occurring.
  }
   \item{chunk.size}{An integer (default of 10,000) indicating what the number of rows in the block of data (so that the program doesn't overwhelm memory) 
-   fed into the internal growth projection function.}
-  \item{convert.0and100}{Boolean argument (defaults to TRUE) indicating whether conversion of growth percentiles of 0 and 100 to growth percentiles
-    of 1 and 99, respectively, occurs. The default produces growth percentiles ranging from 1 to 99.}
+   fed into the internal growth projection function.
  }
+  \item{convert.0and100}{Boolean argument (defaults to TRUE) indicating whether conversion of growth percentiles of 0 and 100 to growth percentiles
+    of 1 and 99, respectively, occurs. The default produces growth percentiles ranging from 1 to 99.
+ }
+  \item{percentile.trajectories}{Returns a vector of percentile trajectories (defaults to 10th, 35th, 50th, 65th, and 90th) associated with 1, 2 and 3 year projections for each student
+    in addition to the percentiles necessary to reach the performance thresholds. If no percentile trajectories are desired, set \code{percentile.cuts=NULL}. 
+ }
+  \item{projcuts.digits}{The number of digits (defaults to 2) percentile trajectories (if requested) are formatted.
+ }
+}
 
 \details{
   }
 
 \value{Function returns a data frame consisting of student IDs and the associated percentile growth projections/trajectories.
- Depending upon the number of cut-scores specified, the data frame contains 3 columns (1, 2, and 3 year projections/trajectories)
- for each cut-point supplied (enumerated \file{LEVEL1}, \file{LEVEL2}, \file{LEVEL3}, ...).
+ Depending upon the number of performance level cut-scores and percentile trajectories specified, the data frame contains 1, 2, and 3 year projections/trajectories
+ for each performance level cut-point supplied (enumerated \file{LEVEL1}, \file{LEVEL2}, \file{LEVEL3}, ...) and each percentile cut specified (enumerated,
+ for example, \file{CUT\_10}, \file{CUT\_35}, \file{CUT\_50}, \file{CUT\_65}, \file{CUT\_90}).
 }
 
 \references{
@@ -169,12 +179,14 @@ detach(sgpData)
 
 
 sgp_g2s_read_2007_g3 <- studentGrowthProjections(
-                           student.data = sgpData,
-                           num.panels = 3,
-                           max.num.scores = 1,
-                           num.prior.scores=list(c(1,2,3)),
-                           proj.function.labels = list(my.year=2007, my.subject="read", my.grade=3),
-                           subset.grade = 3)
+             student.data = sgpData,
+             num.panels = 3,
+             max.num.scores = 1,
+             num.prior.scores=list(c(1,2,3)),
+             proj.function.labels = list(my.year=2007, my.subject="read", my.grade=3),
+             subset.grade = 3,
+             percentile.trajectories=c(35,65),
+             projcuts.digits=0)
 
 ## save(sgp_g2s_read_2007_g3, file="Results_Data/sgp_g2s_read_2007_g3.Rdata")
 
@@ -185,12 +197,14 @@ sgp_g2s_read_2007_g3 <- studentGrowthProjections(
 
 
 sgp_g2s_read_2007_g4 <- studentGrowthProjections(
-                           student.data = sgpData,
-                           num.panels = 3,
-                           max.num.scores = 2,
-                           num.prior.scores=list(c(1,2,3), c(2,3,3)),
-                           proj.function.labels = list(my.year=2007, my.subject="read", my.grade=4),
-                           subset.grade = 4)
+             student.data = sgpData,
+             num.panels = 3,
+             max.num.scores = 2,
+             num.prior.scores=list(c(1,2,3), c(2,3,3)),
+             proj.function.labels = list(my.year=2007, my.subject="read", my.grade=4),
+             subset.grade = 4,
+             percentile.trajectories=c(35,65),
+             projcuts.digits=0)
 
 ## save(sgp_g2s_read_2007_g4, file="Results_Data/sgp_g2s_read_2007_g4.Rdata")
 
@@ -202,12 +216,14 @@ sgp_g2s_read_2007_g4 <- studentGrowthProjections(
 
 
 sgp_g2s_read_2007_g5 <- studentGrowthProjections(
-                           student.data = sgpData,
-                           num.panels = 3,
-                           max.num.scores = 3,
-                           num.prior.scores=list(c(1,2,NA), c(2,3,NA), c(3,3,NA)),
-                           proj.function.labels = list(my.year=2007, my.subject="read", my.grade=5),
-                           subset.grade = 5)
+             student.data = sgpData,
+             num.panels = 3,
+             max.num.scores = 3,
+             num.prior.scores=list(c(1,2,NA), c(2,3,NA), c(3,3,NA)),
+             proj.function.labels = list(my.year=2007, my.subject="read", my.grade=5),
+             subset.grade = 5,
+             percentile.trajectories=c(35,65),
+             projcuts.digits=0)
 
 ## save(sgp_g2s_read_2007_g5, file="Results_Data/sgp_g2s_read_2007_g5.Rdata")
 
@@ -217,12 +233,14 @@ sgp_g2s_read_2007_g5 <- studentGrowthProjections(
 ##
 
 sgp_g2s_read_2007_g6 <- studentGrowthProjections(
-                           student.data = sgpData,
-                           num.panels = 3,
-                           max.num.scores = 3,
-                           num.prior.scores=list(c(1,NA,NA), c(2,NA,NA), c(3,NA,NA)),
-                           proj.function.labels = list(my.year=2007, my.subject="read", my.grade=6),
-                           subset.grade = 6)
+             student.data = sgpData,
+             num.panels = 3,
+             max.num.scores = 3,
+             num.prior.scores=list(c(1,NA,NA), c(2,NA,NA), c(3,NA,NA)),
+             proj.function.labels = list(my.year=2007, my.subject="read", my.grade=6),
+             subset.grade = 6,
+             percentile.trajectories=c(35,65),
+             projcuts.digits=0)
 
 ## save(sgp_g2s_read_2007_g6, file="Results_Data/sgp_g2s_read_2007_g6.Rdata")
 

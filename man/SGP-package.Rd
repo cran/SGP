@@ -4,11 +4,11 @@
 \docType{package}
 \title{Functions to calculate student growth percentiles and percentile growth projections/trajectories following methodology found in Betebenner (2008)
 }
-\description{SGP contains two functions, \code{studentGrowthPercentiles} and \code{studentGrowthProjections} that are used to calculate 
-growth percentiles and projections for students using large scale, longitudinal assessment data. These norm referenced growth values 
-are currently used in state testing and accountability systems. The functions employ quantile regression techniques (using the \code{quantreg}
+\description{SGP contains two functions, \code{studentGrowthPercentiles} and \code{studentGrowthProjections}, used to calculate 
+student growth percentiles and percentile growth projections/trajectories for students using large scale, longitudinal assessment data. These norm referenced growth values 
+are currently used in state testing and accountability systems. The functions employ quantile regression (using the \code{quantreg}
 package) to estimate the conditional density associated with each student's achievement history. Percentile growth projections/trajectories
-are calculated using the coefficient matrices derived from the student growth percentile quantile regression analyses.}
+are calculated using the coefficient matrices derived from the student growth percentile analyses.}
 
 \details{
 \tabular{ll}{

@@ -16,6 +16,7 @@ studentGrowthPercentiles(student.data,
                          print.other.gp = FALSE, 
                          rq.method = "br", 
                          convert.0and100 = TRUE, 
+                         percuts.digits=2,
                          save.matrices = TRUE, 
                          sgp.function.labels)
 }
@@ -62,6 +63,8 @@ studentGrowthPercentiles(student.data,
   \item{convert.0and100}{Boolean argument (defaults to TRUE) indicating whether conversion of growth percentiles of 0 and 100 to growth percentiles
     of 1 and 99, respectively, occurs. The default produces growth percentiles ranging from 1 to 99. 
  }
+  \item{percuts.digits}{Argument specifying how many digits (defaults to 2) to print percentile cuts (if asked for) with.
+ }
   \item{save.matrices}{Boolean argument (defaults to FALSE) indicating whether the coefficient matrices derived by the quantile regression analyses are saved to the
     \file{Coefficient\_Matrices} directory for later use (e.g., for use in the percentile growth projection/trajectory analyses).
  }
@@ -106,7 +109,7 @@ Knots\_Boundaries directory using a specific naming conventions. See the example
 
 ###
 ### Create knots and save to Knots\_Boundaries directory
-### Uncomment is wishing to specify these knots/boundaries
+### Uncomment to specify these knots/boundaries
 ### and add argument use.my.knots.and.boundaries=TRUE
 ###
 
@@ -154,8 +157,9 @@ g4_sgp <- studentGrowthPercentiles(
              student.data = sgpData, 
              num.panels = 4, 
              num.prior = 1, 
-             subset.grade = 4, 
-             sgp.function.labels=list(my.year=2007, my.subject="read", my.grade=4))
+             subset.grade = 4,
+             percuts.digits = 0, 
+             sgp.function.labels = list(my.year=2007, my.subject="read", my.grade=4))
 
 ## save(g4_sgp, file="Results_Data/sgp_read_2007_g4.Rdata")
 
@@ -168,7 +172,8 @@ g5_sgp <- studentGrowthPercentiles(
              num.panels = 4, 
              num.prior = 2,  
              subset.grade = 5,
-             sgp.function.labels=list(my.year=2007, my.subject="read", my.grade=5))
+             percuts.digits = 0,
+             sgp.function.labels = list(my.year=2007, my.subject="read", my.grade=5))
 
 ## save(g5_sgp, file="Results_Data/sgp_read_2007_g5.Rdata")
 
@@ -181,7 +186,8 @@ g6_sgp <- studentGrowthPercentiles(
              num.panels = 4, 
              num.prior = 3, 
              subset.grade = 6,
-             sgp.function.labels=list(my.year=2007, my.subject="read", my.grade=6))
+             percuts.digits = 0,
+             sgp.function.labels = list(my.year=2007, my.subject="read", my.grade=6))
 
 ## save(g6_sgp, file="Results_Data/sgp_read_2007_g6.Rdata")
 
@@ -194,7 +200,8 @@ g7_sgp <- studentGrowthPercentiles(
              num.panels = 4, 
              num.prior = 3, 
              subset.grade = 7,
-             sgp.function.labels=list(my.year=2007, my.subject="read", my.grade=7))
+             percuts.digits = 0,
+             sgp.function.labels = list(my.year=2007, my.subject="read", my.grade=7))
 
 ## save(g7_sgp, file="Results_Data/sgp_read_2007_g7.Rdata")
 
