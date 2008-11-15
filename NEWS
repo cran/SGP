@@ -2,5 +2,15 @@
 
 Changes in version: SGP_0.0-1
 
-  o Package Released
+  o Package Released.
 
+Changes in version: SGP_0.0-2
+
+  o Updated Contributors.
+  o Changed rounding of percentile cuts used for growth percentile calculation to 5 decimal places.
+  o Changed rounding of automatically produced B-spline knots to 2 decimal places.
+  o Extended range of automatically produced B-spline boundaries.
+  o Added argument, percuts.digits, to studentGrowthPercentiles to allow specification of rounding digits for growth percentile cuts.
+  o Added argument, percentile.trajectories, to studentGrowthProjections allowing the function to return 1, 2, and 3 year student percentile trajectories based upon supplied percentile values 
+    (defaults to 10th, 35th, 50th, 65th, and 90th)
+  o Added argument, projcuts.digits, to studentGrowthProjections to allow specification of rounding digits for percentile trajectory cuts. 

@@ -1,14 +1,14 @@
 citHeader("To cite package 'SGP' in publications use:")
 
 citEntry(entry = "Manual",
-         title        = "{SGP}: Student Growth Percentile and Percentile Growth Projection Calculation",
+         title        = "{SGP}: Student Growth Percentile and Percentile Growth Projection/Trajectory Calculation",
          author       = "Damian W. Betebenner",
          year         = "2008",
-         note         = "R package version 0.0-1",
+         note         = "R package version 0.0-2",
          url          = "http://cran.r-project.org/web/packages/SGP/index.html",
          
          textVersion  = paste("Damian W. Betebenner (2008).",
-                        "SGP: Student Growth Percentile and Percentile Growth Projection Calculation.",
-                        "(R package version 0.0-1).",
+                        "SGP: Student Growth Percentile and Percentile Growth Projection/Trajectory Calculation.",
+                        "(R package version 0.0-2).",
                         "URL http://cran.r-project.org/web/packages/SGP/index.html")
 )

@@ -1,12 +1,14 @@
 `studentGrowthProjections` <-
-function(student.data,               ## REQUIRED
-                                     num.panels,                 ## REQUIRED
-                                     max.num.scores,             ## REQUIRED
-                                     proj.function.labels,       ## REQUIRED
-                                     num.prior.scores,           ## OPTIONAL
-                                     subset.grade,               ## OPTIONAL
-                                     chunk.size=10000,           ## OPTIONAL
-                                     convert.0and100="TRUE"){    ## OPTIONAL
+function(                            student.data,                                      ## REQUIRED
+                                     num.panels,                                        ## REQUIRED
+                                     max.num.scores,                                    ## REQUIRED
+                                     proj.function.labels,                              ## REQUIRED
+                                     num.prior.scores,                                  ## OPTIONAL
+                                     subset.grade,                                      ## OPTIONAL
+                                     chunk.size=10000,                                  ## OPTIONAL
+                                     convert.0and100="TRUE",                            ## OPTIONAL
+                                     percentile.trajectories=c(10, 35, 50, 65, 90),     ## OPTIONAL
+                                     projcuts.digits=2){                                ## OPTIONAL
 
 
 
@@ -97,7 +99,7 @@ function(student.data,               ## REQUIRED
 ############################################################
 
 
-studentGrowthProjections_Internal <- function(grade.data, num.prior.scores, convert.0and100, proj.function.labels){
+studentGrowthProjections_Internal <- function(grade.data, num.prior.scores){
 
 
 ##
@@ -465,7 +467,7 @@ if (identical(num.prior.scores[3], 4)){
 
 
 ##
-## 1 year projections
+## 1 year projections and percentile trajectories (if requested)
 ##
 
 for (i in 1:length(get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade))) {
@@ -474,19 +476,22 @@ if (!is.na(num.prior.scores[1])) {
 
 tf.matrix <- predictions_1year < get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[i]
 tf.matrix <- cbind(tf.matrix, FALSE)
-temp <- apply(tf.matrix, 1, function(x) which.min(x == TRUE)-1)
+temp <- apply(tf.matrix, 1, function(x) which.min(x)-1)
 if (convert.0and100 == TRUE) {temp[temp==0] <- 1; temp[temp==100] <- 99}
 assign(paste("gp_proj_1year_level", i, sep=""), temp)
+if (!is.null(percentile.trajectories)) { gp_proj_1year_cuts <- round(predictions_1year[,percentile.trajectories+1], digits=projcuts.digits) }
 }
 
-else assign(paste("gp_proj_1year_level", i, sep=""), rep(NA, length(grade.data$ID)))
+else {
+assign(paste("gp_proj_1year_level", i, sep=""), rep(NA, length(grade.data$ID)))
+if (!is.null(percentile.trajectories)) { gp_proj_1year_cuts <- matrix(NA, nrow=length(grade.data$ID), ncol=length(percentile.trajectories)) }
 }
-
+}
 
 
 
 ##
-## 2 year projections
+## 2 year projections and percentile trajectories (if requested)
 ##
 
 for (i in 1:length(get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade))) {
@@ -495,18 +500,23 @@ if (!is.na(num.prior.scores[2])) {
 
 tf.matrix <- predictions_2year < get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[i]
 tf.matrix <- cbind(tf.matrix, FALSE)
-temp <- apply(tf.matrix, 1, function(x) which.min(x == TRUE)-1)
+temp <- apply(tf.matrix, 1, function(x) which.min(x)-1)
 if (convert.0and100 == TRUE) {temp[temp==0] <- 1; temp[temp==100] <- 99}
 assign(paste("gp_proj_2year_level", i, sep=""), temp)
+if (!is.null(percentile.trajectories)) { gp_proj_2year_cuts <- round(predictions_2year[,percentile.trajectories+1], digits=projcuts.digits) }
 }
 
-else assign(paste("gp_proj_2year_level", i, sep=""), rep(NA, length(grade.data$ID)))
+else {
+assign(paste("gp_proj_2year_level", i, sep=""), rep(NA, length(grade.data$ID)))
+if (!is.null(percentile.trajectories)) { gp_proj_2year_cuts <- matrix(NA, nrow=length(grade.data$ID), ncol=length(percentile.trajectories)) }
 }
+}
+
 
 
 
 ##
-## 3 year projections
+## 3 year projections and percentile trajectories (if requested)
 ##
 
 for (i in 1:length(get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade))) {
@@ -515,13 +525,19 @@ if (!is.na(num.prior.scores[3])) {
 
 tf.matrix <- predictions_3year < get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[i]
 tf.matrix <- cbind(tf.matrix, FALSE)
-temp <- apply(tf.matrix, 1, function(x) which.min(x == TRUE)-1)
+temp <- apply(tf.matrix, 1, function(x) which.min(x)-1)
 if (convert.0and100 == TRUE) {temp[temp==0] <- 1; temp[temp==100] <- 99}
 assign(paste("gp_proj_3year_level", i, sep=""), temp)
+if (!is.null(percentile.trajectories)) { gp_proj_3year_cuts <- round(predictions_3year[,percentile.trajectories+1], digits=projcuts.digits) }
 }
 
-else assign(paste("gp_proj_3year_level", i, sep=""), rep(NA, length(grade.data$ID)))
+else {
+assign(paste("gp_proj_3year_level", i, sep=""), rep(NA, length(grade.data$ID)))
+if (!is.null(percentile.trajectories)) { gp_proj_3year_cuts <- matrix(NA, nrow=length(grade.data$ID), ncol=length(percentile.trajectories)) }
+
 }
+}
+
 
 
 ##
@@ -545,6 +561,23 @@ colnames(gp_proj_dataframe) <- c("id", paste("level", 1:length(get_mycutscores(p
 
 
 gp_proj_dataframe <- data.frame(gp_proj_dataframe)
+gp_proj_list <- list(gp_proj_dataframe=gp_proj_dataframe)
+
+
+##
+## Create data frame of Growth percentiles cuts in 1, 2, and 3 year time frames
+##
+
+if (!is.null(percentile.trajectories)){
+
+gp_cuts_dataframe <- data.frame(grade.data$ID, gp_proj_1year_cuts, gp_proj_2year_cuts, gp_proj_3year_cuts)
+
+names(gp_cuts_dataframe) <- c("id", paste("cut_", percentile.trajectories , "_in_1year_", proj.function.labels$my.year, sep=""),
+                                    paste("cut_", percentile.trajectories , "_in_2year_", proj.function.labels$my.year, sep=""),
+                                    paste("cut_", percentile.trajectories , "_in_3year_", proj.function.labels$my.year, sep="")) 
+
+gp_proj_list$gp_cuts_dataframe <- gp_cuts_dataframe
+}
 
 
 
@@ -553,7 +586,7 @@ gp_proj_dataframe <- data.frame(gp_proj_dataframe)
 ##
 
 
-return(gp_proj_dataframe)
+return(gp_proj_list)
 
 
 }
@@ -572,10 +605,10 @@ return(gp_proj_dataframe)
 
 return.best.projection <- function(x, block_size){
                                    num.blocks <- (length(x)-1)/block_size
-                                   block.start <- 2 + 9*0:(num.blocks-1)
+                                   block.start <- 2 + block_size*0:(num.blocks-1)
                                    nonempty.blocks <- !is.na(x[block.start])
                                    best.block.start <- max(block.start[nonempty.blocks])
-                                   best.block <- x[c(1, best.block.start + 0:8)]                 
+                                   best.block <- x[c(1, best.block.start + 0:(block_size-1))]                 
                                    return(best.block)
 }
 
@@ -668,11 +701,10 @@ student.data <- subset(student.data, student.data$GD8 == subset.grade)
 
 for (j in 1:max.num.scores){
 
+
 ##
 ## Construction of Grade Specific Data Files based upon loop index j
 ##
-
-
 
 str1 <- " !is.na(SS8)"
 if (j > 1) str1 <- paste("!is.na(",SS[(num.panels-j+1):num.panels],") & ", sep="")
@@ -687,12 +719,9 @@ if (j > 1) str3 <- c(paste(SS[(num.panels-j+1):(num.panels-1)], ", ", sep=""), s
 grade_data <- eval(parse(text=c("subset(student.data,", c(str1, str2), ", select=c(ID, ", str3 ,"))")))
 
 
-
-
 ##
 ## Loop over chunks to calculate projections using studentGrowthProjections_Internal
 ##
-
 
 num_rows <- dim(grade_data)[1]
 num_chunks <- floor(num_rows/chunk.size)
@@ -702,20 +731,31 @@ for (i in 0:num_chunks){
    upper_index <- min((i+1)*chunk.size, num_rows)
    if (i == 0) {
 
-           assign(paste("growth_projections_", j, sep=""), studentGrowthProjections_Internal(grade_data[lower_index:upper_index,], num.prior.scores[[j]], convert.0and100, proj.function.labels=proj.function.labels))
-   }
+         tmp <- studentGrowthProjections_Internal(grade_data[lower_index:upper_index,], 
+                                                  num.prior.scores[[j]])
+         assign(paste("growth_projections_", j, sep=""), tmp$gp_proj_dataframe)
+
+         if(!is.null(percentile.trajectories)){ assign(paste("growth_projections_cuts_", j, sep=""), tmp$gp_cuts_dataframe) }
+
+   } ## End if
 
    else {
-           assign(paste("growth_projections_", j, sep=""), rbind(get(paste("growth_projections_", j, sep="")),
-                                                                 studentGrowthProjections_Internal(grade_data[lower_index:upper_index,], num.prior.scores[[j]], convert.0and100, proj.function.labels=proj.function.labels)))
-   }
-}
-}
+         tmp <- studentGrowthProjections_Internal(grade_data[lower_index:upper_index,], 
+                                                  num.prior.scores[[j]])
+         assign(paste("growth_projections_", j, sep=""), rbind(get(paste("growth_projections_", j, sep="")), tmp$gp_proj_dataframe))
+
+         if(!is.null(percentile.trajectories)){ assign(paste("growth_projections_cuts_", j, sep=""), rbind(get(paste("growth_projections_cuts_", j, sep="")), tmp$gp_cuts_dataframe)) } 
+   } ## End else
+
+} ## End i loop
+
+} ## End j loop
 
 
 ##
 ## Merge together different ordered projections
 ##
+
 
 for (i in 1:max.num.scores) {
    if (i == 1) growth_projections <- get(paste("growth_projections_", i, sep=""))
@@ -724,18 +764,43 @@ for (i in 1:max.num.scores) {
 
 
 ##
+## Merge together different ordered cuts
+##
+
+for (i in 1:max.num.scores) {
+   if (i == 1) growth_projections_cuts <- get(paste("growth_projections_cuts_", i, sep=""))
+   else growth_projections_cuts <- merge(growth_projections_cuts, get(paste("growth_projections_cuts_", i, sep="")), by="id", all=TRUE)
+}
+
+
+##
 ## Get best growth projections
 ##
 
-
 growth_projections <- t(apply(growth_projections, 1, return.best.projection, block_size=3*length(get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade+1))))
 colnames(growth_projections) <- toupper(colnames(get(paste("growth_projections_1"))))
+growth_projections <- as.data.frame(growth_projections)
+
+
+##
+## Get best growth projection cuts (if asked for) and merge with growth projections
+##
+
+if (!is.null(percentile.trajectories)) {
+growth_projections_cuts <- t(apply(growth_projections_cuts, 1, return.best.projection, block_size=3*length(percentile.trajectories)))
+colnames(growth_projections_cuts) <- toupper(colnames(get(paste("growth_projections_cuts_1"))))
+growth_projections_cuts <- as.data.frame(growth_projections_cuts)
+
+growth_projections <- merge(growth_projections, growth_projections_cuts, by="ID", all=TRUE)
+
+}
+
 
 ###
 ### Return projections
 ###
 
-return(as.data.frame(growth_projections))
+return(growth_projections)
 
 }
 
