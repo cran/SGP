@@ -1,16 +1,18 @@
 `studentGrowthPercentiles` <-
-function(student.data, 
-                num.panels,
-                num.prior=num.panels-1,   
-                subset.grade,
-                percentile.cuts=c(10, 35, 50, 65, 90),
-                use.my.knots.and.boundaries=FALSE,
-                print.other.gp=FALSE, 
-                rq.method="br", 
-                convert.0and100=TRUE,
-                percuts.digits=2,
-                save.matrices=TRUE,
-                sgp.function.labels){
+function(student.data,                                ## REQUIRED
+         num.panels,                                  ## REQUIRED
+         num.prior=num.panels-1,                      ## OPTIONAL
+         subset.grade,                                ## OPTIONAL
+         percentile.cuts=c(1, 35, 65, 99),            ## OPTIONAL
+         use.my.knots.and.boundaries=FALSE,           ## OPTIONAL
+         print.other.gp=FALSE,                        ## OPTIONAL
+         rq.method="br",                              ## OPTIONAL
+         convert.0and100=TRUE,                        ## OPTIONAL
+         percuts.digits=2,                            ## OPTIONAL
+         save.matrices=TRUE,                          ## OPTIONAL
+         isotonize=TRUE,                              ## OPTIONAL
+         convert.using.loss.hoss=TRUE,                ## OPTIONAL
+         sgp.function.labels){                        ## OPTIONAL, BUT ALMOST ALWAYS USED
 
 
 ###
@@ -23,9 +25,10 @@ function(student.data,
 ## Code for function that linearly interpolates missing values
 ##
 
-smooth.row <- function(x){
-                       x[which(is.na(x))] <- approx(x, xout=which(is.na(x)))$y
-                       return(x)
+smooth.and.isotonize.row <- function(x){
+                                  x[which(is.na(x))] <- approx(x, xout=which(is.na(x)))$y
+                                  if (isotonize) return(sort(x))
+                                  else return(x)
 }
 
 
@@ -60,13 +63,13 @@ return.best.sgp.percuts <- function(x, numpercentilecuts){
 ###
 
 get_gp_knots <- function(grade, subject, priors){
-                         for (i in 7:(8-priors)) {
+                         for (i in 8:(8-priors)) {
                            assign(paste("knots", i, sep=""), get(paste("knots_", subject, "_g", grade-(8-i), sep="")), inherits=TRUE)
 }
 }
 
 get_gp_boundaries <- function(grade, subject, priors){
-                              for (i in 7:(8-priors)) {
+                              for (i in 8:(8-priors)) {
                                 assign(paste("boundaries", i, sep=""), get(paste("boundaries_", subject, "_g", grade-(8-i), sep="")), inherits=TRUE)
 }
 }
@@ -79,6 +82,12 @@ create_gp_knots_and_boundaries <- function(scores, grade, subject) {
 }
 
 
+###
+### Commands for testing student.data and converting to a data.frame if necessary
+###
+
+if (class(student.data) != "data.frame") {student.data <- as.data.frame(student.data)}
+if (2*num.panels+1 != dim(student.data)[2]) {print("WARNING: Number of columns for student.data does not appear to conform to data requirements!")}
 
 ###
 ### Commands for creating Results_Data subdirectory
@@ -202,7 +211,7 @@ for (i in 1:num.prior) {
 
 for (i in 1:num.prior) {
 	tmp <- eval(parse(text=paste("predict(qr.", prefix[i], "order)", sep="")))
-	tmp <- round(t(apply(tmp, 1, function(x) smooth.row(x))), digits=5)
+	tmp <- round(t(apply(tmp, 1, function(x) smooth.and.isotonize.row(x))), digits=5)
 	assign(paste("predict.", prefix[i], "order", sep=""), tmp)
 }
 
@@ -236,6 +245,10 @@ if (!is.null(percentile.cuts)){
 	
 	for (i in 1:num.prior) {
 		tmp <- eval(parse(text=paste("predict.", prefix[i], "order[ , percentile.cuts+1]", sep="")))
+                if (convert.using.loss.hoss==TRUE) {
+                tmp[tmp < get(paste("boundaries", 8, sep=""))[1]] <- get(paste("boundaries", 8, sep=""))[1]
+                tmp[tmp > get(paste("boundaries", 8, sep=""))[2]] <- get(paste("boundaries", 8, sep=""))[2]
+                }
 		colnames(tmp) <- paste("p", prefix[i], percentile.cuts, sep="")
 		assign(paste("percuts_", prefix[i], "order", sep=""), tmp)
 		assign(paste("percuts.frame", i+1, "y", sep=""), eval(parse(text=paste("data.frame(ID=data.grade", i+1, "y$ID, percuts_", prefix[i], "order)", sep=""))))

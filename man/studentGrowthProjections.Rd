@@ -15,8 +15,9 @@ studentGrowthProjections(student.data,
                          num.prior.scores, 
                          subset.grade, 
                          chunk.size = 10000, 
-                         convert.0and100 = "TRUE",
-                         percentile.trajectories=c(10, 35, 50, 65, 90),
+                         convert.0and100 = TRUE,
+                         percentile.trajectories=c(1, 35, 65, 99),
+                         isotonize = TRUE,
                          projcuts.digits=2)
 }
 
@@ -86,8 +87,11 @@ studentGrowthProjections(student.data,
   \item{convert.0and100}{Boolean argument (defaults to TRUE) indicating whether conversion of growth percentiles of 0 and 100 to growth percentiles
     of 1 and 99, respectively, occurs. The default produces growth percentiles ranging from 1 to 99.
  }
-  \item{percentile.trajectories}{Returns a vector of percentile trajectories (defaults to 10th, 35th, 50th, 65th, and 90th) associated with 1, 2 and 3 year projections for each student
+  \item{percentile.trajectories}{Returns a vector of percentile trajectories (defaults to 1st, 35th, 65th, and 99th) associated with 1, 2 and 3 year projections for each student
     in addition to the percentiles necessary to reach the performance thresholds. If no percentile trajectories are desired, set \code{percentile.cuts=NULL}. 
+ }
+  \item{isotonize}{Boolean argument (defaults to TRUE) indicating whether quantile regression results are isotonized to prevent quantile crossing following the methods derived by
+    Dette & Volgushev (2008).
  }
   \item{projcuts.digits}{The number of digits (defaults to 2) percentile trajectories (if requested) are formatted.
  }
@@ -105,6 +109,9 @@ studentGrowthProjections(student.data,
 \references{
 Betebenner, D. W. (2008). Toward a normative understanding of student growth. In K. E. Ryan & 
 L. A. Shepard (Eds.), \emph{The Future of Test Based Accountability} (pp. 155-170). New York: Routledge.
+
+Dette, H. & Volgushev, S. Non-crossing non-parametric estimates of quantile curves. Journal of the Royal Statistical Society B, 
+70(3), 609-627.
 }
 
 \author{Damian W. Betebenner \email{dbetebenner@nciea.org} }
@@ -245,19 +252,15 @@ sgp_g2s_read_2007_g6 <- studentGrowthProjections(
 ## save(sgp_g2s_read_2007_g6, file="Results_Data/sgp_g2s_read_2007_g6.Rdata")
 
 
-
-
-
-
 ###
 ### Combine all the different grade growth projection files into a single file 
 ### and write the results to a comma separated data set
 ###
 
 sgp_g2s_read_2007_gall <- rbind(sgp_g2s_read_2007_g3,
-                                      sgp_g2s_read_2007_g4,
-                                      sgp_g2s_read_2007_g5,
-                                      sgp_g2s_read_2007_g6)
+                                sgp_g2s_read_2007_g4,
+                                sgp_g2s_read_2007_g5,
+                                sgp_g2s_read_2007_g6)
 
 save(sgp_g2s_read_2007_gall, file="Results_Data/sgp_g2s_read_2007_gall.Rdata")
 write.table(sgp_g2s_read_2007_gall, file="Results_Data/sgp_g2s_read_2007_gall.dat", 

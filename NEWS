@@ -1,8 +1,11 @@
 ==============================
 
-Changes in version: SGP_0.0-1
+Changes in version: SGP_0.0-3
 
-  o Package Released.
+  o Included option/argument in studentGrowthPercentiles function to avoid quantile crossing based upon Dette & Volgushev (2008)
+  o Cleaned up minor errors in documentation.
+  o Added optional argument, convert.using.loss.hoss, to studentGrowthPercentiles to convert percentile cuts extended below/above the lowest obtainable scale score/highest obtainable 
+    scale score (loss/hoss) to the loss/hoss (defaults to TRUE).
 
 Changes in version: SGP_0.0-2
 
@@ -10,7 +13,11 @@ Changes in version: SGP_0.0-2
   o Changed rounding of percentile cuts used for growth percentile calculation to 5 decimal places.
   o Changed rounding of automatically produced B-spline knots to 2 decimal places.
   o Extended range of automatically produced B-spline boundaries.
-  o Added argument, percuts.digits, to studentGrowthPercentiles to allow specification of rounding digits for growth percentile cuts.
-  o Added argument, percentile.trajectories, to studentGrowthProjections allowing the function to return 1, 2, and 3 year student percentile trajectories based upon supplied percentile values 
-    (defaults to 10th, 35th, 50th, 65th, and 90th)
-  o Added argument, projcuts.digits, to studentGrowthProjections to allow specification of rounding digits for percentile trajectory cuts. 
+  o Added optional argument, percuts.digits, to studentGrowthPercentiles to allow specification of rounding digits for growth percentile cuts (defaults to 2).
+  o Added optional argument, percentile.trajectories, to studentGrowthProjections allowing the function to return 1, 2, and 3 year student percentile trajectories based upon supplied percentile values 
+    (defaults to 10th, 35th, 50th, 65th, and 90th). 
+  o Added optional argument, projcuts.digits, to studentGrowthProjections to allow specification of rounding digits for percentile trajectory cuts (defaults to 2).
+
+Changes in version: SGP_0.0-1
+
+  o Package Released.

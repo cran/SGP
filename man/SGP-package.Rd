@@ -14,15 +14,15 @@ are calculated using the coefficient matrices derived from the student growth pe
 \tabular{ll}{
 Package: \tab SGP\cr
 Type: \tab Package\cr
-Version: \tab 0.0-1\cr
-Date: \tab 2008-10-10\cr
+Version: \tab 0.0-3\cr
+Date: \tab 2009-2-15\cr
 License: \tab Creative Commons Attribution + ShareAlike (by-sa)\cr
 LazyLoad: \tab yes\cr
 }
 Calculation of student growth percentiles is typically performed by grade and subject. Data for growth percentile calculation must be specifically formatted. 
-See \code{sgpData} for an example data set. Batch R syntax for performing analyses across all grades is provided in the examples of the studentGrowthPercentiles function. 
-Calculation of percentile growth projections/trajectories follows calculation of student growth percentiles and requires coefficient matrices derived during 
-student growth percentile estimation.}
+See \code{sgpData} for an example data set. Batch R syntax for performing analyses across all grades is provided in the examples of the \code{studentGrowthPercentiles} and
+\code{studentGrowthProjections} functions. Calculation of percentile growth projections/trajectories follows calculation of student growth percentiles and requires coefficient matrices 
+derived during student growth percentile estimation.}
 
 \author{Damian W. Betebenner \email{DBetebenner@nciea.org}} 
 
