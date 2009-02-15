@@ -19,7 +19,8 @@ studentGrowthPercentiles(student.data,
                          percuts.digits=2,
                          save.matrices = TRUE,
                          isotonize = TRUE,
-                         convert.using.loss.hoss=TRUE, 
+                         convert.using.loss.hoss=TRUE,
+                         goodness.of.fit=TRUE, 
                          sgp.function.labels)
 }
 
@@ -60,14 +61,14 @@ studentGrowthPercentiles(student.data,
    percentile for each student.
  }
   \item{rq.method}{An argument that defines the estimation method used in the quantile regression calculations. The default is the the \code{"br"} method
-   referring to the Barrondale and Roberts l1 estimation detailed in Koenker (2005) and in the help for the quantile regression package.
+   referring to the Barrodale and Roberts l1 estimation detailed in Koenker (2005) and in the help for the quantile regression package.
  }
   \item{convert.0and100}{Boolean argument (defaults to TRUE) indicating whether conversion of growth percentiles of 0 and 100 to growth percentiles
     of 1 and 99, respectively, occurs. The default produces growth percentiles ranging from 1 to 99. 
  }
   \item{percuts.digits}{Argument specifying how many digits (defaults to 2) to print percentile cuts (if asked for) with.
  }
-  \item{save.matrices}{Boolean argument (defaults to FALSE) indicating whether the coefficient matrices derived by the quantile regression analyses are saved to the
+  \item{save.matrices}{Boolean argument (defaults to TRUE) indicating whether the coefficient matrices derived by the quantile regression analyses are saved to the
     \file{Coefficient\_Matrices} directory for later use (e.g., for use in the percentile growth projection/trajectory analyses).
  }
   \item{isotonize}{Boolean argument (defaults to TRUE) indicating whether quantile regression results are isotonized to prevent quantile crossing following the methods derived by
@@ -77,6 +78,9 @@ studentGrowthPercentiles(student.data,
     highest obtainable scale score (HOSS). Those percentile cuts above the HOSS are replaced with the HOSS and those percentile cuts below the LOSS are replaced with the LOSS. The LOSS 
     and HOSS are obtained from the boundaries used for spline calculations. 
  }
+  \item{goodness.of.fit}{Boolean argument (defaults to TRUE) indicating whether to produce goodness of fit results associated with produced student growth percentiles.
+Goodness of fit results are placed in the \file{Goodnessi\_of\_Fit} directory and test whether the observed growth percentile distribution follows a normal distribution.
+} 
   \item{sgp.function.labels}{If \code{save.matrices=TRUE} or \code{save.knots.boundaries=TRUE}, the function requires the user to specify a list, \code{sgp.function.labels}, of the form  
     \code{list(my.year= , my.subject= , my.grade= )}. The user specified values are used to save the coefficient matrices and/or knots/boundaries in an orderly fashion using an appropriate 
     combination of year, subject and grade.
@@ -118,117 +122,83 @@ Knots\_Boundaries directory using a specific naming conventions. See the example
 ####
 ############################################################################
 
-
 ###
-### Create knots and save to Knots\_Boundaries directory
-### Uncomment to specify these knots/boundaries
-### and add argument use.my.knots.and.boundaries=TRUE
+### Load student growth percentile (SGP) library
 ###
 
+require(SGP) 
 
-##if (is.na(file.info("Knots_Boundaries")$isdir)) {
-##    dir.create("Knots_Boundaries")
-##}
-
-##boundaries_read_g3 <- c(150, 795); knots_read_g3 <- c(510, 550, 580, 615)
-##boundaries_read_g4 <- c(180, 940); knots_read_g4 <- c(542, 580, 606, 635)
-##boundaries_read_g5 <- c(220, 955); knots_read_g5 <- c(562, 602, 632, 665)
-##boundaries_read_g6 <- c(260, 970); knots_read_g6 <- c(575, 615, 645, 675)
-##boundaries_read_g7 <- c(300, 980); knots_read_g7 <- c(586, 625, 655, 690)
-
-##save(boundaries_read_g3, file="Knots_Boundaries/boundaries_read_g3.Rdata")
-##save(knots_read_g3, file="Knots_Boundaries/knots_read_g3.Rdata")
-
-##save(boundaries_read_g4, file="Knots_Boundaries/boundaries_read_g4.Rdata")
-##save(knots_read_g4, file="Knots_Boundaries/knots_read_g4.Rdata")
-
-##save(boundaries_read_g5, file="Knots_Boundaries/boundaries_read_g5.Rdata")
-##save(knots_read_g5, file="Knots_Boundaries/knots_read_g5.Rdata")
-
-##save(boundaries_read_g6, file="Knots_Boundaries/boundaries_read_g6.Rdata")
-##save(knots_read_g6, file="Knots_Boundaries/knots_read_g6.Rdata")
-
-##save(boundaries_read_g7, file="Knots_Boundaries/boundaries_read_g7.Rdata")
-##save(knots_read_g7, file="Knots_Boundaries/knots_read_g7.Rdata")
-
-###
-### Load relevant datasets
-###
-
-data(sgpData)
 
 ###
 ### Calculate student growth percentiles
 ###
 
-
 ## 444444444444444444444444444444444444444444444444444444444444
 
-
-g4_sgp <- studentGrowthPercentiles(
-             student.data = sgpData, 
+sgp_reading_2007_g4 <- studentGrowthPercentiles(
+             student.data = sgpData, ### SGP Library data set
              num.panels = 4, 
              num.prior = 1, 
              subset.grade = 4,
              percuts.digits = 0, 
-             sgp.function.labels = list(my.year=2007, my.subject="read", my.grade=4))
+             sgp.function.labels = list(my.year=2007, my.subject="Reading", my.grade=4))
 
-## save(g4_sgp, file="Results_Data/sgp_read_2007_g4.Rdata")
+## save(sgp_reading_2007_g4, file="Results_Data/sgp_reading_2007_g4.Rdata")
 
 
 ## 555555555555555555555555555555555555555555555555555555555555
 
-
-g5_sgp <- studentGrowthPercentiles(
+sgp_reading_2007_g5 <- studentGrowthPercentiles(
              student.data = sgpData, 
              num.panels = 4, 
              num.prior = 2,  
              subset.grade = 5,
              percuts.digits = 0,
              use.my.knots.and.boundaries=TRUE, 
-             sgp.function.labels = list(my.year=2007, my.subject="read", my.grade=5))
+             sgp.function.labels = list(my.year=2007, my.subject="Reading", my.grade=5))
 
-## save(g5_sgp, file="Results_Data/sgp_read_2007_g5.Rdata")
+## save(sgp_reading_2007_g5, file="Results_Data/sgp_reading_2007_g5.Rdata")
 
 
 ## 6666666666666666666666666666666666666666666666666666666666666
 
-
-g6_sgp <- studentGrowthPercentiles(
+sgp_reading_2007_g6 <- studentGrowthPercentiles(
              student.data = sgpData, 
              num.panels = 4, 
              num.prior = 3, 
              subset.grade = 6,
              percuts.digits = 0,
              use.my.knots.and.boundaries=TRUE,
-             sgp.function.labels = list(my.year=2007, my.subject="read", my.grade=6))
+             sgp.function.labels = list(my.year=2007, my.subject="Reading", my.grade=6))
 
-## save(g6_sgp, file="Results_Data/sgp_read_2007_g6.Rdata")
+## save(sgp_reading_2007_g6, file="Results_Data/sgp_reading_2007_g6.Rdata")
 
 
 ## 7777777777777777777777777777777777777777777777777777777777777
 
-
-g7_sgp <- studentGrowthPercentiles(
+sgp_reading_2007_g7 <- studentGrowthPercentiles(
              student.data = sgpData, 
              num.panels = 4, 
              num.prior = 3, 
              subset.grade = 7,
              percuts.digits = 0,
              use.my.knots.and.boundaries=TRUE,
-             sgp.function.labels = list(my.year=2007, my.subject="read", my.grade=7))
+             sgp.function.labels = list(my.year=2007, my.subject="Reading", my.grade=7))
 
-## save(g7_sgp, file="Results_Data/sgp_read_2007_g7.Rdata")
-
+## save(sgp_reading_2007_g7, file="Results_Data/sgp_reading_2007_g7.Rdata")
 
 
 ###
 ### Bind grade results and save output
 ###
 
-sgp_read_2007_gall <- rbind(g4_sgp, g5_sgp, g6_sgp, g7_sgp)
-save(sgp_read_2007_gall, file="Results_Data/sgp_read_2007_gall.Rdata")
-write.table(sgp_read_2007_gall, file="Results_Data/sgp_read_2007_gall.dat", 
+sgp_reading_2007_gall <- rbind(sgp_reading_2007_g4, 
+                               sgp_reading_2007_g5, 
+                               sgp_reading_2007_g6, 
+                               sgp_reading_2007_g7)
+
+save(sgp_reading_2007_gall, file="Results_Data/sgp_reading_2007_gall.Rdata")
+write.table(sgp_reading_2007_gall, file="Results_Data/sgp_reading_2007_gall.dat", 
             sep=",", row.names=FALSE, quote=FALSE)
 
 

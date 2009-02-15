@@ -1,6 +1,8 @@
 .onLoad <- function(lib,pkg) {
     require(splines)
     require(quantreg)
+    require(grid)
+    require(gtools)
     load(SGP)
 }
 

@@ -7,105 +7,23 @@ function(                            student.data,                              
                                      subset.grade,                                      ## OPTIONAL
                                      chunk.size=10000,                                  ## OPTIONAL
                                      convert.0and100=TRUE,                              ## OPTIONAL
-                                     percentile.trajectories=c(1, 35, 65, 99),          ## OPTIONAL
+                                     percentile.trajectories=c(1,35,65,99),             ## OPTIONAL
                                      isotonize=TRUE,                                    ## OPTIONAL
                                      projcuts.digits=2){                                ## OPTIONAL
 
 
-
-
-####
-#### Function to calculate growth percentile projections given up to 8 panels of data for students 
-#### 
-
-###
-### Use of this function assumes prior calculation of growth percentiles with save.matrices=TRUE (saving
-### the coefficient matrices associated with growth percentile calculations within the CoefMatrices directory)
-###
-
-###
-### Function accepts a DATAFRAME. The dataframe is in wide format.
-### Each line has the grade and associated scale score for the same student over several years. 
-###
-
-### The dataframe must have the following variables (or subset of them dependening upon number of panels) in the following
-### order
-###
-###                  ID---unique student identifier, 
-###                  GD1---Grade in Year 1,
-###                  GD2---Grade in Year 2,
-###                  GD3---Grade in Year 3,
-###                  GD4---Grade in Year 4,
-###                  GD5---Grade in Year 5,
-###                  GD6---Grade in Year 6,
-###                  GD7---Grade in Year 7,
-###                  GD8---Grade in Year 8
-###                  SS1---Scale Score Year 1,
-###                  SS2---Scale Score Year 2,
-###                  SS3---Scale Score Year 3,
-###                  SS4---Scale Score Year 4,
-###                  SS5---Scale Score Year 5, 
-###                  SS6---Scale Score Year 6,
-###                  SS7---Scale Score Year 7,
-###                  SS8---Scale Score Year 8
-###
-###
-### For example, if your data contains three panels, then the user supplies a dataframe 
-### containing variables in the following order: ID, GD1, GD2, GD3, SS1, SS2, SS3
-###
-###
-###
-### Data should come from "like" students who are in the same grade in the final panel. 
-### For example, all students with grade 5 in panel 3 could be submitted for analysis to the function.
-### The function will select out those students with non-canonical grade progressions. 
-###
-### Data must be formatted so that ID is the first variable, the grades, from earliest to latest, next, and 
-### scale scores from earliest to latest last.
-###
-###
-### The function accepts 4 variables: 
-### (1) The data frame (student.data), 
-### (2) The number of prior scores one wishes to use to calculate each of the 1, 2, and 3 year projections (num.prior.scores)
-###     This is a vector of length 3. The first component of the vector indicates how many scores are used to calculate the 1
-###     year projection. The second component of the vector indicates how many scores are used to calculate the 2 year projections
-###     and the third component of the vector indicates how many scores are used to calculate the 3 year projections. If calculation
-###     of a given prediction is not appropriate, then the component of the vector should be NA. For example, for students currently
-###     in the ninth grade, only a 1 year projection is calculated, thus the latter two components of the vector are NA---c(??, NA, NA)
-###     NOTE: The num.prior.scores used for projection calculation are based upon the quantile regression based coefficient matrices
-###           calculated when growth percentiles are estimated. The num.prior.scores is USUALLY the maximum number of priors used for 
-###           growth percentile calculations (USUALLY num.panels - 1). For example, including 2007 CSAP data, there are five panels of
-###           data. Thus, growth percentile coefficient matrices were calculated based upon a maximum of 4 prior scores. Thus, no
-###           component of num.prior.scores can exceed 4. Currently the function only supports a maximum of 4 prior scores. 
-###            
-
-###
-### If num.scores = 1, then num.prior.scores is USUALLY c(1, 2, 3). That is, because there is only one score, only 1 score is
-###      used to calculate the 1st year projection. However, for the 2nd year, because there are now two scores available (the
-###      actual score used for the 1 year projection AND the 1 year projection itself), 2 scores are used to get the 2 year projection.
-###      Finally, for the 3rd year, 3 scores are used to get the 3 year projection. 
-### If num.scores = 2, then num.prior.scores is USUALLY c(2, 3, 4). 
-### If num.scores = 3, then num.prior.scores is USUALLY c(3, 4, 4).
-### If num.scores = 4, then num.prior.scores is USUALLY c(4, 4, 4).
-### (3) convert.0and100 (REQUIRED) is a boolean variable indicating whether 0 and 100 are converted to 1 and 99, respectively.
-### (4) proj.function.labels (REQUIRED) is a list of labels used to pull the appropriate coefficient matrices, knots, and boundaries for the projections.
-###     The list corresponds to the list used to save the coefficient matrices and knots and boundaries in the growth percentile analyses. The list is of the form  
-###     "list(my.year= , my.subject= , my.grade= )".
-
-
-
 ############################################################
 ###
-### Code for student growth projection function
+### Code for INTERNAL student growth projection function
 ###
 ############################################################
-
 
 studentGrowthProjections_Internal <- function(grade.data, num.prior.scores){
-
 
 ##
 ## Code for function that returns subject x grade specific knots and boundaries 
 ##
+
 
 get_myknots <- function(subject, grade){
                         return(get(paste("knots_", subject, "_g", grade, sep="")))
@@ -114,7 +32,6 @@ get_myknots <- function(subject, grade){
 get_myboundaries <- function(subject, grade){
                              return(get(paste("boundaries_", subject, "_g", grade, sep="")))
 }
-
 
 
 ##
@@ -127,11 +44,15 @@ get_myqrmatrix <- function(order, year, grade, subject){
    if (order==2) return(get(paste("qr_2ndorder_", year, "_g", grade, "_", subject, "_coefmatrix", sep="")))
    if (order==3) return(get(paste("qr_3rdorder_", year, "_g", grade, "_", subject, "_coefmatrix", sep="")))
    if (order==4) return(get(paste("qr_4thorder_", year, "_g", grade, "_", subject, "_coefmatrix", sep="")))
+   if (order==5) return(get(paste("qr_5thorder_", year, "_g", grade, "_", subject, "_coefmatrix", sep="")))
+   if (order==6) return(get(paste("qr_6thorder_", year, "_g", grade, "_", subject, "_coefmatrix", sep="")))
+   if (order==7) return(get(paste("qr_7thorder_", year, "_g", grade, "_", subject, "_coefmatrix", sep="")))
+   if (order==8) return(get(paste("qr_8thorder_", year, "_g", grade, "_", subject, "_coefmatrix", sep="")))
 }
 
 
 ##
-## Code for function that linearly interpolates missing values
+## Code for function that linearly interpolates missing values and prevents quantile crossing
 ##
 
 smooth.and.isotonize.row <- function(x){
@@ -141,11 +62,9 @@ smooth.and.isotonize.row <- function(x){
 }
 
 
-
-
-##########################################################
-## Create 1, 2, and 3 year projections for each student
-##########################################################
+#######################################################################
+## Create 1, 2, 3, and 4 year projections for each student
+#######################################################################
 
 ##
 ## Create relevant variables
@@ -160,7 +79,6 @@ my_intercept_long <- rep(1, num.students*100)
 ## 1 year projections
 ##
 
-
 if (identical(num.prior.scores[1], 1)){
 
           predictions_1year <- cbind(my_intercept, 
@@ -171,10 +89,7 @@ if (identical(num.prior.scores[1], 1)){
           predictions_1year <- t(apply(predictions_1year, 1, function(x) smooth.and.isotonize.row(x)))
           predictions_1year[predictions_1year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]
           predictions_1year[predictions_1year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]
-  } 
-
-
-
+} 
 
 if (identical(num.prior.scores[1], 2)){
 
@@ -189,13 +104,12 @@ if (identical(num.prior.scores[1], 2)){
           predictions_1year <- t(apply(predictions_1year, 1, function(x) smooth.and.isotonize.row(x)))
           predictions_1year[predictions_1year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]
           predictions_1year[predictions_1year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]
- }
-
-
+}
 
 if (identical(num.prior.scores[1], 3)){
-         predictions_1year <-  cbind(my_intercept, 
-                                bs(grade.data$SS8,  
+
+          predictions_1year <-  cbind(my_intercept, 
+                                 bs(grade.data$SS8,  
                                         knots=get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade), 
                                         Boundary.knots=get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade)), 
                                 bs(grade.data$SS7,  
@@ -209,8 +123,6 @@ if (identical(num.prior.scores[1], 3)){
           predictions_1year[predictions_1year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]
           predictions_1year[predictions_1year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]
 }
-
-
 
 if (identical(num.prior.scores[1], 4)){
 
@@ -231,17 +143,12 @@ if (identical(num.prior.scores[1], 4)){
           predictions_1year <- t(apply(predictions_1year, 1, function(x) smooth.and.isotonize.row(x)))
           predictions_1year[predictions_1year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]
           predictions_1year[predictions_1year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]
-  
 }
-
-
 
 
 ##
 ## 2 year projections
 ##
-
-
 
 if (identical(num.prior.scores[2], 1)){
          temp.matrix <- cbind(my_intercept_long, 
@@ -261,10 +168,7 @@ if (identical(num.prior.scores[2], 1)){
           dimnames(predictions_2year) <- dimnames(predictions_1year)
           predictions_2year[predictions_2year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]
           predictions_2year[predictions_2year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]
-  } 
-
-
-
+} 
 
 if (identical(num.prior.scores[2], 2)){
          temp.matrix <- cbind(my_intercept_long, 
@@ -287,9 +191,7 @@ if (identical(num.prior.scores[2], 2)){
           dimnames(predictions_2year) <- dimnames(predictions_1year)
           predictions_2year[predictions_2year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]
           predictions_2year[predictions_2year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]
- } 
-
-
+} 
 
 if (identical(num.prior.scores[2], 3)){
          temp.matrix <- cbind(my_intercept_long, 
@@ -315,9 +217,7 @@ if (identical(num.prior.scores[2], 3)){
           dimnames(predictions_2year) <- dimnames(predictions_1year)
           predictions_2year[predictions_2year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]
           predictions_2year[predictions_2year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]
-  } 
-
-
+} 
 
 if (identical(num.prior.scores[2], 4)){
 
@@ -347,16 +247,12 @@ if (identical(num.prior.scores[2], 4)){
           dimnames(predictions_2year) <- dimnames(predictions_1year)
           predictions_2year[predictions_2year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]
           predictions_2year[predictions_2year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]
-        }
-
-
+}
 
 
 ##
 ## 3 year projections
 ##
-
-
 
 if (identical(num.prior.scores[3], 1)){
 
@@ -403,7 +299,6 @@ if (identical(num.prior.scores[3], 2)){
          predictions_3year[predictions_3year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]
 }
 
-
 if (identical(num.prior.scores[3], 3)){
 
         temp.matrix <- cbind(my_intercept_long, 
@@ -430,7 +325,6 @@ if (identical(num.prior.scores[3], 3)){
          predictions_3year[predictions_3year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1]
          predictions_3year[predictions_3year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]
 }
-
 
 if (identical(num.prior.scores[3], 4)){
 
@@ -463,14 +357,116 @@ if (identical(num.prior.scores[3], 4)){
 }
 
 
+##
+## 4 year projections
+##
 
+if (identical(num.prior.scores[4], 1)){
 
+         temp.matrix <- cbind(my_intercept_long, 
+                               bs(as.vector(t(predictions_3year)),  
+                                     knots=get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade+3), 
+                                     Boundary.knots=get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3))) 
+
+          for (i in 1:100){
+                if (i == 1) predictions_4year <- temp.matrix[i+0:(num.students-1)*100,] %*% 
+                                             get_myqrmatrix(1, proj.function.labels$my.year, proj.function.labels$my.grade+4, proj.function.labels$my.subject)[,i]
+                if (i > 1) predictions_4year <- c(predictions_4year, temp.matrix[i+0:(num.students-1)*100,] %*% 
+                                             get_myqrmatrix(1, proj.function.labels$my.year, proj.function.labels$my.grade+4, proj.function.labels$my.subject)[,i])
+            }
+
+          predictions_4year <- matrix(predictions_4year, ncol=100)
+          predictions_4year <- t(apply(predictions_4year, 1, function(x) smooth.and.isotonize.row(x)))
+          dimnames(predictions_4year) <- dimnames(predictions_1year)
+          predictions_4year[predictions_4year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[1]
+          predictions_4year[predictions_4year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[2]
+}
+
+if (identical(num.prior.scores[4], 2)){
+
+          temp.matrix <- cbind(my_intercept_long, 
+                               bs(as.vector(t(predictions_3year)),  
+                                     knots=get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade+3), 
+                                     Boundary.knots=get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)), 
+                               bs(as.vector(t(predictions_2year)),  
+                                     knots=get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade+2), 
+                                     Boundary.knots=get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2))) 
+
+          for (i in 1:100){
+                if (i == 1) predictions_4year <- temp.matrix[i+0:(num.students-1)*100,] %*% 
+                                             get_myqrmatrix(2, proj.function.labels$my.year, proj.function.labels$my.grade+4, proj.function.labels$my.subject)[,i]
+                if (i > 1) predictions_4year <- c(predictions_4year, temp.matrix[i+0:(num.students-1)*100,] %*% 
+                                             get_myqrmatrix(2, proj.function.labels$my.year, proj.function.labels$my.grade+4, proj.function.labels$my.subject)[,i])
+            }
+
+         predictions_4year <- matrix(predictions_4year, ncol=100)
+         predictions_4year <- t(apply(predictions_4year, 1, function(x) smooth.and.isotonize.row(x)))
+         dimnames(predictions_4year) <- dimnames(predictions_1year)
+         predictions_4year[predictions_4year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[1]
+         predictions_4year[predictions_4year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[2]
+}
+
+if (identical(num.prior.scores[4], 3)){
+
+        temp.matrix <- cbind(my_intercept_long, 
+                               bs(as.vector(t(predictions_3year)),  
+                                     knots=get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade+3), 
+                                     Boundary.knots=get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)), 
+                               bs(as.vector(t(predictions_2year)),  
+                                     knots=get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade+2),
+                                     Boundary.knots=get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)),
+                               bs(as.vector(t(predictions_1year)),  
+                                     knots=get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade+1),
+                                     Boundary.knots=get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1))) 
+
+          for (i in 1:100){
+                if (i == 1) predictions_4year <- temp.matrix[i+0:(num.students-1)*100,] %*% 
+                                             get_myqrmatrix(3, proj.function.labels$my.year, proj.function.labels$my.grade+4, proj.function.labels$my.subject)[,i]
+                if (i > 1) predictions_4year <- c(predictions_4year, temp.matrix[i+0:(num.students-1)*100,] %*% 
+                                             get_myqrmatrix(3, proj.function.labels$my.year, proj.function.labels$my.grade+4, proj.function.labels$my.subject)[,i])
+            }
+
+         predictions_4year <- matrix(predictions_4year, ncol=100)
+         predictions_4year <- t(apply(predictions_4year, 1, function(x) smooth.and.isotonize.row(x)))
+         dimnames(predictions_4year) <- dimnames(predictions_1year)
+         predictions_4year[predictions_4year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[1]
+         predictions_4year[predictions_4year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[2]
+}
+
+if (identical(num.prior.scores[4], 4)){
+
+        temp.matrix <- cbind(my_intercept_long,
+                               bs(as.vector(t(predictions_3year)),  
+                                     knots=get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade+3), 
+                                     Boundary.knots=get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)), 
+                               bs(as.vector(t(predictions_2year)),  
+                                     knots=get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade+2),
+                                     Boundary.knots=get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)),
+                               bs(as.vector(t(predictions_1year)),  
+                                     knots=get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade+1),
+                                     Boundary.knots=get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)),
+                               bs(rep(grade.data$SS8, each=100),  
+                                     knots=get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade),
+                                     Boundary.knots=get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade)))
+                                     
+          for (i in 1:100){
+                if (i == 1) predictions_4year <- temp.matrix[i+0:(num.students-1)*100,] %*%
+                                             get_myqrmatrix(4, proj.function.labels$my.year, proj.function.labels$my.grade+4, proj.function.labels$my.subject)[,i]
+                if (i > 1) predictions_4year <- c(predictions_4year, temp.matrix[i+0:(num.students-1)*100,] %*%
+                                             get_myqrmatrix(4, proj.function.labels$my.year, proj.function.labels$my.grade+4, proj.function.labels$my.subject)[,i])
+            }
+
+         predictions_4year <- matrix(predictions_4year, ncol=100)
+         predictions_4year <- t(apply(predictions_4year, 1, function(x) smooth.and.isotonize.row(x)))
+         dimnames(predictions_4year) <- dimnames(predictions_1year)
+         predictions_4year[predictions_4year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[1]
+         predictions_4year[predictions_4year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[2]
+}
 
 
 ######################################################################################################
-## Code to get percentile to achieve given perrformance level
+## Code to get percentile to achieve given perrformance level in 1, 2, 3, and 4 years
 ######################################################################################################
-
 
 ##
 ## 1 year projections and percentile trajectories (if requested)
@@ -482,8 +478,8 @@ if (!is.na(num.prior.scores[1])) {
 
 tf.matrix <- predictions_1year < get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[i]
 tf.matrix <- cbind(tf.matrix, FALSE)
-temp <- apply(tf.matrix, 1, function(x) which.min(x)-1)
-if (convert.0and100 == TRUE) {temp[temp==0] <- 1; temp[temp==100] <- 99}
+temp <- apply(tf.matrix, 1, function(x) which.min(x)); temp[temp==101] <- 100
+if (convert.0and100) {temp[temp==0] <- 1; temp[temp==100] <- 99}
 assign(paste("gp_proj_1year_level", i, sep=""), temp)
 if (!is.null(percentile.trajectories)) { gp_proj_1year_cuts <- round(predictions_1year[,percentile.trajectories+1], digits=projcuts.digits) }
 }
@@ -493,8 +489,6 @@ assign(paste("gp_proj_1year_level", i, sep=""), rep(NA, length(grade.data$ID)))
 if (!is.null(percentile.trajectories)) { gp_proj_1year_cuts <- matrix(NA, nrow=length(grade.data$ID), ncol=length(percentile.trajectories)) }
 }
 }
-
-
 
 ##
 ## 2 year projections and percentile trajectories (if requested)
@@ -506,8 +500,8 @@ if (!is.na(num.prior.scores[2])) {
 
 tf.matrix <- predictions_2year < get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[i]
 tf.matrix <- cbind(tf.matrix, FALSE)
-temp <- apply(tf.matrix, 1, function(x) which.min(x)-1)
-if (convert.0and100 == TRUE) {temp[temp==0] <- 1; temp[temp==100] <- 99}
+temp <- apply(tf.matrix, 1, function(x) which.min(x)); temp[temp==101] <- 100
+if (convert.0and100) {temp[temp==0] <- 1; temp[temp==100] <- 99}
 assign(paste("gp_proj_2year_level", i, sep=""), temp)
 if (!is.null(percentile.trajectories)) { gp_proj_2year_cuts <- round(predictions_2year[,percentile.trajectories+1], digits=projcuts.digits) }
 }
@@ -517,9 +511,6 @@ assign(paste("gp_proj_2year_level", i, sep=""), rep(NA, length(grade.data$ID)))
 if (!is.null(percentile.trajectories)) { gp_proj_2year_cuts <- matrix(NA, nrow=length(grade.data$ID), ncol=length(percentile.trajectories)) }
 }
 }
-
-
-
 
 ##
 ## 3 year projections and percentile trajectories (if requested)
@@ -531,8 +522,8 @@ if (!is.na(num.prior.scores[3])) {
 
 tf.matrix <- predictions_3year < get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[i]
 tf.matrix <- cbind(tf.matrix, FALSE)
-temp <- apply(tf.matrix, 1, function(x) which.min(x)-1)
-if (convert.0and100 == TRUE) {temp[temp==0] <- 1; temp[temp==100] <- 99}
+temp <- apply(tf.matrix, 1, function(x) which.min(x)); temp[temp==101] <- 100
+if (convert.0and100) {temp[temp==0] <- 1; temp[temp==100] <- 99}
 assign(paste("gp_proj_3year_level", i, sep=""), temp)
 if (!is.null(percentile.trajectories)) { gp_proj_3year_cuts <- round(predictions_3year[,percentile.trajectories+1], digits=projcuts.digits) }
 }
@@ -544,13 +535,35 @@ if (!is.null(percentile.trajectories)) { gp_proj_3year_cuts <- matrix(NA, nrow=l
 }
 }
 
+##
+## 4 year projections and percentile trajectories (if requested)
+##
+
+for (i in 1:length(get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade))) {
+
+if (!is.na(num.prior.scores[4])) {
+
+tf.matrix <- predictions_4year < get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade+4)[i]
+tf.matrix <- cbind(tf.matrix, FALSE)
+temp <- apply(tf.matrix, 1, function(x) which.min(x)); temp[temp==101] <- 100
+if (convert.0and100) {temp[temp==0] <- 1; temp[temp==100] <- 99}
+assign(paste("gp_proj_4year_level", i, sep=""), temp)
+if (!is.null(percentile.trajectories)) { gp_proj_4year_cuts <- round(predictions_4year[,percentile.trajectories+1], digits=projcuts.digits) }
+}
+
+else {
+assign(paste("gp_proj_4year_level", i, sep=""), rep(NA, length(grade.data$ID)))
+if (!is.null(percentile.trajectories)) { gp_proj_4year_cuts <- matrix(NA, nrow=length(grade.data$ID), ncol=length(percentile.trajectories)) }
+
+}
+}
 
 
 ##
-## Create data frame of Growth percentiles required to meet achievement levels in 1, 2, and 3 year time frames
+## Create data frame of Growth percentiles required to meet achievement levels in 1, 2, 3, and 4 year time frames
 ##
 
-for (i in 1:3){
+for (i in 1:4){
 for (j in 1:length(get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade))) {
 if (i==1 & j==1) {gp_proj_dataframe <- cbind(grade.data$ID, get(paste("gp_proj_", i, "year_level", j, sep="")))}
 else {gp_proj_dataframe <- cbind(gp_proj_dataframe, get(paste("gp_proj_", i, "year_level", j, sep="")))}
@@ -563,37 +576,37 @@ colnames(gp_proj_dataframe) <- c("id", paste("level", 1:length(get_mycutscores(p
                                        paste("level", 1:length(get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade)),
                                              "_in_2year_", proj.function.labels$my.year, sep=""),
                                        paste("level", 1:length(get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade)),
-                                             "_in_3year_", proj.function.labels$my.year, sep="")) 
+                                             "_in_3year_", proj.function.labels$my.year, sep=""),
+                                       paste("level", 1:length(get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade)),
+                                             "_in_4year_", proj.function.labels$my.year, sep="")) 
 
 
-gp_proj_dataframe <- data.frame(gp_proj_dataframe)
+gp_proj_dataframe <- data.frame(gp_proj_dataframe, stringsAsFactors=FALSE)
 gp_proj_list <- list(gp_proj_dataframe=gp_proj_dataframe)
 
 
 ##
-## Create data frame of Growth percentiles cuts in 1, 2, and 3 year time frames
+## Create data frame of Growth percentiles cuts in 1, 2, 3, and 4 year time frames (if requested)
 ##
 
 if (!is.null(percentile.trajectories)){
 
-gp_cuts_dataframe <- data.frame(grade.data$ID, gp_proj_1year_cuts, gp_proj_2year_cuts, gp_proj_3year_cuts)
+gp_cuts_dataframe <- data.frame(grade.data$ID, gp_proj_1year_cuts, gp_proj_2year_cuts, gp_proj_3year_cuts, gp_proj_4year_cuts, stringsAsFactors=FALSE)
 
 names(gp_cuts_dataframe) <- c("id", paste("cut_", percentile.trajectories , "_in_1year_", proj.function.labels$my.year, sep=""),
                                     paste("cut_", percentile.trajectories , "_in_2year_", proj.function.labels$my.year, sep=""),
-                                    paste("cut_", percentile.trajectories , "_in_3year_", proj.function.labels$my.year, sep="")) 
+                                    paste("cut_", percentile.trajectories , "_in_3year_", proj.function.labels$my.year, sep=""),
+                                    paste("cut_", percentile.trajectories , "_in_4year_", proj.function.labels$my.year, sep="")) 
 
 gp_proj_list$gp_cuts_dataframe <- gp_cuts_dataframe
 }
-
 
 
 ##
 ## Return Growth Projection Frame
 ##
 
-
 return(gp_proj_list)
-
 
 }
 
@@ -602,12 +615,10 @@ return(gp_proj_list)
 ## End studentGrowthProjections_Internal  Function 
 ###########################################################
 
-
-
-###
-### Function that selects the best growth projection percentiles
-### (i.e., those based upon the maximum number of prior predictors)
-###
+##
+## Function that selects the best growth projection percentiles
+## (i.e., those based upon the maximum number of prior predictors)
+##
 
 return.best.projection <- function(x, block_size){
                                    num.blocks <- (length(x)-1)/block_size
@@ -619,8 +630,6 @@ return.best.projection <- function(x, block_size){
 }
 
 
-
-
 ##
 ## Code for function that returns subject x grade specific cutscores
 ##
@@ -629,87 +638,66 @@ get_mycutscores <- function(subject, grade){
                             return(get(paste("cutscores_", subject, "_g", grade, sep="")))
 }
 
-###
-### Commands for testing student.data and converting to a data.frame if necessary
-###
 
-if (class(student.data) != "data.frame") {student.data <- as.data.frame(student.data)}
-if (2*num.panels+1 != dim(student.data)[2]) {print("WARNING: Number of columns for student.data does not appear to conform to data requirements!")}
+##
+## Commands for testing student.data and converting to a data frame if necessary
+##
+
+if (class(student.data) != "data.frame") student.data <- as.data.frame(student.data, stringsAsFactors=FALSE)
+if (2*num.panels+1 != dim(student.data)[2]) print("WARNING: Number of columns for student.data does not appear to conform to data requirements!")
 
 
-###
-### Test for existence of both knots/boundaries and coefficient matrices
-###
+##
+## Test for existence of both knots/boundaries and coefficient matrices
+##
 
 if (length(list.files("Knots_Boundaries")) == 0) stop("Knots and Boundaries must be supplied to calculate percentile growth trajectories.")
 if (length(list.files("Coefficient_Matrices")) == 0) stop("Coefficient Matrices must be supplied by first calculating growth percentiles to calculate percentile growth trajectories.")
 
-###
-### Get knots, boundaries and coefficient matrices
-###
 
+##
+## Get knots, boundaries and coefficient matrices
+##
 
 lapply(list.files("Knots_Boundaries", full.names=T, pattern=proj.function.labels$my.subject), load, envir=.GlobalEnv)
 lapply(list.files("Coefficient_Matrices", full.names=T, pattern=proj.function.labels$my.subject), load, envir=.GlobalEnv)
 lapply(list.files("Cutscores", full.names=T, pattern=proj.function.labels$my.subject), load, envir=.GlobalEnv)
 
 
-###
-### Create num.prior.scores vector if not specified
-###
-
+##
+## Create num.prior.scores vector if not specified
+##
 
 if (missing(num.prior.scores)){
-
-if (max.num.scores == 1) {num.prior.scores <- list(c(1,2,3))}
-if (max.num.scores == 2) {num.prior.scores <- list(c(1,2,3), c(2,3,4))}
-if (max.num.scores == 3) {num.prior.scores <- list(c(1,2,3), c(2,3,4), c(3,4,4))}
-if (max.num.scores == 4) {num.prior.scores <- list(c(1,2,3), c(2,3,4), c(3,4,4), c(4,4,4))}
-if (max.num.scores > 4) {stop("Maximum number of scores used for prediction is 4. Please choose a smaller maximum number of scores")}
-
-##
-## Reduce number of priors, if necessary, to be at most 1 less than the number of panels
-##
-
-num.prior.scores <- lapply(num.prior.scores, function(x) {x[which(x>=num.panels)] <- num.panels - 1; return(x)})
-
-##
-## Change priors to NA if grade projections exceed max.grade
-
-max.grade <- max(student.data[,num.panels+1], na.rm=T)
-
-if (max.grade - subset.grade < 3){
-num.prior.scores <- lapply(num.prior.scores, function(x) {x[(max.grade-subset.grade+1):3] <-NA; return(x)})
-}
+if (max.num.scores == 1) {num.prior.scores <- list(c(1,2,3,4))}
+if (max.num.scores == 2) {num.prior.scores <- list(c(1,2,3,4), c(2,3,4,4))}
+if (max.num.scores == 3) {num.prior.scores <- list(c(1,2,3,4), c(2,3,4,4), c(3,4,4,4))}
+if (max.num.scores >= 4) {num.prior.scores <- list(c(1,2,3,4), c(2,3,4,4), c(3,4,4,4), c(4,4,4,4))}
+if (max.num.scores > 4) {warning("Maximum number of scores used for prediction is 4. Results reflect results using at most 4 scores")}
 }
 
 
-#####
-##### Subset and rename data
-#####
-
-###
-### Rename variables so that they end with year 8
-###
+##
+## Rename variables so that they end with year 8
+##
 
 GD <- paste("GD",(9-num.panels):8,sep="")
 SS <- paste("SS",(9-num.panels):8,sep="")
 names(student.data) <- c("ID", GD, SS)
 
 
-###
-### Subset data by selected grade if requested
-###
+##
+## Subset data by selected grade if requested
+##
 
 if (!missing(subset.grade)){
 student.data <- subset(student.data, student.data$GD8 == subset.grade)
 }
 
 
-
-###
-### Loop over integers up to max number of scores to calculate projections
-###
+####
+#### Loop over integers up to max number of scores to calculate projections
+####
 
 for (j in 1:max.num.scores){
 
@@ -759,15 +747,13 @@ for (i in 0:num_chunks){
          if(!is.null(percentile.trajectories)){ assign(paste("growth_projections_cuts_", j, sep=""), rbind(get(paste("growth_projections_cuts_", j, sep="")), tmp$gp_cuts_dataframe)) } 
    } ## End else
 
-} ## End i loop
-
-} ## End j loop
+} ###### End i loop
+} ###### End j loop
 
 
 ##
 ## Merge together different ordered projections
 ##
-
 
 for (i in 1:max.num.scores) {
    if (i == 1) growth_projections <- get(paste("growth_projections_", i, sep=""))
@@ -779,9 +765,11 @@ for (i in 1:max.num.scores) {
 ## Merge together different ordered cuts
 ##
 
+if (!is.null(percentile.trajectories)){
 for (i in 1:max.num.scores) {
    if (i == 1) growth_projections_cuts <- get(paste("growth_projections_cuts_", i, sep=""))
    else growth_projections_cuts <- merge(growth_projections_cuts, get(paste("growth_projections_cuts_", i, sep="")), by="id", all=TRUE)
+}
 }
 
 
@@ -789,9 +777,9 @@ for (i in 1:max.num.scores) {
 ## Get best growth projections
 ##
 
-growth_projections <- t(apply(growth_projections, 1, return.best.projection, block_size=3*length(get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade+1))))
+growth_projections <- t(apply(growth_projections, 1, return.best.projection, block_size=4*length(get_mycutscores(proj.function.labels$my.subject, proj.function.labels$my.grade+1))))
 colnames(growth_projections) <- toupper(colnames(get(paste("growth_projections_1"))))
-growth_projections <- as.data.frame(growth_projections)
+growth_projections <- as.data.frame(growth_projections, stringsAsFactors=FALSE)
 
 
 ##
@@ -799,12 +787,10 @@ growth_projections <- as.data.frame(growth_projections)
 ##
 
 if (!is.null(percentile.trajectories)) {
-growth_projections_cuts <- t(apply(growth_projections_cuts, 1, return.best.projection, block_size=3*length(percentile.trajectories)))
+growth_projections_cuts <- t(apply(growth_projections_cuts, 1, return.best.projection, block_size=4*length(percentile.trajectories)))
 colnames(growth_projections_cuts) <- toupper(colnames(get(paste("growth_projections_cuts_1"))))
-growth_projections_cuts <- as.data.frame(growth_projections_cuts)
-
+growth_projections_cuts <- as.data.frame(growth_projections_cuts, stringsAsFactors=FALSE)
 growth_projections <- merge(growth_projections, growth_projections_cuts, by="ID", all=TRUE)
-
 }
 
 

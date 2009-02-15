@@ -3,7 +3,7 @@ function(student.data,                                ## REQUIRED
          num.panels,                                  ## REQUIRED
          num.prior=num.panels-1,                      ## OPTIONAL
          subset.grade,                                ## OPTIONAL
-         percentile.cuts=c(1, 35, 65, 99),            ## OPTIONAL
+         percentile.cuts=c(1,35,65,99),               ## OPTIONAL
          use.my.knots.and.boundaries=FALSE,           ## OPTIONAL
          print.other.gp=FALSE,                        ## OPTIONAL
          rq.method="br",                              ## OPTIONAL
@@ -12,6 +12,7 @@ function(student.data,                                ## REQUIRED
          save.matrices=TRUE,                          ## OPTIONAL
          isotonize=TRUE,                              ## OPTIONAL
          convert.using.loss.hoss=TRUE,                ## OPTIONAL
+         goodness.of.fit=TRUE,                        ## OPTIONAL
          sgp.function.labels){                        ## OPTIONAL, BUT ALMOST ALWAYS USED
 
 
@@ -86,7 +87,7 @@ create_gp_knots_and_boundaries <- function(scores, grade, subject) {
 ### Commands for testing student.data and converting to a data.frame if necessary
 ###
 
-if (class(student.data) != "data.frame") {student.data <- as.data.frame(student.data)}
+if (class(student.data) != "data.frame") {student.data <- as.data.frame(student.data, stringsAsFactors=FALSE)}
 if (2*num.panels+1 != dim(student.data)[2]) {print("WARNING: Number of columns for student.data does not appear to conform to data requirements!")}
 
 ###
@@ -106,7 +107,7 @@ if (is.na(file.info("Coefficient_Matrices")$isdir) & save.matrices){
 }
 
 if (save.matrices & missing(sgp.function.labels)) {
-     stop("Please specify an appropriate list of matrix labels as described in the function's help page")
+     stop("Please specify an appropriate list of SGP function labels (sgp.function.labels) as described in the studentGrowthPercentiles function help page")
 }
 
 ###
@@ -225,7 +226,7 @@ for (i in 1:num.prior) {
 for (i in 1:num.prior) {
 	tmp <- eval(parse(text=paste("predict.", prefix[i], "order < data.grade", i+1, "y$SS8", sep="")))
 	tmp <- cbind(tmp, FALSE)
-	tmp <- apply(tmp, 1, function(x) which.min(x == TRUE)-1)
+	tmp <- apply(tmp, 1, function(x) which.min(x)-1)
 	if (convert.0and100 == TRUE) {
 		tmp[tmp==0] <- 1
 		tmp[tmp==100] <- 99
@@ -263,7 +264,7 @@ if (!is.null(percentile.cuts)){
 
 
 for (i in 1:num.prior) {
-	assign(paste("growth.frame", i+1, "y", sep=""), eval(parse(text=paste("data.frame(ID=data.grade", i+1, "y$ID, gp_", prefix[i], "order)", sep=""))))
+	assign(paste("growth.frame", i+1, "y", sep=""), eval(parse(text=paste("data.frame(ID=data.grade", i+1, "y$ID, gp_", prefix[i], "order, stringsAsFactors=FALSE)", sep=""))))
 }
 
 
@@ -304,8 +305,8 @@ for (i in 1:num.prior) {
 
 gp_best <- apply(growth.frame, 1, return.best.sgp)
 
-if (print.other.gp == TRUE) growth.frame <- data.frame(growth.frame, SGP=gp_best)
-if (print.other.gp == FALSE) growth.frame <- data.frame(ID=growth.frame$ID, SGP=gp_best)
+if (print.other.gp == TRUE) growth.frame <- data.frame(growth.frame, SGP=gp_best, stringsAsFactors=FALSE)
+if (print.other.gp == FALSE) growth.frame <- data.frame(ID=growth.frame$ID, SGP=gp_best, stringsAsFactors=FALSE)
 
 
 ###
@@ -317,9 +318,144 @@ if (!is.null(percentile.cuts)){
 percuts_best <- t(apply(percuts.frame, 1, return.best.sgp.percuts, numpercentilecuts=length(percentile.cuts)))
 percuts_best <- round(percuts_best, digits=percuts.digits)
 colnames(percuts_best) <- paste("CUT", as.character(percentile.cuts), sep="")
-growth.frame <- data.frame(growth.frame, percuts_best)
+growth.frame <- data.frame(growth.frame, percuts_best, stringsAsFactors=FALSE)
 }
 
+
+###
+### End studentGrowthPercentile function
+###
+
+
+###
+### Goodness of fit report code (if requested)
+###
+
+if (goodness.of.fit == TRUE){
+
+##
+## Create Goodness-of-fit Directory if it doesn't exist
+##
+
+if (is.na(file.info("Goodness_of_Fit")$isdir)) {
+    dir.create("Goodness_of_Fit")
+}
+
+
+##
+## Cell color function
+##
+
+cell_color <- function(x){
+           temp_cell_color <- character(length(x))
+           my_reds <- c("#FFFFFF", "#FEF1E1", "#FBD9CA", "#F9C1B4", "#F7A99E", "#F59188", "#F27972", "#F0615C", "#EE4946", "#EC3130", "#EA1A1A")
+           temp_diff <- abs(x - 10)
+           temp_cell_color[temp_diff < 1] <- my_reds[1]
+           for (i in 1:9){
+           temp_cell_color[temp_diff >= i & temp_diff < i+1] <- my_reds[i+1]
+           }
+           temp_cell_color[temp_diff >= 10] <- my_reds[11]
+           return(temp_cell_color)
+}
+
+
+##
+## function to produce table with values ranging from 1 to 99 or 0 to 100
+##
+
+if (convert.0and100 == TRUE) my_percentile_labels <- c("1 to 9", "10 to 19", "20 to 29", "30 to 39", "40 to 49", "50 to 59", "60 to 69", "70 to 79", "80 to 89", "90 to 99")
+if (convert.0and100 == FALSE) my_percentile_labels <- c("0 to 9", "10 to 19", "20 to 29", "30 to 39", "40 to 49", "50 to 59", "60 to 69", "70 to 79", "80 to 89", "90 to 100")
+
+sgp.fit <- function (score, sgp) {
+                         gfittable <- prop.table(table(quantcut(score, q=0:10/10),
+                                                       cut(sgp, c(-1, 9.5, 19.5, 29.5, 39.5, 49.5, 59.5, 69.5, 79.5, 89.5, 100.5),
+                                                       labels=my_percentile_labels)), 1)*100
+                         return(gfittable)
+}
+
+
+##
+## Merge data and student growth percentile files
+##
+
+growth_data_cols <- c("ID", "SS7") ## ID, prior year scale score
+sgp_data_cols <- c("ID", "SGP") ## ID, student growth percentile
+data_merge <- merge(student.data[,growth_data_cols], growth.frame[,sgp_data_cols], by.x=1, by.y=1)
+
+
+##
+## Create qqplot coordinates
+##
+
+qq <- function(y) {
+     x <- qunif(ppoints(length(y)))[order(order(y))]*100
+     return(list(x=sort(x), y=sort(y)))
+}
+
+
+##
+## Create goodness-of-fit tables
+##
+
+temp.table <- sgp.fit(data_merge[,2], data_merge[,3])
+temp.cuts <- quantcut(data_merge[,2], 0:10/10, labels=1:10)
+temp.colors <- cell_color(as.vector(temp.table))
+
+if (missing(sgp.function.labels)) pdf(file="Goodness_of_Fit/gof_diagnositics.pdf", width=8.5, height=4.5)
+if (!missing(sgp.function.labels)) pdf(file=paste("Goodness_of_Fit/gof_diagnostics_", sgp.function.labels$my.subject, 
+                                                  "_", sgp.function.labels$my.grade, "_", sgp.function.labels$my.year, ".pdf", sep=""), 
+                                                  width=8.5, height=4.5)
+
+goodness.vp <- viewport(layout = grid.layout(2, 2, widths = unit(c(4.75, 3.5), rep("inches", 2)),
+                                              heights = unit(c(0.75, 3.5), rep("inches", 2))))
+
+table.vp <- viewport(layout.pos.row=2, layout.pos.col=1, xscale=c(-3,12), yscale=c(0,13))
+qq.vp <- viewport(layout.pos.row=2, layout.pos.col=2, xscale=c(-25,110), yscale=c(-8,130))
+title.vp <- viewport(layout.pos.row=1, layout.pos.col=1:2)
+
+pushViewport(goodness.vp)
+pushViewport(title.vp)
+grid.rect()
+grid.text(x=0.5, y=0.65, "Student Growth Percentile Goodness-of-Fit Descriptives", gp=gpar(cex=1.25))
+grid.text(x=0.5, y=0.4, paste(sgp.function.labels$my.year, " ", sgp.function.labels$my.subject, ", Grade ", sgp.function.labels$my.grade, sep=""))
+popViewport()
+
+pushViewport(table.vp)
+grid.rect()
+grid.rect(x=rep(1:10,each=10), y=rep(10:1,10),
+          width=1, height=1, default.units="native",
+          gp=gpar(col="black", fill=temp.colors),
+          name="my_image")
+grid.text(x=0.35, y=10:1, paste(c("1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th"), dimnames(temp.table)[[1]], sep="/"), just="right", gp=gpar(cex=0.7), default.units="native")
+grid.text(x=-2.3, y=5.5, "Prior Scale Score Decile/Range", gp=gpar(cex=0.8), default.units="native", rot=90)
+grid.text(x=1:10, y=10.8, dimnames(temp.table)[[2]], gp=gpar(cex=0.7), default.units="native", rot=45, just="left")
+grid.text(x=5.75, y=12.5, "Student Growth Percentile Range", gp=gpar(cex=0.8), default.units="native")
+grid.text(x=rep(1:10,each=10), y=rep(10:1,10), formatC(as.vector(temp.table), format="f", digits=2), default.units="native", gp=gpar(cex=0.7))
+popViewport()
+
+pushViewport(qq.vp)
+grid.rect()
+for (j in 1:10) {
+    grid.lines(qq(data_merge$SGP[temp.cuts==j])$x, qq(data_merge$SGP[temp.cuts==j])$y, gp=gpar(lwd=0.35), default.units="native")
+    }
+grid.lines(c(0,100), c(0,100), gp=gpar(lwd=0.75, col="red"), default.units="native")
+grid.lines(x=c(-3,-3,103,103,-3), y=c(-3,103,103,-3,-3), default.units="native")
+grid.polyline(x=rep(c(-6,-3), 11), y=rep(0:10*10, each=2), id=rep(1:11, each=2), default.units="native")
+grid.text(x=-7, y=0:10*10, 0:10*10, default.units="native", gp=gpar(cex=0.7), just="right")
+grid.polyline(x=rep(0:10*10, each=2), y=rep(c(103,106), 11), id=rep(1:11, each=2), default.units="native")
+grid.text(x=0:10*10, y=109, 0:10*10, default.units="native", gp=gpar(cex=0.7))
+grid.text(x=45, y=123, "QQ-Plot: Student Growth Percentiles", default.units="native")
+grid.text(x=50, y=115, "Empirical SGP Distribution", default.units="native", gp=gpar(cex=0.7))
+grid.text(x=-17, y=50, "Theoretical SGP Distribution", default.units="native", gp=gpar(cex=0.7), rot=90)
+popViewport()
+popViewport()
+dev.off()
+
+###
+### End of Goodness-of-fit table construction
+###
+
+} ## END GOODNESS-OF-FIT
 
 ###
 ### Return Growth Frame
@@ -327,9 +463,4 @@ growth.frame <- data.frame(growth.frame, percuts_best)
 
 return(growth.frame)
 
-###
-### End studentGrowthPercentile function
-###
-
-}
-
+} ## END studentGrowthPercentile Function

@@ -1,16 +1,25 @@
 Package: SGP
-Version: 0.0-3
+Version: 0.0-4
 Date: 2009-02-15
-Title: Student Growth Percentile and Percentile Growth Projection/Trajectory Functions
-Depends: R (>= 2.7.0), splines, quantreg
-Author: Damian W. Betebenner <dbetebenner@nciea.org>,
-        with contributions from Jonathan Weeks, Jinnie Choi, Marie Huchton, Xin Wei, and Hi Shin Shim
+Title: Student Growth Percentile and Percentile Growth
+        Projection/Trajectory Functions
+Depends: R (>= 2.7.0), splines, quantreg, grid, gtools
+Author: Damian W. Betebenner <dbetebenner@nciea.org>, with
+        contributions from Jonathan Weeks, Jinnie Choi, Marie Huchton,
+        Xin Wei, and Hi Shin Shim
 Maintainer: Damian W. Betebenner <dbetebenner@nciea.org>
-Description: Functions to calculate growth percentiles and percentile growth projections/trajectories for students using large scale, 
-        longitudinal assessment data.  Functions use quantile regression to estimate the conditional density associated 
-        with each students achievement history.  Percentile growth projections/trajectories are calculated using the coefficient matrices derived from 
-	the quantile regression analyses and specify what percentile growth is required for students to reach future achievement targets.
+Description: Functions to calculate growth percentiles and percentile
+        growth projections/trajectories for students using large scale,
+        longitudinal assessment data.  Functions use quantile
+        regression to estimate the conditional density associated with
+        each students achievement history.  Percentile growth
+        projections/trajectories are calculated using the coefficient
+        matrices derived from the quantile regression analyses and
+        specify what percentile growth is required for students to
+        reach future achievement targets.
 LazyLoad: Yes
 LazyData: Yes
-License: Creative Commons Attribution + ShareAlike (by-sa)
-Packaged: Sun Feb 15 20:20:05 2009; damian
+License: file LICENSE
+Packaged: Sun Apr 5 22:09:51 2009; damian
+Repository: CRAN
+Date/Publication: 2009-04-14 17:27:05
