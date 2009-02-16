@@ -6,8 +6,9 @@ function(                            student.data,                              
                                      num.prior.scores,                                  ## OPTIONAL
                                      subset.grade,                                      ## OPTIONAL
                                      chunk.size=10000,                                  ## OPTIONAL
-                                     convert.0and100="TRUE",                            ## OPTIONAL
-                                     percentile.trajectories=c(10, 35, 50, 65, 90),     ## OPTIONAL
+                                     convert.0and100=TRUE,                              ## OPTIONAL
+                                     percentile.trajectories=c(1, 35, 65, 99),          ## OPTIONAL
+                                     isotonize=TRUE,                                    ## OPTIONAL
                                      projcuts.digits=2){                                ## OPTIONAL
 
 
@@ -133,9 +134,10 @@ get_myqrmatrix <- function(order, year, grade, subject){
 ## Code for function that linearly interpolates missing values
 ##
 
-smooth.row <- function(x){
+smooth.and.isotonize.row <- function(x){
                        x[which(is.na(x))] <- approx(x, xout=which(is.na(x)))$y
-                       return(x)
+                       if (isotonize) return(sort(x))
+                       else return(x)
 }
 
 
@@ -166,8 +168,9 @@ if (identical(num.prior.scores[1], 1)){
                                        knots=as.vector(get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade)), 
                                        Boundary.knots=as.vector(get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade)))) %*%
                                get_myqrmatrix(1, proj.function.labels$my.year, proj.function.labels$my.grade+1, proj.function.labels$my.subject)
-          predictions_1year[which(predictions_1year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]
-          predictions_1year[which(predictions_1year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]
+          predictions_1year <- t(apply(predictions_1year, 1, function(x) smooth.and.isotonize.row(x)))
+          predictions_1year[predictions_1year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]
+          predictions_1year[predictions_1year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]
   } 
 
 
@@ -183,8 +186,9 @@ if (identical(num.prior.scores[1], 2)){
                                           knots=get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade-1),
                                           Boundary.knots=get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade-1))) %*%
                                 get_myqrmatrix(2, proj.function.labels$my.year, proj.function.labels$my.grade+1, proj.function.labels$my.subject)
-          predictions_1year[which(predictions_1year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]
-          predictions_1year[which(predictions_1year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]
+          predictions_1year <- t(apply(predictions_1year, 1, function(x) smooth.and.isotonize.row(x)))
+          predictions_1year[predictions_1year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]
+          predictions_1year[predictions_1year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]
  }
 
 
@@ -201,8 +205,9 @@ if (identical(num.prior.scores[1], 3)){
                                         knots=get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade-2),
                                         Boundary.knots=get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade-2))) %*%
                                 get_myqrmatrix(3, proj.function.labels$my.year, proj.function.labels$my.grade+1, proj.function.labels$my.subject)
-          predictions_1year[which(predictions_1year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]
-          predictions_1year[which(predictions_1year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]
+          predictions_1year <- t(apply(predictions_1year, 1, function(x) smooth.and.isotonize.row(x)))
+          predictions_1year[predictions_1year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]
+          predictions_1year[predictions_1year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]
 }
 
 
@@ -223,8 +228,9 @@ if (identical(num.prior.scores[1], 4)){
                                         knots=get_myknots(proj.function.labels$my.subject, proj.function.labels$my.grade-3),
                                         Boundary.knots=get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade-3))) %*%
                           get_myqrmatrix(4, proj.function.labels$my.year, proj.function.labels$my.grade+1, proj.function.labels$my.subject)
-          predictions_1year[which(predictions_1year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]
-          predictions_1year[which(predictions_1year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]
+          predictions_1year <- t(apply(predictions_1year, 1, function(x) smooth.and.isotonize.row(x)))
+          predictions_1year[predictions_1year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[1]
+          predictions_1year[predictions_1year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+1)[2]
   
 }
 
@@ -251,10 +257,10 @@ if (identical(num.prior.scores[2], 1)){
             }
 
           predictions_2year <- matrix(predictions_2year, ncol=100)
-          predictions_2year <- t(apply(predictions_2year, 1, function(x) smooth.row(x)))
+          predictions_2year <- t(apply(predictions_2year, 1, function(x) smooth.and.isotonize.row(x)))
           dimnames(predictions_2year) <- dimnames(predictions_1year)
-          predictions_2year[which(predictions_2year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]
-          predictions_2year[which(predictions_2year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]
+          predictions_2year[predictions_2year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]
+          predictions_2year[predictions_2year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]
   } 
 
 
@@ -277,10 +283,10 @@ if (identical(num.prior.scores[2], 2)){
             }
 
           predictions_2year <- matrix(predictions_2year, ncol=100)
-          predictions_2year <- t(apply(predictions_2year, 1, function(x) smooth.row(x)))
+          predictions_2year <- t(apply(predictions_2year, 1, function(x) smooth.and.isotonize.row(x)))
           dimnames(predictions_2year) <- dimnames(predictions_1year)
-          predictions_2year[which(predictions_2year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]
-          predictions_2year[which(predictions_2year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]
+          predictions_2year[predictions_2year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]
+          predictions_2year[predictions_2year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]
  } 
 
 
@@ -305,10 +311,10 @@ if (identical(num.prior.scores[2], 3)){
             }
 
           predictions_2year <- matrix(predictions_2year, ncol=100)
-          predictions_2year <- t(apply(predictions_2year, 1, function(x) smooth.row(x)))
+          predictions_2year <- t(apply(predictions_2year, 1, function(x) smooth.and.isotonize.row(x)))
           dimnames(predictions_2year) <- dimnames(predictions_1year)
-          predictions_2year[which(predictions_2year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]
-          predictions_2year[which(predictions_2year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]
+          predictions_2year[predictions_2year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]
+          predictions_2year[predictions_2year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]
   } 
 
 
@@ -337,10 +343,10 @@ if (identical(num.prior.scores[2], 4)){
             }
 
           predictions_2year <- matrix(predictions_2year, ncol=100)
-          predictions_2year <- t(apply(predictions_2year, 1, function(x) smooth.row(x)))
+          predictions_2year <- t(apply(predictions_2year, 1, function(x) smooth.and.isotonize.row(x)))
           dimnames(predictions_2year) <- dimnames(predictions_1year)
-          predictions_2year[which(predictions_2year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]
-          predictions_2year[which(predictions_2year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]
+          predictions_2year[predictions_2year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[1]
+          predictions_2year[predictions_2year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+2)[2]
         }
 
 
@@ -367,10 +373,10 @@ if (identical(num.prior.scores[3], 1)){
             }
 
           predictions_3year <- matrix(predictions_3year, ncol=100)
-          predictions_3year <- t(apply(predictions_3year, 1, function(x) smooth.row(x)))
+          predictions_3year <- t(apply(predictions_3year, 1, function(x) smooth.and.isotonize.row(x)))
           dimnames(predictions_3year) <- dimnames(predictions_1year)
-          predictions_3year[which(predictions_3year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1]
-          predictions_3year[which(predictions_3year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]
+          predictions_3year[predictions_3year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1]
+          predictions_3year[predictions_3year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]
 }
 
 if (identical(num.prior.scores[3], 2)){
@@ -391,10 +397,10 @@ if (identical(num.prior.scores[3], 2)){
             }
 
          predictions_3year <- matrix(predictions_3year, ncol=100)
-         predictions_3year <- t(apply(predictions_3year, 1, function(x) smooth.row(x)))
+         predictions_3year <- t(apply(predictions_3year, 1, function(x) smooth.and.isotonize.row(x)))
          dimnames(predictions_3year) <- dimnames(predictions_1year)
-         predictions_3year[which(predictions_3year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1]
-         predictions_3year[which(predictions_3year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]
+         predictions_3year[predictions_3year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1]
+         predictions_3year[predictions_3year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]
 }
 
 
@@ -419,10 +425,10 @@ if (identical(num.prior.scores[3], 3)){
             }
 
          predictions_3year <- matrix(predictions_3year, ncol=100)
-         predictions_3year <- t(apply(predictions_3year, 1, function(x) smooth.row(x)))
+         predictions_3year <- t(apply(predictions_3year, 1, function(x) smooth.and.isotonize.row(x)))
          dimnames(predictions_3year) <- dimnames(predictions_1year)
-         predictions_3year[which(predictions_3year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1]
-         predictions_3year[which(predictions_3year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]
+         predictions_3year[predictions_3year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1]
+         predictions_3year[predictions_3year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]
 }
 
 
@@ -450,10 +456,10 @@ if (identical(num.prior.scores[3], 4)){
             }
 
          predictions_3year <- matrix(predictions_3year, ncol=100)
-         predictions_3year <- t(apply(predictions_3year, 1, function(x) smooth.row(x)))
+         predictions_3year <- t(apply(predictions_3year, 1, function(x) smooth.and.isotonize.row(x)))
          dimnames(predictions_3year) <- dimnames(predictions_1year)
-         predictions_3year[which(predictions_3year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1]
-         predictions_3year[which(predictions_3year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2])] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]
+         predictions_3year[predictions_3year < get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[1]
+         predictions_3year[predictions_3year > get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]] <- get_myboundaries(proj.function.labels$my.subject, proj.function.labels$my.grade+3)[2]
 }
 
 
@@ -623,6 +629,12 @@ get_mycutscores <- function(subject, grade){
                             return(get(paste("cutscores_", subject, "_g", grade, sep="")))
 }
 
+###
+### Commands for testing student.data and converting to a data.frame if necessary
+###
+
+if (class(student.data) != "data.frame") {student.data <- as.data.frame(student.data)}
+if (2*num.panels+1 != dim(student.data)[2]) {print("WARNING: Number of columns for student.data does not appear to conform to data requirements!")}
 
 
 ###

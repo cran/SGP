@@ -5,7 +5,7 @@
 \description{
 A dataset comprising a subset of four years of state assessment data suitable for student growth percentile
 and percentile growth projection/trajectory analyses. The dataset is used in examples provided in the documentation
-for the studentGrowthPercentile and studentGrowthProjection functions and serves as an exemplar for user construction 
+for the \code{studentGrowthPercentiles} and \code{studentGrowthProjections} functions and serves as an exemplar for user construction 
 of their own datasets for growth percentile analyses. 
 }
 \usage{data(sgpData)}
@@ -24,7 +24,7 @@ of their own datasets for growth percentile analyses.
   }
 }
 
-\note{All datasets used with \code{studentGrowthPercentile} and \code{studentGrowthProjection} must be specifically formatted as \emph{wide} format files. The first 
+\note{All datasets used with \code{studentGrowthPercentiles} and \code{studentGrowthProjections} must be specifically formatted as \emph{wide} format files. The first 
 variable/column is the student ID variable. The next set of columns provide the grade of the student across all the years provided in the dataset (possibly missing). 
 The last set of columns provide the scales scores of the student in the respective grades.} 
 

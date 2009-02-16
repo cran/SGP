@@ -11,13 +11,15 @@ studentGrowthPercentiles(student.data,
                          num.panels, 
                          num.prior = num.panels - 1, 
                          subset.grade, 
-                         percentile.cuts = c(10, 35, 50, 65, 90), 
+                         percentile.cuts = c(1, 35, 65, 99), 
                          use.my.knots.and.boundaries = FALSE, 
                          print.other.gp = FALSE, 
                          rq.method = "br", 
                          convert.0and100 = TRUE, 
                          percuts.digits=2,
-                         save.matrices = TRUE, 
+                         save.matrices = TRUE,
+                         isotonize = TRUE,
+                         convert.using.loss.hoss=TRUE, 
                          sgp.function.labels)
 }
 
@@ -35,21 +37,21 @@ studentGrowthPercentiles(student.data,
   where the number of prior data points is small compared to the number of panels of data. 
 }
   \item{subset.grade}{Student grade level for sub-setting. If the data fed into the function contains multiple
-  grades, setting \code{subset.grade=5} selects out those students in grade five in the most recent year of the data. Defaults to NA, meaning all data 
-  supplied are analyzed without any sub-setting occurring.
+  grades, setting \code{subset.grade=5} selects out those students in grade five in the most recent year of the data. If no sub-setting is desired,
+  argument do not include the \code{subset.grade} argument.
 }
   \item{percentile.cuts}{Additional percentile cuts (supplied as a vector) associated with each student's conditional distribution. 
-   Default is to supply the 10th, 35th, 50th, 65th, and 90th growth percentile cuts (scale scores associated with 
+   Default is to supply the 1st, 35th, 65th, and 99th growth percentile cuts (scale scores associated with 
    those growth percentiles) for each student. If percentile cuts are not wanted, set \code{percentile.cuts=NULL}.
  }
   \item{use.my.knots.and.boundaries}{Boolean argument (default is FALSE) specifying whether the growth percentile function calculates B-splines using pre-specified
    knots and boundaries from the user or whether the program creates its own and saves those results to the directory \file{Knots\_Boundaries}. 
    \emph{KNOTS} are vectors of cut-points used in B-spline interpolations and \emph{BOUNDARIES} are vectors of length 2 specifying minimum and maximum values. 
 
-   If, \code{use.knots.and.boundaries=FALSE}, then knots and boundaries
+   If, \code{use.my.knots.and.boundaries=FALSE}, then knots and boundaries
    are created and saved to the subdirectory \file{Knots\_Boundaries} using the naming convention \file{boundaries\_SUBJECT\_gNUMBER}, and 
    \file{knots\_SUBJECT\_gNUMBER}, where \file{SUBJECT} is the subject tested and \file{NUMBER} is the grade number. \file{SUBJECT} and \file{NUMBER} must be specified in 
-   \code{knot.boundary.labels} if \code{use.knots.and.boundaries=FALSE}. 
+   \code{knot.boundary.labels} if \code{use.my.knots.and.boundaries=FALSE}. 
 
   If \code{knots.and.boundaries=TRUE} then directory \file{Knots\_Boundaries} exists and contains knots and boundaries given in the form 
   \file{knots\_SUBJECT\_gNUMBER} and \file{boundaries\_SUBJECT\_gNUMBER}.  See example for how this can be accomplished within a larger master file.
@@ -67,6 +69,13 @@ studentGrowthPercentiles(student.data,
  }
   \item{save.matrices}{Boolean argument (defaults to FALSE) indicating whether the coefficient matrices derived by the quantile regression analyses are saved to the
     \file{Coefficient\_Matrices} directory for later use (e.g., for use in the percentile growth projection/trajectory analyses).
+ }
+  \item{isotonize}{Boolean argument (defaults to TRUE) indicating whether quantile regression results are isotonized to prevent quantile crossing following the methods derived by
+    Dette & Volgushev (2008). 
+ }
+  \item{convert.using.loss.hoss}{Boolean argument (defaults to TRUE) indicating whether requested percentile cuts are adjusted using the lowest obtainable scale score (LOSS) and
+    highest obtainable scale score (HOSS). Those percentile cuts above the HOSS are replaced with the HOSS and those percentile cuts below the LOSS are replaced with the LOSS. The LOSS 
+    and HOSS are obtained from the boundaries used for spline calculations. 
  }
   \item{sgp.function.labels}{If \code{save.matrices=TRUE} or \code{save.knots.boundaries=TRUE}, the function requires the user to specify a list, \code{sgp.function.labels}, of the form  
     \code{list(my.year= , my.subject= , my.grade= )}. The user specified values are used to save the coefficient matrices and/or knots/boundaries in an orderly fashion using an appropriate 
@@ -88,6 +97,9 @@ Koenker, R. (2005). \emph{Quantile regression}. Cambridge: Cambridge University 
 
 Betebenner, D. W. (2008). Toward a normative understanding of student growth. In K. E. Ryan & 
 L. A. Shepard (Eds.), \emph{The Future of Test Based Accountability} (pp. 155-170). New York: Routledge.
+
+Dette, H. & Volgushev, S. Non-crossing non-parametric estimates of quantile curves. Journal of the Royal Statistical Society B,
+70(3), 609-627.
 }
 
 \author{Damian W. Betebenner \email{dbetebenner@nciea.org} }
@@ -173,6 +185,7 @@ g5_sgp <- studentGrowthPercentiles(
              num.prior = 2,  
              subset.grade = 5,
              percuts.digits = 0,
+             use.my.knots.and.boundaries=TRUE, 
              sgp.function.labels = list(my.year=2007, my.subject="read", my.grade=5))
 
 ## save(g5_sgp, file="Results_Data/sgp_read_2007_g5.Rdata")
@@ -187,6 +200,7 @@ g6_sgp <- studentGrowthPercentiles(
              num.prior = 3, 
              subset.grade = 6,
              percuts.digits = 0,
+             use.my.knots.and.boundaries=TRUE,
              sgp.function.labels = list(my.year=2007, my.subject="read", my.grade=6))
 
 ## save(g6_sgp, file="Results_Data/sgp_read_2007_g6.Rdata")
@@ -201,6 +215,7 @@ g7_sgp <- studentGrowthPercentiles(
              num.prior = 3, 
              subset.grade = 7,
              percuts.digits = 0,
+             use.my.knots.and.boundaries=TRUE,
              sgp.function.labels = list(my.year=2007, my.subject="read", my.grade=7))
 
 ## save(g7_sgp, file="Results_Data/sgp_read_2007_g7.Rdata")
