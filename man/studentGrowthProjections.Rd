@@ -3,8 +3,8 @@
 \title{Student Growth Projections}
 \description{
   Function to calculate percentile growth projections/trajectories using up to 8 panels of large scale assessment data.
-  Function produces growth percentiles necessary for each student to reach a set of predefined
-  scale score cut points in 1, 2, and 3 years. 
+  Function produces growth percentiles sufficient for each student to reach a set of predefined
+  scale score cut points in 1, 2, 3 and 4 time periods (most often years). 
 }
 
 \usage{
@@ -36,49 +36,47 @@ studentGrowthProjections(student.data,
    The list corresponds to the list used to save the coefficient matrices and knots and boundaries in the growth percentile analyses. The list is of the form  
    \code{list(my.year= , my.subject= , my.grade= )}.
  }
-  \item{num.prior.scores}{Number of prior scores used to calculate each of the 1, 2, and 3 year projections.
-   A list of length \code{max.number.scores} consisting of vectors of length 3. 
+  \item{num.prior.scores}{Number of prior scores used to calculate each of the 1, 2, 3 and 4 year projections.
+   A list of length \code{max.number.scores} consisting of vectors of length 4. 
 
-   The first component of the list (a vector of length 3, a 3-tuple) indicates how many prior scores are used in the calculation of the 1, 2, and 3 
-   year projections, respectively, in the case when \emph{1 prior score} is utilized. The first component of the 3-tuple is used to calculate the 1
-   year projection. The second component of the 3-tuple indicates how many scores are used to calculate the 2 year projections
-   and the third component of the 3-tuple indicates how many scores are used to calculate the 3 year projections. 
+   The first component of the list (a vector of length 4, a 4-tuple) indicates how many prior scores are used in the calculation of the 1, 2, 3, and 4 
+   year projections, respectively, in the case when \emph{1 prior score} is utilized. The first element of the 4-tuple is used to calculate the 1
+   year projection. The second element of the 4-tuple indicates how many scores are used to calculate the 2 year projections.
+   The third element of the 4-tuple indicates how many scores are used to calculate the 3 year projections. And the fourth element of the 4-tuple
+   indicates how many scores are used to calculate the 4 year projections. 
 
    If calculation of a given prediction is not appropriate, then the component of the vector should be \code{NA}. For example, for students currently
-   in the penultimate grade that is assessed, only a 1 year projection is calculated. Thus, the latter two components of the vector are \code{NA, c(??, NA, NA)}
+   in the penultimate grade that is assessed, only a 1 year projection is calculated. Thus, the latter three elements of the vector are \code{NA, c(??,NA,NA,NA)}
    
-   The second component of the list (another 3-tuple) indicates the number of prior scores to be used in the calculation of the 1, 2, and 3
+   The second component of the list (another 4-tuple) indicates the number of prior scores to be used in the calculation of the 1, 2, 3, and 4
    year projections in the case when \emph{2 prior scores} are utilized. Similarly, the third and fourth component of the list indicate how many
-   prior scores are to be used in the calculation of the 1, 2, and 3 year projections in the case when \emph{3 and 4 priors scores}, respectively, are utilized. 
+   prior scores are to be used in the calculation of the 1, 2, 3 and 4 year projections in the case when \emph{3 and 4 priors scores}, respectively, are utilized. 
 
    The \code{num.prior.scores} used for projection calculation are based upon the quantile regression based coefficient matrices
-   calculated when growth percentiles are estimated. The \code{num.prior.scores} is USUALLY the maximum number of priors used for 
-   growth percentile calculations (USUALLY \code{num.panels - 1}). 
-
-   If \code{max.num.scores=1}, then \code{num.prior.scores} is USUALLY \code{list(c(1, 2, 3))}. That is, because there is only one score, only 1 score is
-   used to calculate the 1st year projection. However, for the 2nd year, because there are now two scores available (the
-   actual score used for the 1 year projection AND the 1 year projection itself), 2 scores are used to get the 2 year projection. However,
-   in order to use two scores to get the 2 year projection, a prior 2nd order analysis (i.e., using 3 panels of data) must exist that relates
-   the two predictor scores with the dependent variable. Hence, the values are dependent BOTH upon the number of predictors available AND also upon
-   the prior analyses performed. Similarly, for the 3rd year, 3 scores are used to get the 3 year projection. 
+   calculated when growth percentiles are calculated.  If \code{max.num.scores=1}, then \code{num.prior.scores} is USUALLY \code{list(c(1,2,3,4))}. 
+   That is, because there is only 1 actual student score, only 1 score is used to calculate the 1st year projection. However, for the 2nd year, 
+   because there are now 2 scores available (the actual score used for the 1 year projection AND the 1 year projection itself), 2 scores are used to 
+   get the 2 year projection. However, in order to use 2 scores to get the 2 year projection, a prior 2nd order analysis (i.e., using 3 panels of data) 
+   must exist that relates the 2 predictor scores with the dependent variable. Hence, the values are dependent BOTH upon the number of predictors available AND also upon
+   the prior analyses performed. Similarly, for the 3rd and 4th year projections, 3 and 4 scores, respectively, are used to get the 3 and 4 year projections. 
 
    When not supplied, the function tries to set the appropriate values. These are:
 
 \preformatted{
-     max.num.scores=1:  num.prior.scores=list(c(1,2,3))
-     max.num.scores=2:  num.prior.scores=list(c(1,2,3), 
-                                             c(2,3,4))
-     max.num.scores=3:  num.prior.scores=list(c(1,2,3), 
-                                             c(2,3,4), 
-                                             c(3,4,4))
-     max.num.scores=4:  num.prior.scores=list(c(1,2,3), 
-                                             c(2,3,4), 
-                                             c(3,4,4), 
-                                             c(4,4,4))
+     max.num.scores=1:  num.prior.scores=list(c(1,2,3,4))
+     max.num.scores=2:  num.prior.scores=list(c(1,2,3,4), 
+                                             c(2,3,4,4))
+     max.num.scores=3:  num.prior.scores=list(c(1,2,3,4), 
+                                             c(2,3,4,4), 
+                                             c(3,4,4,4))
+     max.num.scores=4:  num.prior.scores=list(c(1,2,3,4), 
+                                             c(2,3,4,4), 
+                                             c(3,4,4,4), 
+                                             c(4,4,4,4))
  }
 }
-  \item{subset.grade}{Student grade level for sub-setting. If the data fed into the function contains multiple
-  grades, setting \code{subset.grade=5} selects out those students in grade five in the most recent year of the data. Defaults to NA, meaning all data 
+  \item{subset.grade}{Student grade level for sub-setting. If the data fed into the function contain multiple
+  grades, setting \code{subset.grade=5} selects out those students in grade five in the most recent year of the data. If missing, all data 
   supplied are analyzed without any sub-setting occurring.
  }
   \item{chunk.size}{An integer (default of 10,000) indicating what the number of rows in the block of data (so that the program doesn't overwhelm memory) 
@@ -87,8 +85,8 @@ studentGrowthProjections(student.data,
   \item{convert.0and100}{Boolean argument (defaults to TRUE) indicating whether conversion of growth percentiles of 0 and 100 to growth percentiles
     of 1 and 99, respectively, occurs. The default produces growth percentiles ranging from 1 to 99.
  }
-  \item{percentile.trajectories}{Returns a vector of percentile trajectories (defaults to 1st, 35th, 65th, and 99th) associated with 1, 2 and 3 year projections for each student
-    in addition to the percentiles necessary to reach the performance thresholds. If no percentile trajectories are desired, set \code{percentile.cuts=NULL}. 
+  \item{percentile.trajectories}{Returns a vector of percentile trajectories (defaults to 1st, 35th, 65th, and 99th) associated with 1, 2, 3 and 4 year trajectories for each student
+    in addition to the percentiles sufficient to reach the performance thresholds. If no percentile trajectories are desired, set \code{percentile.cuts=NULL}. 
  }
   \item{isotonize}{Boolean argument (defaults to TRUE) indicating whether quantile regression results are isotonized to prevent quantile crossing following the methods derived by
     Dette & Volgushev (2008).
@@ -101,9 +99,9 @@ studentGrowthProjections(student.data,
   }
 
 \value{Function returns a data frame consisting of student IDs and the associated percentile growth projections/trajectories.
- Depending upon the number of performance level cut-scores and percentile trajectories specified, the data frame contains 1, 2, and 3 year projections/trajectories
+ Depending upon the number of performance level cut-scores and percentile trajectories specified, the data frame contains 1, 2, 3 and 4 year projections/trajectories
  for each performance level cut-point supplied (enumerated \file{LEVEL1}, \file{LEVEL2}, \file{LEVEL3}, ...) and each percentile cut specified (enumerated,
- for example, \file{CUT\_10}, \file{CUT\_35}, \file{CUT\_50}, \file{CUT\_65}, \file{CUT\_90}).
+ for example, \file{CUT\_1}, \file{CUT\_35}, \file{CUT\_65}, \file{CUT\_99}).
 }
 
 \references{
@@ -144,17 +142,17 @@ if (is.na(file.info("Cutscores")$isdir)) {
 }
 
 
-cutscores_read_g3 <- c(465.5, 525.5, 655.5)
-cutscores_read_g4 <- c(516.5, 571.5, 670.5)
-cutscores_read_g5 <- c(537.5, 587.5, 690.5)
-cutscores_read_g6 <- c(542.5, 599.5, 695.5)
-cutscores_read_g7 <- c(566.5, 619.5, 715.5)
+cutscores_Reading_g3 <- c(465.5, 525.5, 655.5)
+cutscores_Reading_g4 <- c(516.5, 571.5, 670.5)
+cutscores_Reading_g5 <- c(537.5, 587.5, 690.5)
+cutscores_Reading_g6 <- c(542.5, 599.5, 695.5)
+cutscores_Reading_g7 <- c(566.5, 619.5, 715.5)
 
-save(cutscores_read_g3, file="Cutscores/cutscores_read_g3.Rdata")
-save(cutscores_read_g4, file="Cutscores/cutscores_read_g4.Rdata")
-save(cutscores_read_g5, file="Cutscores/cutscores_read_g5.Rdata")
-save(cutscores_read_g6, file="Cutscores/cutscores_read_g6.Rdata")
-save(cutscores_read_g7, file="Cutscores/cutscores_read_g7.Rdata")
+save(cutscores_Reading_g3, file="Cutscores/cutscores_Reading_g3.Rdata")
+save(cutscores_Reading_g4, file="Cutscores/cutscores_Reading_g4.Rdata")
+save(cutscores_Reading_g5, file="Cutscores/cutscores_Reading_g5.Rdata")
+save(cutscores_Reading_g6, file="Cutscores/cutscores_Reading_g6.Rdata")
+save(cutscores_Reading_g7, file="Cutscores/cutscores_Reading_g7.Rdata")
 
 
 ###
@@ -165,6 +163,7 @@ data(sgpData)
 
 ###
 ### Create subset of data for 2004 to 2006
+###  (for growth to standard comparisons)
 ###
 
 attach(sgpData)
@@ -185,17 +184,17 @@ detach(sgpData)
 ##
 
 
-sgp_g2s_read_2007_g3 <- studentGrowthProjections(
+sgp_g2s_reading_2007_g3 <- studentGrowthProjections(
              student.data = sgpData,
              num.panels = 3,
              max.num.scores = 1,
-             num.prior.scores=list(c(1,2,3)),
-             proj.function.labels = list(my.year=2007, my.subject="read", my.grade=3),
+             num.prior.scores=list(c(1,2,3,3)),
+             proj.function.labels = list(my.year=2007, my.subject="Reading", my.grade=3),
              subset.grade = 3,
-             percentile.trajectories=c(35,65),
+             percentile.trajectories=c(1,35,50,65,99),
              projcuts.digits=0)
 
-## save(sgp_g2s_read_2007_g3, file="Results_Data/sgp_g2s_read_2007_g3.Rdata")
+## save(sgp_g2s_reading_2007_g3, file="Results_Data/sgp_g2s_Reading_2007_g3.Rdata")
 
 
 ##
@@ -203,18 +202,17 @@ sgp_g2s_read_2007_g3 <- studentGrowthProjections(
 ##
 
 
-sgp_g2s_read_2007_g4 <- studentGrowthProjections(
+sgp_g2s_reading_2007_g4 <- studentGrowthProjections(
              student.data = sgpData,
              num.panels = 3,
              max.num.scores = 2,
-             num.prior.scores=list(c(1,2,3), c(2,3,3)),
-             proj.function.labels = list(my.year=2007, my.subject="read", my.grade=4),
+             num.prior.scores=list(c(1,2,3,NA), c(2,3,3,NA)),
+             proj.function.labels = list(my.year=2007, my.subject="Reading", my.grade=4),
              subset.grade = 4,
-             percentile.trajectories=c(35,65),
+             percentile.trajectories=c(1,35,50,65,99),
              projcuts.digits=0)
 
-## save(sgp_g2s_read_2007_g4, file="Results_Data/sgp_g2s_read_2007_g4.Rdata")
-
+## save(sgp_g2s_reading_2007_g4, file="Results_Data/sgp_g2s_Reading_2007_g4.Rdata")
 
 
 ##
@@ -222,34 +220,34 @@ sgp_g2s_read_2007_g4 <- studentGrowthProjections(
 ## 
 
 
-sgp_g2s_read_2007_g5 <- studentGrowthProjections(
+sgp_g2s_reading_2007_g5 <- studentGrowthProjections(
              student.data = sgpData,
              num.panels = 3,
              max.num.scores = 3,
-             num.prior.scores=list(c(1,2,NA), c(2,3,NA), c(3,3,NA)),
-             proj.function.labels = list(my.year=2007, my.subject="read", my.grade=5),
+             num.prior.scores=list(c(1,2,NA,NA), c(2,3,NA,NA), c(3,3,NA,NA)),
+             proj.function.labels = list(my.year=2007, my.subject="Reading", my.grade=5),
              subset.grade = 5,
-             percentile.trajectories=c(35,65),
+             percentile.trajectories=c(1,35,50,65,99),
              projcuts.digits=0)
 
-## save(sgp_g2s_read_2007_g5, file="Results_Data/sgp_g2s_read_2007_g5.Rdata")
+## save(sgp_g2s_reading_2007_g5, file="Results_Data/sgp_g2s_Reading_2007_g5.Rdata")
 
 
 ##
 ## 66666666666666666666666666666666666666666666666666666666666
 ##
 
-sgp_g2s_read_2007_g6 <- studentGrowthProjections(
+sgp_g2s_reading_2007_g6 <- studentGrowthProjections(
              student.data = sgpData,
              num.panels = 3,
              max.num.scores = 3,
-             num.prior.scores=list(c(1,NA,NA), c(2,NA,NA), c(3,NA,NA)),
-             proj.function.labels = list(my.year=2007, my.subject="read", my.grade=6),
+             num.prior.scores=list(c(1,NA,NA,NA), c(2,NA,NA,NA), c(3,NA,NA,NA)),
+             proj.function.labels = list(my.year=2007, my.subject="Reading", my.grade=6),
              subset.grade = 6,
-             percentile.trajectories=c(35,65),
+             percentile.trajectories=c(1,35,50,65,99),
              projcuts.digits=0)
 
-## save(sgp_g2s_read_2007_g6, file="Results_Data/sgp_g2s_read_2007_g6.Rdata")
+## save(sgp_g2s_reading_2007_g6, file="Results_Data/sgp_g2s_Reading_2007_g6.Rdata")
 
 
 ###
@@ -257,14 +255,14 @@ sgp_g2s_read_2007_g6 <- studentGrowthProjections(
 ### and write the results to a comma separated data set
 ###
 
-sgp_g2s_read_2007_gall <- rbind(sgp_g2s_read_2007_g3,
-                                sgp_g2s_read_2007_g4,
-                                sgp_g2s_read_2007_g5,
-                                sgp_g2s_read_2007_g6)
+sgp_g2s_reading_2007_gall <- rbind(sgp_g2s_reading_2007_g3,
+                                   sgp_g2s_reading_2007_g4,
+                                   sgp_g2s_reading_2007_g5,
+                                   sgp_g2s_reading_2007_g6)
 
-save(sgp_g2s_read_2007_gall, file="Results_Data/sgp_g2s_read_2007_gall.Rdata")
-write.table(sgp_g2s_read_2007_gall, file="Results_Data/sgp_g2s_read_2007_gall.dat", 
-            sep=" , ", row.names=FALSE, quote=FALSE)
+save(sgp_g2s_reading_2007_gall, file="Results_Data/sgp_g2s_reading_2007_gall.Rdata")
+write.table(sgp_g2s_reading_2007_gall, file="Results_Data/sgp_g2s_reading_2007_gall.dat", 
+            sep=",", row.names=FALSE, quote=FALSE)
 
 
 
