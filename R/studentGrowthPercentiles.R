@@ -40,7 +40,7 @@ smooth.and.isotonize.row <- function(x){
 
 return.best.sgp <- function(x){ 
                             if (sum(is.na(x)) == 0) return(x[length(x)]) 
-                            if (sum(is.na(x)) != 0) return(x[max(which(!is.na(x)))])
+                            if (sum(is.na(x)) != 0) return(as.numeric(x[max(which(!is.na(x)))]))
 }
 
 
@@ -322,9 +322,11 @@ growth.frame <- data.frame(growth.frame, percuts_best, stringsAsFactors=FALSE)
 }
 
 
+##############################################
 ###
 ### End studentGrowthPercentile function
 ###
+##############################################
 
 
 ###
@@ -367,7 +369,7 @@ if (convert.0and100 == TRUE) my_percentile_labels <- c("1 to 9", "10 to 19", "20
 if (convert.0and100 == FALSE) my_percentile_labels <- c("0 to 9", "10 to 19", "20 to 29", "30 to 39", "40 to 49", "50 to 59", "60 to 69", "70 to 79", "80 to 89", "90 to 100")
 
 sgp.fit <- function (score, sgp) {
-                         gfittable <- prop.table(table(quantcut(score, q=0:10/10),
+                         gfittable <- prop.table(table(quantcut(score, q=0:10/10, dig.lab=5, right=FALSE),
                                                        cut(sgp, c(-1, 9.5, 19.5, 29.5, 39.5, 49.5, 59.5, 69.5, 79.5, 89.5, 100.5),
                                                        labels=my_percentile_labels)), 1)*100
                          return(gfittable)
@@ -384,21 +386,11 @@ data_merge <- merge(student.data[,growth_data_cols], growth.frame[,sgp_data_cols
 
 
 ##
-## Create qqplot coordinates
-##
-
-qq <- function(y) {
-     x <- qunif(ppoints(length(y)))[order(order(y))]*100
-     return(list(x=sort(x), y=sort(y)))
-}
-
-
-##
 ## Create goodness-of-fit tables
 ##
 
 temp.table <- sgp.fit(data_merge[,2], data_merge[,3])
-temp.cuts <- quantcut(data_merge[,2], 0:10/10, labels=1:10)
+temp.cuts <- quantcut(data_merge[,2], 0:10/10)
 temp.colors <- cell_color(as.vector(temp.table))
 
 if (missing(sgp.function.labels)) pdf(file="Goodness_of_Fit/gof_diagnositics.pdf", width=8.5, height=4.5)
@@ -435,8 +427,8 @@ popViewport()
 
 pushViewport(qq.vp)
 grid.rect()
-for (j in 1:10) {
-    grid.lines(qq(data_merge$SGP[temp.cuts==j])$x, qq(data_merge$SGP[temp.cuts==j])$y, gp=gpar(lwd=0.35), default.units="native")
+for (j in levels(temp.cuts)) {
+    grid.lines(quantile(data_merge$SGP[temp.cuts==j], probs=ppoints(1:500)), ppoints(1:500)*100, gp=gpar(lwd=0.35), default.units="native")
     }
 grid.lines(c(0,100), c(0,100), gp=gpar(lwd=0.75, col="red"), default.units="native")
 grid.lines(x=c(-3,-3,103,103,-3), y=c(-3,103,103,-3,-3), default.units="native")
@@ -445,8 +437,8 @@ grid.text(x=-7, y=0:10*10, 0:10*10, default.units="native", gp=gpar(cex=0.7), ju
 grid.polyline(x=rep(0:10*10, each=2), y=rep(c(103,106), 11), id=rep(1:11, each=2), default.units="native")
 grid.text(x=0:10*10, y=109, 0:10*10, default.units="native", gp=gpar(cex=0.7))
 grid.text(x=45, y=123, "QQ-Plot: Student Growth Percentiles", default.units="native")
-grid.text(x=50, y=115, "Empirical SGP Distribution", default.units="native", gp=gpar(cex=0.7))
-grid.text(x=-17, y=50, "Theoretical SGP Distribution", default.units="native", gp=gpar(cex=0.7), rot=90)
+grid.text(x=50, y=115, "Theoretical SGP Distribution", default.units="native", gp=gpar(cex=0.7))
+grid.text(x=-17, y=50, "Empirical SGP Distribution", default.units="native", gp=gpar(cex=0.7), rot=90)
 popViewport()
 popViewport()
 dev.off()
@@ -464,3 +456,4 @@ dev.off()
 return(growth.frame)
 
 } ## END studentGrowthPercentile Function
+

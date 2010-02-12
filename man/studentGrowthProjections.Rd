@@ -95,9 +95,6 @@ studentGrowthProjections(student.data,
  }
 }
 
-\details{
-  }
-
 \value{Function returns a data frame consisting of student IDs and the associated percentile growth projections/trajectories.
  Depending upon the number of performance level cut-scores and percentile trajectories specified, the data frame contains 1, 2, 3 and 4 year projections/trajectories
  for each performance level cut-point supplied (enumerated \file{LEVEL1}, \file{LEVEL2}, \file{LEVEL3}, ...) and each percentile cut specified (enumerated,
