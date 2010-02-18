@@ -14,8 +14,8 @@ are calculated using the coefficient matrices derived from the student growth pe
 \tabular{ll}{
 Package: \tab SGP\cr
 Type: \tab Package\cr
-Version: \tab 0.0-4\cr
-Date: \tab 2009-2-15\cr
+Version: \tab 0.0-5\cr
+Date: \tab 2010-2-12\cr
 License: \tab Creative Commons Attribution + ShareAlike (by-sa)\cr
 LazyLoad: \tab yes\cr
 }
@@ -31,6 +31,8 @@ Koenker, R. (2005). \emph{Quantile regression}. Cambridge: Cambridge University 
 
 Betebenner, D. W. (2008). Toward a normative understanding of student growth. In K. E. Ryan & 
 L. A. Shepard (Eds.), \emph{The Future of Test Based Accountability} (pp. 155-170). New York: Routledge.
+
+Betebenner, D. W. (2009). Norm- and Criterion-Referenced Student Growth. Educational Measurement: Issues and Practice, 28(4): 42-51.
 }
 
 \keyword{package}

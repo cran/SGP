@@ -1,6 +1,6 @@
 Package: SGP
-Version: 0.0-4
-Date: 2009-02-15
+Version: 0.0-5
+Date: 2010-02-12
 Title: Student Growth Percentile and Percentile Growth
         Projection/Trajectory Functions
 Depends: R (>= 2.7.0), splines, quantreg, grid, gtools
@@ -20,6 +20,6 @@ Description: Functions to calculate growth percentiles and percentile
 LazyLoad: Yes
 LazyData: Yes
 License: file LICENSE
-Packaged: Sun Apr 5 22:09:51 2009; damian
+Packaged: 2010-02-13 00:40:29 UTC; damian
 Repository: CRAN
-Date/Publication: 2009-04-14 17:27:05
+Date/Publication: 2010-02-18 13:04:27
