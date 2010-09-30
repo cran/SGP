@@ -2,209 +2,165 @@
 \alias{studentGrowthPercentiles}
 \title{Student Growth Percentiles}
 \description{
-Function to calculate student growth percentiles using up to 8 panels of large scale assessment data. 
+Function to calculate student growth percentiles using large scale assessment data. 
 Outputs growth percentiles for each student and supplies various options as function arguments.
-Output from this function is used to calculate percentile growth projections/trajectories.   
+Results from this function are utilized to calculate percentile growth projections/trajectories.   
 }
 \usage{
-studentGrowthPercentiles(student.data, 
-                         num.panels, 
-                         num.prior = num.panels - 1, 
-                         subset.grade, 
-                         percentile.cuts = c(1, 35, 65, 99), 
-                         use.my.knots.and.boundaries = FALSE, 
-                         print.other.gp = FALSE, 
-                         rq.method = "br", 
-                         convert.0and100 = TRUE, 
-                         percuts.digits=2,
-                         save.matrices = TRUE,
-                         isotonize = TRUE,
-                         convert.using.loss.hoss=TRUE,
-                         goodness.of.fit=TRUE, 
-                         sgp.function.labels)
+studentGrowthPercentiles(panel.data,                                                    
+                         sgp.labels,                                          
+                         panel.data.vnames,                                 
+                         grade.progression,                               
+                         num.prior,                                         
+                         subset.grade,                                     
+                         percentile.cuts,                                
+                         use.my.knots.boundaries,                       
+                         use.my.coefficient.matrices,                 
+                         print.other.gp,                             
+                         calculate.sgps=TRUE,                                       
+                         rq.method="br",                                           
+                         knot.cut.percentiles=c(0.2,0.4,0.6,0.8),                 
+                         convert.0and100=TRUE,                                   
+                         sgp.quantiles="Percentiles",                          
+                         percuts.digits=0,                                  
+                         isotonize=TRUE,                                 
+                         convert.using.loss.hoss=TRUE,                
+                         goodness.of.fit=TRUE)                 
 }
 
 \arguments{
-  \item{student.data}{Data frame containing longitudinal student data in wide format. 
-  Data must be formatted so that student ID is the first variable/column, student grade variables for each year, from earliest to most recent, are the next variables/columns, 
-  and student scale score variables for each year, from earliest to latest, are the remaining variables/columns. See \code{\link{sgpData}} for an exemplar data set. NOTE: The 
-  column position of the variables IS IMPORTANT, NOT the names of the variables. The function renames variables internally.
-}
-  \item{num.panels}{Number of panels in the data frame.
-}
+  \item{panel.data}{REQUIRED. Object of class list, data.frame, or matrix containing longitudinal student data in wide format. If supplied as part of a list, data should be 
+  contained in panel.data$Panel_Data. Data must be formatted so that student ID is the first variable/column, student grade/time variables for each time perior, 
+  from earliest to most recent, are the next variables/columns, and student scale score variables for each year, from earliest to latest, are the remaining 
+  variables/columns. See \code{\link{sgpData}} for an exemplar data set. NOTE: The column position of the variables IS IMPORTANT, NOT the names of the variables. 
+  }
+  \item{sgp.labels}{REQUIRED. A list, \code{sgp.labels}, of the form  \code{list(my.year= , my.subject=)}. The user specified values are used to save the 
+  student growth percentiles, coefficient matrices, knots/boundaries, and goodness of fit results in an orderly fashion using an appropriate combination of year & 
+  subject.
+  }
+  \item{panel.data.vnames}{Vector of variables to use in student growth percentile calculations. If not specified, function attempts to use all available variables.
+  }
+  \item{grade.progression}{Preferred argument to specify a student grade/time progression in the data. For example, \code{3:4} would indicate to subset the
+  data where the two most recent years of data available are 3 and 4, respectively. Also allows for non-sequential grade progressions to be analyzed. For example,
+  \code{c(7,8,10)} combined with an appropriate \code{panel.data.vnames} argument to remove a year of data would analyze students progressing from 7 to 8 to 10. 
+  }
   \item{num.prior}{Number of prior scores one wishes to use in the analysis. Defaults to \code{num.panels-1}. 
   If \code{num.prior=1}, then only 1st order growth percentiles are computed, if \code{num.prior=2}, then 1st and 2nd order are computed, 
   if \code{num.prior=3}, 1st, 2nd, and 3rd ... NOTE: specifying \code{num.prior} is necessary in some situations (in early grades for example)
   where the number of prior data points is small compared to the number of panels of data. 
-}
+  }
   \item{subset.grade}{Student grade level for sub-setting. If the data fed into the function contains multiple
   grades, setting \code{subset.grade=5} selects out those students in grade five in the most recent year of the data. If no sub-setting is desired,
-  argument do not include the \code{subset.grade} argument.
-}
+  argument do not include the \code{subset.grade} argument. If \code{grade.progression} is supplied, then a subset grade is implicitly specified.
+  }
   \item{percentile.cuts}{Additional percentile cuts (supplied as a vector) associated with each student's conditional distribution. 
-   Default is to supply the 1st, 35th, 65th, and 99th growth percentile cuts (scale scores associated with 
-   those growth percentiles) for each student. If percentile cuts are not wanted, set \code{percentile.cuts=NULL}.
- }
-  \item{use.my.knots.and.boundaries}{Boolean argument (default is FALSE) specifying whether the growth percentile function calculates B-splines using pre-specified
-   knots and boundaries from the user or whether the program creates its own and saves those results to the directory \file{Knots\_Boundaries}. 
-   \emph{KNOTS} are vectors of cut-points used in B-spline interpolations and \emph{BOUNDARIES} are vectors of length 2 specifying minimum and maximum values. 
-
-   If, \code{use.my.knots.and.boundaries=FALSE}, then knots and boundaries
-   are created and saved to the subdirectory \file{Knots\_Boundaries} using the naming convention \file{boundaries\_SUBJECT\_gNUMBER}, and 
-   \file{knots\_SUBJECT\_gNUMBER}, where \file{SUBJECT} is the subject tested and \file{NUMBER} is the grade number. \file{SUBJECT} and \file{NUMBER} must be specified in 
-   \code{knot.boundary.labels} if \code{use.my.knots.and.boundaries=FALSE}. 
-
-  If \code{knots.and.boundaries=TRUE} then directory \file{Knots\_Boundaries} exists and contains knots and boundaries given in the form 
-  \file{knots\_SUBJECT\_gNUMBER} and \file{boundaries\_SUBJECT\_gNUMBER}.  See example for how this can be accomplished within a larger master file.
- }
-  \item{print.other.gp}{Boolean argument (defaults to FALSE) indicating whether growth percentiles of all orders should be returned. The default returns only the highest order growth 
-   percentile for each student.
- }
-  \item{rq.method}{An argument that defines the estimation method used in the quantile regression calculations. The default is the the \code{"br"} method
+   Default is to provide NO growth percentile cuts (scale scores associated with those growth percentiles) for each student.
+  }
+  \item{use.my.knots.boundaries}{A list of the form  \code{list(my.year= , my.subject=)} specifying a set of pre-calculated
+   knots and boundaries for B-spline calculations. Most often used to utilize knots and boundaries calculated from a previous analysis. Knot and boundaries are stored
+   (and must be made available) with panel.data supplied as a list in \code{panel.data$Knots_Boundaries$my.year.my.subject}. If missing, function automatically calculates
+   knots, boundaries, and loss.hoss values and stores them in \code{panel.data$Knots_Boundaries$my.year.my.subject} where my.year and my.subject are provided by 
+   \code{sgp.labels}.  
+  }
+  \item{use.my.coefficient.matrices}{A list of the form  \code{list(my.year= , my.subject=)} specifying a set of pre-calculated
+   coefficient matrices to use for student grwoth percentile calculations. Can be used to calculate baseline referenced student growth percentiles or to calculate
+   student growth percentiles for small groups of excluded students without recalculating an entire set of data. If missing, coefficient matrices are calculated
+   based upon the provided data and stores them in \code{panel.data$Coefficient_Matrices$my.year.my.subject} where my.year and my.subject are provided by 
+   \code{sgp.labels}.
+  }
+  \item{print.other.gp}{Boolean argument (defaults to FALSE) indicating whether growth percentiles of all orders should be returned. The default returns only the 
+   highest order growth percentile for each student.
+  }
+  \item{calculate.sgps}{Boolean argument (defaults to TRUE) indicating whether student growth percentiles should be calculated following coefficient matrix calculation. 
+  }
+  \item{rq.method}{Argument to define the estimation method used in the quantile regression calculations. The default is the the \code{"br"} method
    referring to the Barrodale and Roberts l1 estimation detailed in Koenker (2005) and in the help for the quantile regression package.
- }
+  }
+  \item{knot.cut.percentiles}{Argument that specifies the quantiles to be used for calculation of B-spline knots. Default is to place knots at the 0.2, 0.4, 0.6, and 0.8
+  quantiles. 
+  }
   \item{convert.0and100}{Boolean argument (defaults to TRUE) indicating whether conversion of growth percentiles of 0 and 100 to growth percentiles
     of 1 and 99, respectively, occurs. The default produces growth percentiles ranging from 1 to 99. 
- }
+  }
+  \item{sgp.quantiles}{Argument to specify quantiles for quantile regression estimation. Default is PERCENTILES. User can specify any combination of values between 0 and 1
+  as well as DECILES, QUINTILES, and QUARTILES. Goodness of fit output only available currently for PERCENTILES. 
+  }
   \item{percuts.digits}{Argument specifying how many digits (defaults to 2) to print percentile cuts (if asked for) with.
- }
-  \item{save.matrices}{Boolean argument (defaults to TRUE) indicating whether the coefficient matrices derived by the quantile regression analyses are saved to the
-    \file{Coefficient\_Matrices} directory for later use (e.g., for use in the percentile growth projection/trajectory analyses).
- }
-  \item{isotonize}{Boolean argument (defaults to TRUE) indicating whether quantile regression results are isotonized to prevent quantile crossing following the methods derived by
-    Dette & Volgushev (2008). 
- }
-  \item{convert.using.loss.hoss}{Boolean argument (defaults to TRUE) indicating whether requested percentile cuts are adjusted using the lowest obtainable scale score (LOSS) and
-    highest obtainable scale score (HOSS). Those percentile cuts above the HOSS are replaced with the HOSS and those percentile cuts below the LOSS are replaced with the LOSS. The LOSS 
-    and HOSS are obtained from the boundaries used for spline calculations. 
- }
+  }
+  \item{isotonize}{Boolean argument (defaults to TRUE) indicating whether quantile regression results are isotonized to prevent quantile crossing following the 
+  methods derived by Dette & Volgushev (2008). 
+  }
+  \item{convert.using.loss.hoss}{Boolean argument (defaults to TRUE) indicating whether requested percentile cuts are adjusted using the lowest obtainable scale 
+   score (LOSS) and highest obtainable scale score (HOSS). Those percentile cuts above the HOSS are replaced with the HOSS and those percentile cuts below the 
+   LOSS are replaced with the LOSS. The LOSS and HOSS are obtained from the loss and hoss calculated with the knots and boundaries used for spline calculations. 
+  }
   \item{goodness.of.fit}{Boolean argument (defaults to TRUE) indicating whether to produce goodness of fit results associated with produced student growth percentiles.
-Goodness of fit results are placed in the \file{Goodnessi\_of\_Fit} directory and test whether the observed growth percentile distribution follows a normal distribution.
+   Goodness of fit results are grid.grobs stored in \code{panel.data$Goodness_of_Fit$my.year.my.subject} where \code{my.year} and \code{my.subject} are provided by
+   \code{sgp.labels}.
+  }
 } 
-  \item{sgp.function.labels}{If \code{save.matrices=TRUE} or \code{save.knots.boundaries=TRUE}, the function requires the user to specify a list, \code{sgp.function.labels}, of the form  
-    \code{list(my.year= , my.subject= , my.grade= )}. The user specified values are used to save the coefficient matrices and/or knots/boundaries in an orderly fashion using an appropriate 
-    combination of year, subject and grade.
- }
+
+
+\details{Typical use of the function is to submit a data frame to the function containing records of all students across all grades, allowing the function to subset 
+out specific grade progressions using \code{grade.progression}. Additional uses include using precalculated results to recalculate SGPs for baseline referencing.
+The examples provide code for use in analyzing assessment data across multiple grades. 
 }
 
-\details{Typical use of the function is to submit a data frame to the function containing records of all students across all grades, allowing the function to subset out the specified grade 
- using \code{subset.grade}. Function will subset those students with non-canonical grade progressions. If percentile growth projection/trajectory analyses are also desired, coefficient 
- matrices from the quantile regression analyses must be saved for use in those analyses. The example provides a generic file for use in analyzing assessment data across multiple grades. 
-}
-
-\value{Function returns a data frame containing student IDs and the associated student growth percentiles. If percentile.cuts or other order growth percentiles are requested then
-additional variables are supplied in the returned data frame.
+\value{Function returns an object of class list containing the following lists: Coefficient_Matrices, Goodness_of_Fit, Knots_Boundaries, Panel_Data, SGPercentiles.
 }
 
 \references{
-Koenker, R. (2005). \emph{Quantile regression}. Cambridge: Cambridge University Press.
+Betebenner, D. W. (2009). Norm- and criterion-referenced student growth. 
+Educational Measurement: Issues and Practice, 28(4):42-51.
 
 Betebenner, D. W. (2008). Toward a normative understanding of student growth. In K. E. Ryan & 
 L. A. Shepard (Eds.), \emph{The Future of Test Based Accountability} (pp. 155-170). New York: Routledge.
 
-Dette, H. & Volgushev, S. Non-crossing non-parametric estimates of quantile curves. Journal of the Royal Statistical Society B,
+Dette, H. & Volgushev, S. (2008). Non-crossing non-parametric estimates of quantile curves. Journal of the Royal Statistical Society B,
 70(3), 609-627.
+
+Koenker, R. (2005). \emph{Quantile regression}. Cambridge: Cambridge University Press.
 }
 
 \author{Damian W. Betebenner \email{dbetebenner@nciea.org} }
-
-\note{If using user specified knots and boundaries (\code{use.my.knots.and.boundaries=TRUE}), knot and boundary vectors must be available within the 
-Knots\_Boundaries directory using a specific naming conventions. See the example for syntax.}
 
 \seealso{\code{\link{studentGrowthProjections}}, \code{\link{sgpData}}}
 
 
 \examples{
-############################################################################
-####
-#### Code for master file which computes student growth percentiles for 2007
-#### using provided sgpData dataset
-####
-############################################################################
+### Calculate 4th grade student growth percentiles
 
-###
-### Load student growth percentile (SGP) library
-###
-
-require(SGP) 
+my.sgpData <- studentGrowthPercentiles(panel.data=sgpData,
+                                       sgp.labels=list(my.year=2010, my.subject="Reading"),
+                                       percentile.cuts=c(1,35,65,99),
+                                       grade.progression=3:4)
 
 
-###
-### Calculate student growth percentiles
-###
+### Loop to calculate all SGPs for all grades without percentile cuts
 
-## 444444444444444444444444444444444444444444444444444444444444
+\dontrun{
+my.grade.sequences <- list(3:4, 3:5, 3:6, 3:7, 4:8)
 
-sgp_reading_2007_g4 <- studentGrowthPercentiles(
-             student.data = sgpData, ### SGP Library data set
-             num.panels = 4, 
-             num.prior = 1, 
-             subset.grade = 4,
-             percuts.digits = 0, 
-             sgp.function.labels = list(my.year=2007, my.subject="Reading", my.grade=4))
+for (i in seq_along(my.grade.sequences)) {
+     my.sgpData <- studentGrowthPercentiles(panel.data=sgpData,
+                                            sgp.labels=list(my.year=2010, my.subject="Reading"),
+                                            grade.progression=my.grade.sequences[[i]])
+}
+}
 
-## save(sgp_reading_2007_g4, file="Results_Data/sgp_reading_2007_g4.Rdata")
+### Loop to calculate all SGPs for all grades using 2006 to 2009 data (embedding results in my.sgpData from previous example)
 
+\dontrun{
+my.grade.sequences <- list(3:4, 3:5, 3:6, 4:7, 5:8)
 
-## 555555555555555555555555555555555555555555555555555555555555
-
-sgp_reading_2007_g5 <- studentGrowthPercentiles(
-             student.data = sgpData, 
-             num.panels = 4, 
-             num.prior = 2,  
-             subset.grade = 5,
-             percuts.digits = 0,
-             use.my.knots.and.boundaries=TRUE, 
-             sgp.function.labels = list(my.year=2007, my.subject="Reading", my.grade=5))
-
-## save(sgp_reading_2007_g5, file="Results_Data/sgp_reading_2007_g5.Rdata")
-
-
-## 6666666666666666666666666666666666666666666666666666666666666
-
-sgp_reading_2007_g6 <- studentGrowthPercentiles(
-             student.data = sgpData, 
-             num.panels = 4, 
-             num.prior = 3, 
-             subset.grade = 6,
-             percuts.digits = 0,
-             use.my.knots.and.boundaries=TRUE,
-             sgp.function.labels = list(my.year=2007, my.subject="Reading", my.grade=6))
-
-## save(sgp_reading_2007_g6, file="Results_Data/sgp_reading_2007_g6.Rdata")
-
-
-## 7777777777777777777777777777777777777777777777777777777777777
-
-sgp_reading_2007_g7 <- studentGrowthPercentiles(
-             student.data = sgpData, 
-             num.panels = 4, 
-             num.prior = 3, 
-             subset.grade = 7,
-             percuts.digits = 0,
-             use.my.knots.and.boundaries=TRUE,
-             sgp.function.labels = list(my.year=2007, my.subject="Reading", my.grade=7))
-
-## save(sgp_reading_2007_g7, file="Results_Data/sgp_reading_2007_g7.Rdata")
-
-
-###
-### Bind grade results and save output
-###
-
-sgp_reading_2007_gall <- rbind(sgp_reading_2007_g4, 
-                               sgp_reading_2007_g5, 
-                               sgp_reading_2007_g6, 
-                               sgp_reading_2007_g7)
-
-save(sgp_reading_2007_gall, file="Results_Data/sgp_reading_2007_gall.Rdata")
-write.table(sgp_reading_2007_gall, file="Results_Data/sgp_reading_2007_gall.dat", 
-            sep=",", row.names=FALSE, quote=FALSE)
-
-
-###
-### End of Master Program for Student Growth Percentiles
-###
+for (i in seq_along(my.grade.sequences)) {
+     my.sgpData <- studentGrowthPercentiles(panel.data=my.sgpData,
+                                            panel.data.vnames=c("ID", "GRADE_2006", "GRADE_2007", "GRADE_2008", "GRADE_2009", 
+                                                                      "SS_2006", "SS_2007", "SS_2008", "SS_2009"), 
+                                            sgp.labels=list(my.year=2009, my.subject="Reading"),
+                                            grade.progression=my.grade.sequences[[i]])
+}
+}
 }
 
 \keyword{ misc }
