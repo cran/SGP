@@ -2,7 +2,7 @@
 \alias{SGP-package}
 \alias{SGP}
 \docType{package}
-\title{Functions to calculate student growth percentiles and percentile growth projections/trajectories following methodology found in Betebenner (2008)
+\title{Functions to calculate student growth percentiles and percentile growth projections/trajectories following methodology found in Betebenner (2008,2009)
 }
 \description{SGP contains two functions, \code{studentGrowthPercentiles} and \code{studentGrowthProjections}, used to calculate 
 student growth percentiles and percentile growth projections/trajectories for students using large scale, longitudinal assessment data. These norm referenced growth values 
@@ -14,8 +14,8 @@ are calculated using the coefficient matrices derived from the student growth pe
 \tabular{ll}{
 Package: \tab SGP\cr
 Type: \tab Package\cr
-Version: \tab 0.0-5\cr
-Date: \tab 2010-2-12\cr
+Version: \tab 0.0-6\cr
+Date: \tab 2010-09-30\cr
 License: \tab Creative Commons Attribution + ShareAlike (by-sa)\cr
 LazyLoad: \tab yes\cr
 }
@@ -27,12 +27,13 @@ derived during student growth percentile estimation.}
 \author{Damian W. Betebenner \email{DBetebenner@nciea.org}} 
 
 \references{ 
-Koenker, R. (2005). \emph{Quantile regression}. Cambridge: Cambridge University Press.
+Betebenner, D. W. (2009). Norm- and criterion-referenced student growth. 
+Educational Measurement: Issues and Practice, 28(4):42-51.
 
 Betebenner, D. W. (2008). Toward a normative understanding of student growth. In K. E. Ryan & 
 L. A. Shepard (Eds.), \emph{The Future of Test Based Accountability} (pp. 155-170). New York: Routledge.
 
-Betebenner, D. W. (2009). Norm- and Criterion-Referenced Student Growth. Educational Measurement: Issues and Practice, 28(4): 42-51.
+Koenker, R. (2005). \emph{Quantile regression}. Cambridge: Cambridge University Press.
 }
 
 \keyword{package}

@@ -4,11 +4,11 @@ citEntry(entry = "Manual",
          title        = "{SGP}: Student Growth Percentile and Percentile Growth Projection/Trajectory Calculation",
          author       = "Damian W. Betebenner",
          year         = "2010",
-         note         = "R package version 0.0-5",
+         note         = "R package version 0.0-6",
          url          = "http://cran.r-project.org/web/packages/SGP/index.html",
          
          textVersion  = paste("Damian W. Betebenner (2010).",
                         "SGP: Student Growth Percentile and Percentile Growth Projection/Trajectory Calculation.",
-                        "(R package version 0.0-5).",
+                        "(R package version 0.0-6).",
                         "URL http://cran.r-project.org/web/packages/SGP/index.html")
 )

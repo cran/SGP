@@ -1,459 +1,500 @@
 `studentGrowthPercentiles` <-
-function(student.data,                                ## REQUIRED
-         num.panels,                                  ## REQUIRED
-         num.prior=num.panels-1,                      ## OPTIONAL
-         subset.grade,                                ## OPTIONAL
-         percentile.cuts=c(1,35,65,99),               ## OPTIONAL
-         use.my.knots.and.boundaries=FALSE,           ## OPTIONAL
-         print.other.gp=FALSE,                        ## OPTIONAL
-         rq.method="br",                              ## OPTIONAL
-         convert.0and100=TRUE,                        ## OPTIONAL
-         percuts.digits=2,                            ## OPTIONAL
-         save.matrices=TRUE,                          ## OPTIONAL
-         isotonize=TRUE,                              ## OPTIONAL
-         convert.using.loss.hoss=TRUE,                ## OPTIONAL
-         goodness.of.fit=TRUE,                        ## OPTIONAL
-         sgp.function.labels){                        ## OPTIONAL, BUT ALMOST ALWAYS USED
+function(panel.data,                                                    ## REQUIRED
+         sgp.labels,                                                    ## REQUIRED
+         panel.data.vnames,                                             ## OPTIONAL
+         grade.progression,                                             ## OPTIONAL
+         num.prior,                                                     ## OPTIONAL
+         subset.grade,                                                  ## OPTIONAL
+         percentile.cuts,                                               ## OPTIONAL
+         use.my.knots.boundaries,                                       ## OPTIONAL
+         use.my.coefficient.matrices,                                   ## OPTIONAL
+         print.other.gp,                                                ## OPTIONAL
+         calculate.sgps=TRUE,                                           ## OPTIONAL
+         rq.method="br",                                                ## OPTIONAL
+         knot.cut.percentiles=c(0.2,0.4,0.6,0.8),                       ## OPTIONAL
+         convert.0and100=TRUE,                                          ## OPTIONAL
+         sgp.quantiles="Percentiles",                                   ## OPTIONAL
+         percuts.digits=0,                                              ## OPTIONAL
+         isotonize=TRUE,                                                ## OPTIONAL
+         convert.using.loss.hoss=TRUE,                                  ## OPTIONAL
+         goodness.of.fit=TRUE) {                                        ## OPTIONAL
 
 
+##########################################################
 ###
-### Without function
+### Internal utility functions
 ###
+##########################################################
 
-"%w/o%" <- function(x,y) x[!x %in% y] #-- x without y 
+merge.all <- function(.list, ...){
+	if(length(.list)==1) return(.list[[1]])
+	Recall(c(list(merge(.list[[1]], .list[[2]], ...)), .list[-(1:2)]), ...)
+}
 
-##
-## Code for function that linearly interpolates missing values
-##
-
-smooth.and.isotonize.row <- function(x){
+.smooth.isotonize.row <- function(x, iso=isotonize) {
                                   x[which(is.na(x))] <- approx(x, xout=which(is.na(x)))$y
-                                  if (isotonize) return(sort(x))
+                                  if (iso) return(sort(x))
                                   else return(x)
 }
 
-
-##
-## Function that picks the best growth percentile
-##
-
-
-return.best.sgp <- function(x){ 
-                            if (sum(is.na(x)) == 0) return(x[length(x)]) 
-                            if (sum(is.na(x)) != 0) return(as.numeric(x[max(which(!is.na(x)))]))
+.return.best.sgp <- function(x) {
+                            as.numeric(tail(x[!is.na(x)], 1))
 }
 
-
-###
-### Function that selects the best growth projection percentiles
-### (i.e., those based upon the maximum number of prior predictors)
-###
-
-return.best.sgp.percuts <- function(x, numpercentilecuts){
-                                    num.blocks <- (length(x)-1)/numpercentilecuts
-                                    block.start <- 2 + numpercentilecuts*0:(num.blocks-1)
+.return.best.percuts <- function(x, numpercentilecuts) {
+                                    num.blocks <- (length(x))/numpercentilecuts
+                                    block.start <- 1 + numpercentilecuts*0:(num.blocks-1)
                                     nonempty.blocks <- !is.na(x[block.start])
                                     best.block.start <- max(block.start[nonempty.blocks])
-                                    best.block <- x[best.block.start + 0:(numpercentilecuts-1)]                 
-                                    return(as.numeric(best.block))
+                                    as.numeric(x[best.block.start + 0:(numpercentilecuts-1)])
 }
 
-
-###
-### Functions that assigns proper knot and boundary values for GROWTH PERCENTILE calculations based upon grade and number of priors
-###
-
-get_gp_knots <- function(grade, subject, priors){
-                         for (i in 8:(8-priors)) {
-                           assign(paste("knots", i, sep=""), get(paste("knots_", subject, "_g", grade-(8-i), sep="")), inherits=TRUE)
-}
-}
-
-get_gp_boundaries <- function(grade, subject, priors){
-                              for (i in 8:(8-priors)) {
-                                assign(paste("boundaries", i, sep=""), get(paste("boundaries_", subject, "_g", grade-(8-i), sep="")), inherits=TRUE)
-}
-}
-
-create_gp_knots_and_boundaries <- function(scores, grade, subject) {
-                                         assign(paste("knots_", subject, "_g", grade, sep=""), round(as.vector(quantile(scores, probs=c(.2, .4, .6, .8), na.rm=T)), digits=3), inherits=TRUE)
-                                         assign(paste("boundaries_", subject, "_g", grade, sep=""), round(extendrange(scores, f=0.01), digits=3), inherits=TRUE)
-                                         save(list=paste("knots_", subject, "_g", grade, sep=""), file=paste("Knots_Boundaries/knots_", subject, "_g", grade, ".Rdata", sep=""))
-                                         save(list=paste("boundaries_", subject, "_g", grade, sep=""), file=paste("Knots_Boundaries/boundaries_", subject, "_g", grade, ".Rdata", sep=""))
+.create.knots.boundaries <- function(data, by.grade) {
+                        tmp.list <- vector('list', 3*length(tmp.gp))
+                        if (by.grade) {
+                         tmp.stack <- data.frame(GRADE=stack(lapply(data[,2:(2+num.panels-1)], as.character))[,1], SCORE=stack(data[,(2+num.panels):(2+2*num.panels-1)])[,1]) 
+                        } else {
+                         tmp.stack <- data.frame(GRADE=rep(tmp.gp, each=dim(data)[1]), SCORE=stack(data[,(2+2*num.panels-1-length(tmp.gp)+1):(2+2*num.panels-1)])[,1])
+                        }
+                        for (i in seq_along(tmp.gp)) {
+                         tmp.list[[3*i-2]] <- round(as.vector(quantile(subset(tmp.stack, tmp.stack$GRADE==tmp.gp[i])[,2], probs=knot.cut.percentiles, na.rm=T)), digits=3)
+                         tmp.list[[3*i-1]] <- round(as.vector(extendrange(subset(tmp.stack, tmp.stack$GRADE==tmp.gp[i])[,2], f=0.1)), digits=3)  
+                         tmp.list[[3*i]] <- round(as.vector(extendrange(subset(tmp.stack, tmp.stack$GRADE==tmp.gp[i])[,2], f=0.0)), digits=3)  
+                        }
+                        names(tmp.list) <- paste(rep(c("knots_", "boundaries_", "loss.hoss_"), length(tmp.gp)), rep(tmp.gp, each=3), sep="")
+                        return(tmp.list) 
 }
 
+.get.panel.data <- function(data, k, by.grade) {
+               str1 <- paste(" & !is.na(", tail(SS, 1), ")", sep="")
+               str2 <- paste(" & ", tail(GD, 1), "==", tmp.last, sep="")
+               str3 <- tail(SS, 1)
 
-###
-### Commands for testing student.data and converting to a data.frame if necessary
-###
-
-if (class(student.data) != "data.frame") {student.data <- as.data.frame(student.data, stringsAsFactors=FALSE)}
-if (2*num.panels+1 != dim(student.data)[2]) {print("WARNING: Number of columns for student.data does not appear to conform to data requirements!")}
-
-###
-### Commands for creating Results_Data subdirectory
-###
-
-if (is.na(file.info("Results_Data")$isdir)){
-    dir.create("Results_Data")
+               for (i in 2:(k+1)) {
+                    str1 <- paste(str1, " & !is.na(", rev(SS)[i], ")", sep="")
+                    str2 <- paste(str2, " & ", rev(GD)[i], "==", rev(tmp.gp)[i], sep="")
+                    str3 <- paste(rev(SS)[i], ", ", str3, sep="")
+               }
+               if (by.grade) {
+                  eval(parse(text=paste("return(subset(data,", substring(str1, 3), str2, ", select=c(ID, ", str3 ,")))", sep="")))
+               } else {
+                  eval(parse(text=paste("return(subset(data,", substring(str1, 3), ", select=c(ID, ", str3 ,")))", sep="")))
+               }
 }
 
-###
-### Commands for creating Coefficient_Matrix subdirectory and testing for correct arguments being passed to the function
-###
-
-if (is.na(file.info("Coefficient_Matrices")$isdir) & save.matrices){
-    dir.create("Coefficient_Matrices")
-}
-
-if (save.matrices & missing(sgp.function.labels)) {
-     stop("Please specify an appropriate list of SGP function labels (sgp.function.labels) as described in the studentGrowthPercentiles function help page")
-}
-
-###
-### Commands for creating Knots_Boundaries subdirectory, testing for correct arguments being passed to the function,
-### and creating knots and boundaries if asked for.
-###
-
-if (is.na(file.info("Knots_Boundaries")$isdir) & !use.my.knots.and.boundaries){
-    dir.create("Knots_Boundaries")
-}
-
-if (!use.my.knots.and.boundaries & missing(sgp.function.labels)) {
-     stop("Please specify an appropriate list of knot and boundary labels as described in the function's help page")
-}
-
-if (use.my.knots.and.boundaries & length(list.files("Knots_Boundaries")) == 0) {
-    stop("Knots_Boundaries directory is empty. Specify your knots and boundaries and place them in the Knots_Boundaries directory")
-}
-
-
-if (use.my.knots.and.boundaries) {
-lapply(list.files("Knots_Boundaries", full.names=T, pattern=sgp.function.labels$my.subject), load, envir=.GlobalEnv)
-}
-
-
-if (!use.my.knots.and.boundaries) {
-      all_scores <- data.frame(cbind(stack(student.data[,2:(2+num.panels-1)])[,1], stack(student.data[,(2+num.panels):(2+2*num.panels-1)])[,1]))
-      names(all_scores) <- c("GRADE", "SCORE")
-   for (i in sort(unique(stack(student.data[,2:(2+num.panels-1)])[,1]) %w/o% NA)) 
-      create_gp_knots_and_boundaries(subset(all_scores, all_scores$GRADE==i, select="SCORE"), i, sgp.function.labels$my.subject)
-   
-}
-
-
-###
-### Rename variables so that they end with year 8
-###
-
-GD <- paste("GD",(9-num.panels):8,sep="")
-SS <- paste("SS",(9-num.panels):8,sep="")
-names(student.data) <- c("ID", GD, SS)
-
-
-###
-### Subset data by selected grade if requested
-###
-
-if (!missing(subset.grade)){
-student.data <- subset(student.data, student.data$GD8 == subset.grade)
-}
-
-
-###
-### Construction of Grade Specific Data Files
-###
-
-
-str1 <- " & !is.na(SS8)"
-str2 <- character()
-str3 <- "SS8"
-
-for (i in 1:num.prior) {
-	str1 <- paste(" & !is.na(",SS[num.panels-i],")", str1, sep="")
-	str2 <- paste(str2," & ",GD[num.panels-i],"==",GD[num.panels],"-",i,sep="")
-	str3 <- paste(SS[num.panels-i], ", ", str3, sep="")
-	assign(paste("data.grade",i+1,"y",sep=""), eval(parse(text=paste("subset(student.data,", substring(str1,4), str2, ", select=c(ID, ", str3 ,"))",sep=""))))
-}
-
-	
-###
-### Quantile Regression Function Estimation
-### Coefficient matrices are saved for later percentile growth trajectory calculation
-###
-
-
-prefix <- c("1st","2nd","3rd","4th","5th","6th","7th")
-mod <- character()
-
-get_gp_knots(sgp.function.labels$my.grade, sgp.function.labels$my.subject, num.prior)
-get_gp_boundaries(sgp.function.labels$my.grade, sgp.function.labels$my.subject, num.prior)
-
-for (i in 1:num.prior) {
-	mod <- paste(mod, " + bs(", SS[num.panels-i], ", knots=knots", 8-i, ", Boundary.knots=boundaries", 8-i, ")",sep="")
-	assign(paste("qr.", prefix[i],"order",sep=""), eval(parse(text=paste("rq(SS8 ~ ", substring(mod,4), 
-		", tau=(1:100-0.5)/100, data=data.grade", i+1, "y, method=rq.method)", sep=""))))
-
-	if (save.matrices == TRUE){
-		assign(paste("qr_", prefix[i], "order_", sgp.function.labels$my.year, "_g", sgp.function.labels$my.grade, "_", 
-			sgp.function.labels$my.subject, "_coefmatrix", sep=""), eval(parse(text=paste("qr.", prefix[i], "order$coefficients",sep=""))))
-
-		save(list=paste("qr_", prefix[i], "order_", sgp.function.labels$my.year, "_g", sgp.function.labels$my.grade, "_", sgp.function.labels$my.subject, 
-			"_coefmatrix", sep=""), file=paste("Coefficient_Matrices/qr_", prefix[i], "order_", sgp.function.labels$my.year, "_g", sgp.function.labels$my.grade, "_", 
-			sgp.function.labels$my.subject, "_coefmatrix.Rdata", sep=""))
-	}	
-}
-
-
-###
-### Create percentile score predictions for each student
-###
-
-
-for (i in 1:num.prior) {
-	tmp <- eval(parse(text=paste("predict(qr.", prefix[i], "order)", sep="")))
-	tmp <- round(t(apply(tmp, 1, function(x) smooth.and.isotonize.row(x))), digits=5)
-	assign(paste("predict.", prefix[i], "order", sep=""), tmp)
-}
-
-
-
-###
-### Code to get percentile for each student's most recent scale score (i.e., the dependent variable)
-###
-
-
-for (i in 1:num.prior) {
-	tmp <- eval(parse(text=paste("predict.", prefix[i], "order < data.grade", i+1, "y$SS8", sep="")))
-	tmp <- cbind(tmp, FALSE)
-	tmp <- apply(tmp, 1, function(x) which.min(x)-1)
-	if (convert.0and100 == TRUE) {
-		tmp[tmp==0] <- 1
-		tmp[tmp==100] <- 99
-	}
-	assign(paste("gp_", prefix[i], "order",sep=""), tmp)
-}
-
-
-
-###
-### Code to get percentile cutpoints (if asked for) for each student based 
-### upon prior student data AND attach percentile cut data to each student's record (if asked for)
-###
-
-
-if (!is.null(percentile.cuts)){
-	
-	for (i in 1:num.prior) {
-		tmp <- eval(parse(text=paste("predict.", prefix[i], "order[ , percentile.cuts+1]", sep="")))
-                if (convert.using.loss.hoss==TRUE) {
-                tmp[tmp < get(paste("boundaries", 8, sep=""))[1]] <- get(paste("boundaries", 8, sep=""))[1]
-                tmp[tmp > get(paste("boundaries", 8, sep=""))[2]] <- get(paste("boundaries", 8, sep=""))[2]
-                }
-		colnames(tmp) <- paste("p", prefix[i], percentile.cuts, sep="")
-		assign(paste("percuts_", prefix[i], "order", sep=""), tmp)
-		assign(paste("percuts.frame", i+1, "y", sep=""), eval(parse(text=paste("data.frame(ID=data.grade", i+1, "y$ID, percuts_", prefix[i], "order)", sep=""))))
-	}
-}
-
-
-
-###
-### Attach growth percentile to each student's record
-###
-
-
-for (i in 1:num.prior) {
-	assign(paste("growth.frame", i+1, "y", sep=""), eval(parse(text=paste("data.frame(ID=data.grade", i+1, "y$ID, gp_", prefix[i], "order, stringsAsFactors=FALSE)", sep=""))))
-}
-
-
-
-###
-### Combine data frames containing different order growth percentiles
-###
-
-
-for (i in 1:num.prior) {
-   if (i == 1) growth.frame <- get(paste("growth.frame", i+1, "y", sep=""))
-   else growth.frame <- merge(growth.frame, get(paste("growth.frame", i+1, "y", sep="")), all=T)
-}
-
-if (num.prior < 7) {
-     str1 <- "gp_7thorder=NA"
-     if (num.prior < 6) str1 <- c(paste("gp_", prefix[(num.prior+1):6], "order=NA,", sep=""), str1)
-     growth.frame <- eval(parse(text=c("data.frame(growth.frame,", str1, ")")))
-}
-
-   
-
-###
-### Combine data frames containing different order percentile cuts (if asked for)
-###
-
-if (!is.null(percentile.cuts)){
-
-for (i in 1:num.prior) {
-    if (i == 1) percuts.frame <- get(paste("percuts.frame", i+1, "y", sep=""))
-    else percuts.frame <- merge(percuts.frame, get(paste("percuts.frame", i+1, "y", sep="")), all=T)
-   }
-}
-
-###
-### Create best growth percentile from those in the file
-###
-
-gp_best <- apply(growth.frame, 1, return.best.sgp)
-
-if (print.other.gp == TRUE) growth.frame <- data.frame(growth.frame, SGP=gp_best, stringsAsFactors=FALSE)
-if (print.other.gp == FALSE) growth.frame <- data.frame(ID=growth.frame$ID, SGP=gp_best, stringsAsFactors=FALSE)
-
-
-###
-### Create the best percentile cuts from those in the file and merge
-### with the growth frame (if asked for)
-###
-
-if (!is.null(percentile.cuts)){
-percuts_best <- t(apply(percuts.frame, 1, return.best.sgp.percuts, numpercentilecuts=length(percentile.cuts)))
-percuts_best <- round(percuts_best, digits=percuts.digits)
-colnames(percuts_best) <- paste("CUT", as.character(percentile.cuts), sep="")
-growth.frame <- data.frame(growth.frame, percuts_best, stringsAsFactors=FALSE)
-}
-
-
-##############################################
-###
-### End studentGrowthPercentile function
-###
-##############################################
-
-
-###
-### Goodness of fit report code (if requested)
-###
-
-if (goodness.of.fit == TRUE){
-
-##
-## Create Goodness-of-fit Directory if it doesn't exist
-##
-
-if (is.na(file.info("Goodness_of_Fit")$isdir)) {
-    dir.create("Goodness_of_Fit")
-}
-
-
-##
-## Cell color function
-##
-
-cell_color <- function(x){
-           temp_cell_color <- character(length(x))
-           my_reds <- c("#FFFFFF", "#FEF1E1", "#FBD9CA", "#F9C1B4", "#F7A99E", "#F59188", "#F27972", "#F0615C", "#EE4946", "#EC3130", "#EA1A1A")
-           temp_diff <- abs(x - 10)
-           temp_cell_color[temp_diff < 1] <- my_reds[1]
-           for (i in 1:9){
-           temp_cell_color[temp_diff >= i & temp_diff < i+1] <- my_reds[i+1]
-           }
-           temp_cell_color[temp_diff >= 10] <- my_reds[11]
-           return(temp_cell_color)
-}
-
-
-##
-## function to produce table with values ranging from 1 to 99 or 0 to 100
-##
-
-if (convert.0and100 == TRUE) my_percentile_labels <- c("1 to 9", "10 to 19", "20 to 29", "30 to 39", "40 to 49", "50 to 59", "60 to 69", "70 to 79", "80 to 89", "90 to 99")
-if (convert.0and100 == FALSE) my_percentile_labels <- c("0 to 9", "10 to 19", "20 to 29", "30 to 39", "40 to 49", "50 to 59", "60 to 69", "70 to 79", "80 to 89", "90 to 100")
-
-sgp.fit <- function (score, sgp) {
-                         gfittable <- prop.table(table(quantcut(score, q=0:10/10, dig.lab=5, right=FALSE),
-                                                       cut(sgp, c(-1, 9.5, 19.5, 29.5, 39.5, 49.5, 59.5, 69.5, 79.5, 89.5, 100.5),
-                                                       labels=my_percentile_labels)), 1)*100
-                         return(gfittable)
-}
-
-
-##
-## Merge data and student growth percentile files
-##
-
-growth_data_cols <- c("ID", "SS7") ## ID, prior year scale score
-sgp_data_cols <- c("ID", "SGP") ## ID, student growth percentile
-data_merge <- merge(student.data[,growth_data_cols], growth.frame[,sgp_data_cols], by.x=1, by.y=1)
-
-
-##
-## Create goodness-of-fit tables
-##
-
-temp.table <- sgp.fit(data_merge[,2], data_merge[,3])
-temp.cuts <- quantcut(data_merge[,2], 0:10/10)
-temp.colors <- cell_color(as.vector(temp.table))
-
-if (missing(sgp.function.labels)) pdf(file="Goodness_of_Fit/gof_diagnositics.pdf", width=8.5, height=4.5)
-if (!missing(sgp.function.labels)) pdf(file=paste("Goodness_of_Fit/gof_diagnostics_", sgp.function.labels$my.subject, 
-                                                  "_", sgp.function.labels$my.grade, "_", sgp.function.labels$my.year, ".pdf", sep=""), 
-                                                  width=8.5, height=4.5)
-
-goodness.vp <- viewport(layout = grid.layout(2, 2, widths = unit(c(4.75, 3.5), rep("inches", 2)),
-                                              heights = unit(c(0.75, 3.5), rep("inches", 2))))
-
-table.vp <- viewport(layout.pos.row=2, layout.pos.col=1, xscale=c(-3,12), yscale=c(0,13))
-qq.vp <- viewport(layout.pos.row=2, layout.pos.col=2, xscale=c(-25,110), yscale=c(-8,130))
-title.vp <- viewport(layout.pos.row=1, layout.pos.col=1:2)
-
-pushViewport(goodness.vp)
-pushViewport(title.vp)
-grid.rect()
-grid.text(x=0.5, y=0.65, "Student Growth Percentile Goodness-of-Fit Descriptives", gp=gpar(cex=1.25))
-grid.text(x=0.5, y=0.4, paste(sgp.function.labels$my.year, " ", sgp.function.labels$my.subject, ", Grade ", sgp.function.labels$my.grade, sep=""))
-popViewport()
-
-pushViewport(table.vp)
-grid.rect()
-grid.rect(x=rep(1:10,each=10), y=rep(10:1,10),
-          width=1, height=1, default.units="native",
-          gp=gpar(col="black", fill=temp.colors),
-          name="my_image")
-grid.text(x=0.35, y=10:1, paste(c("1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th"), dimnames(temp.table)[[1]], sep="/"), just="right", gp=gpar(cex=0.7), default.units="native")
-grid.text(x=-2.3, y=5.5, "Prior Scale Score Decile/Range", gp=gpar(cex=0.8), default.units="native", rot=90)
-grid.text(x=1:10, y=10.8, dimnames(temp.table)[[2]], gp=gpar(cex=0.7), default.units="native", rot=45, just="left")
-grid.text(x=5.75, y=12.5, "Student Growth Percentile Range", gp=gpar(cex=0.8), default.units="native")
-grid.text(x=rep(1:10,each=10), y=rep(10:1,10), formatC(as.vector(temp.table), format="f", digits=2), default.units="native", gp=gpar(cex=0.7))
-popViewport()
-
-pushViewport(qq.vp)
-grid.rect()
-for (j in levels(temp.cuts)) {
-    grid.lines(quantile(data_merge$SGP[temp.cuts==j], probs=ppoints(1:500)), ppoints(1:500)*100, gp=gpar(lwd=0.35), default.units="native")
+.create.coefficient.matrices <- function(data, k, by.grade) {
+    tmp.data <- .get.panel.data(data, k, by.grade)
+    mod <- character()
+    for (i in rev(tmp.gp)[2:(k+1)]) {
+         .check.knots.boundaries(knot.names, i)
+         knt <- paste("Knots_Boundaries$", tmp.path.knots.boundaries, "$knots_", i, sep="")
+         bnd <- paste("Knots_Boundaries$", tmp.path.knots.boundaries, "$boundaries_", i, sep="")
+         mod <- paste(mod, " + bs(SS", i, ", knots=", knt, ", Boundary.knots=", bnd, ")", sep="")
     }
-grid.lines(c(0,100), c(0,100), gp=gpar(lwd=0.75, col="red"), default.units="native")
-grid.lines(x=c(-3,-3,103,103,-3), y=c(-3,103,103,-3,-3), default.units="native")
-grid.polyline(x=rep(c(-6,-3), 11), y=rep(0:10*10, each=2), id=rep(1:11, each=2), default.units="native")
-grid.text(x=-7, y=0:10*10, 0:10*10, default.units="native", gp=gpar(cex=0.7), just="right")
-grid.polyline(x=rep(0:10*10, each=2), y=rep(c(103,106), 11), id=rep(1:11, each=2), default.units="native")
-grid.text(x=0:10*10, y=109, 0:10*10, default.units="native", gp=gpar(cex=0.7))
-grid.text(x=45, y=123, "QQ-Plot: Student Growth Percentiles", default.units="native")
-grid.text(x=50, y=115, "Theoretical SGP Distribution", default.units="native", gp=gpar(cex=0.7))
-grid.text(x=-17, y=50, "Empirical SGP Distribution", default.units="native", gp=gpar(cex=0.7), rot=90)
-popViewport()
-popViewport()
-dev.off()
+    eval(parse(text=paste("rq(SS", tmp.last, " ~ ", substring(mod,4), ", tau=taus, data=tmp.data, method=rq.method)$coefficients", sep="")))
+}
 
-###
-### End of Goodness-of-fit table construction
-###
+.check.knots.boundaries <- function(names, grade) {
+                                     tmp <- do.call(rbind, strsplit(names, "_"))
+                                     if (!grade %in% as.numeric(tmp[tmp[,1]=="knots", 2])) stop(paste("knots_", grade, " not found in Knot_Boundaries.", sep=""))
+                                     if (!grade %in% as.numeric(tmp[tmp[,1]=="boundaries", 2])) stop(paste("boundaries_", grade, " not found in Knot_Boundaries.", sep=""))                           
+}
 
-} ## END GOODNESS-OF-FIT
+.check.my.coefficient.matrices <- function(names, grade, order) {
+                                     tmp <- do.call(rbind, strsplit(names, "_"))
+                                     if (!grade %in% as.numeric(tmp[,2])) stop(paste("Coefficient matrix associated with grade ", grade, " not found.", sep=""))
+                                     if (!order %in% as.numeric(tmp[tmp[,2]==grade,3])) stop(paste("Coefficient matrix associated with grade ", grade, "order ", order, " not found.", sep=""))
+}
 
-###
-### Return Growth Frame
-###
+.get.max.matrix.order <- function(names, grade) {
+                            tmp <- do.call(rbind, strsplit(names, "_"))
+                            max(as.numeric(tmp[tmp[,2]==grade,3]), na.rm=TRUE)
+}
 
-return(growth.frame)
+.create_taus <- function(sgp.quantiles) {
+      if (is.character(sgp.quantiles)) {
+         taus <- switch(sgp.quantiles,
+                        PERCENTILES = (1:100-0.5)/100,
+                        DECILES     = 1:10/10,
+                        QUINTILES   = 1:5/5,
+                        QUARTILES   = 1:4/4)
+      }
+
+      if (is.numeric(sgp.quantiles)) {
+         taus <- sgp.quantiles
+      }
+      return(taus)
+}
+
+.get.percentile.predictions <- function(data) {
+     mod <- character()
+     for (k in 1:j) {
+         int <- "cbind(rep(1, dim(data)[1]),"
+         knt <- paste("Knots_Boundaries$", tmp.path.knots.boundaries, "$knots_", rev(tmp.gp)[k+1], sep="")
+         bnd <- paste("Knots_Boundaries$", tmp.path.knots.boundaries, "$boundaries_", rev(tmp.gp)[k+1], sep="")
+         mod <- paste(mod, ", bs(data$SS", rev(tmp.gp)[k+1], ", knots=", knt, ", Boundary.knots=", bnd, ")", sep="")
+         mat <- paste(") %*% Coefficient_Matrices$", tmp.path.coefficient.matrices, "$qrmatrix_", tmp.last, "_", k, sep="")
+         .check.my.coefficient.matrices(matrix.names, tmp.last, k)
+     }
+     tmp <- eval(parse(text=paste(int, substring(mod, 2), mat, sep="")))
+     return(round(t(apply(tmp, 1, function(x) .smooth.isotonize.row(x))), digits=5))
+}
+
+.get.quantiles <- function(data1, data2) {
+      tmp <- data1 < data2[,tail(SS,1)]
+      tmp <- cbind(tmp, FALSE)
+      tmp <- apply(tmp, 1, function(x) which.min(x)-1)
+      if (convert.0and100) {
+              tmp[tmp==0] <- 1
+              tmp[tmp==100] <- 99
+      }
+      tmp <- data.frame(data2$ID, tmp)
+      names(tmp) <- c("ID", paste("SGP_", j, sep=""))
+      return(tmp)
+}
+
+.get.percentile.cuts <- function(data1, data2) {
+     tmp <- data1[ , percentile.cuts+1]
+        if (convert.using.loss.hoss) {
+           bnd <- Knots_Boundaries[[tmp.path.knots.boundaries]][[paste("loss.hoss_", tmp.last, sep="")]]
+           tmp[tmp < bnd[1]] <- bnd[1]
+           tmp[tmp > bnd[2]] <- bnd[2]
+        }
+     tmp <- data.frame(data2$ID, tmp)
+     names(tmp) <- c("ID", paste("PERCUT_", j, "_", percentile.cuts, sep=""))
+     return(tmp)
+} 
+
+.goodness.of.fit <- function(ss.data, sgp.data) {
+
+   .cell.color <- function(x){
+           tmp.cell.color <- character(length(x))
+           my.reds <- c("#FFFFFF", "#FEF1E1", "#FBD9CA", "#F9C1B4", "#F7A99E", "#F59188", "#F27972", "#F0615C", "#EE4946", "#EC3130", "#EA1A1A")
+           tmp.diff <- abs(x - 10)
+           tmp.cell.color[tmp.diff < 1] <- my.reds[1]
+           for (i in 1:9){
+           tmp.cell.color[tmp.diff >= i & tmp.diff < i+1] <- my.reds[i+1]
+           }
+           tmp.cell.color[tmp.diff >= 10] <- my.reds[11]
+           return(tmp.cell.color)
+   }
+
+   if (convert.0and100) {
+       my.percentile.labels <- paste(c(1,1:9*10), "to", seq(9,99,10))
+   } else {
+      my.percentile.labels <- paste(0:9*10, "to", c(seq(9,89,10),100))
+   }
+
+   .sgp.fit <- function (score, sgp) {
+                   gfittable <- prop.table(table(quantcut(round(score, digits=percuts.digits), q=0:10/10, right=FALSE),
+                                    cut(sgp, c(-1, 9.5, 19.5, 29.5, 39.5, 49.5, 59.5, 69.5, 79.5, 89.5, 100.5),
+                                    labels=my.percentile.labels)), 1)*100
+                   return(gfittable)
+   }
+
+   tmp.merge <- merge(ss.data, sgp.data, by.x=1, by.y=1)
+   tmp.table <- .sgp.fit(tmp.merge[,2], tmp.merge[,3])
+   tmp.cuts <- quantcut(tmp.merge[,2], 0:10/10)
+   tmp.colors <- .cell.color(as.vector(tmp.table))
+   tmp.list <- vector("list", length(levels(tmp.cuts)))
+   for (i in levels(tmp.cuts)) {
+   tmp.list[[i]] <- quantile(tmp.merge$SGP[tmp.cuts==i], probs=ppoints(1:500))
+   }
+   tmp.ppoints <- do.call(c, tmp.list)
+
+
+   layout.vp <- viewport(layout = grid.layout(2, 2, widths = unit(c(4.75, 3.5), rep("inches", 2)),
+                         heights = unit(c(0.75, 3.5), rep("inches", 2))), name="layout")
+   components <- vpList(viewport(layout.pos.row=1, layout.pos.col=1:2, name="title"),
+                        viewport(layout.pos.row=2, layout.pos.col=1, xscale=c(-3,12), yscale=c(0,13), name="table"),
+                        viewport(layout.pos.row=2, layout.pos.col=2, xscale=c(-25,110), yscale=c(-8,130), name="qq"))
+
+   grobs <- gTree(childrenvp=layout.vp,
+                  children=gList(gTree(vp="layout",
+                  childrenvp=components,
+                  children=gList(
+                  rectGrob(gp=gpar(fill="grey95"), vp="title"),
+                  textGrob(x=0.5, y=0.65, "Student Growth Percentile Goodness-of-Fit Descriptives", gp=gpar(cex=1.25), vp="title"),
+                  textGrob(x=0.5, y=0.4, paste(sgp.labels$my.year, " ", sgp.labels$my.subject, ", Grade ", tmp.last, sep=""), vp="title"),
+
+                  rectGrob(vp="table"),
+                  rectGrob(x=rep(1:10,each=10), y=rep(10:1,10),
+                      width=1, height=1, default.units="native",
+                      gp=gpar(col="black", fill=tmp.colors),
+                      vp="table"),
+                  textGrob(x=0.35, y=10:1, paste(c("1st", "2nd", "3rd", paste(4:10, "th", sep="")), dimnames(tmp.table)[[1]], sep="/"), just="right", gp=gpar(cex=0.7), default.units="native", vp="table"),
+                  textGrob(x=-2.5, y=5.5, "Prior Scale Score Decile/Range", gp=gpar(cex=0.8), default.units="native", rot=90, vp="table"),
+                  textGrob(x=1:10, y=10.8, dimnames(tmp.table)[[2]], gp=gpar(cex=0.7), default.units="native", rot=45, just="left", vp="table"),
+                  textGrob(x=5.75, y=12.5, "Student Growth Percentile Range", gp=gpar(cex=0.8), default.units="native", vp="table"),
+                  textGrob(x=rep(1:10,each=10), y=rep(10:1,10), formatC(as.vector(tmp.table), format="f", digits=2), default.units="native", gp=gpar(cex=0.7), vp="table"),
+
+                  rectGrob(vp="qq"),
+                  linesGrob(tmp.ppoints, rep(ppoints(1:500)*100, length(levels(tmp.cuts))), gp=gpar(lwd=0.35), default.units="native", vp="qq"),
+                  linesGrob(c(0,100), c(0,100), gp=gpar(lwd=0.75, col="red"), default.units="native", vp="qq"),
+                  linesGrob(x=c(-3,-3,103,103,-3), y=c(-3,103,103,-3,-3), default.units="native", vp="qq"),
+                  polylineGrob(x=rep(c(-6,-3), 11), y=rep(0:10*10, each=2), id=rep(1:11, each=2), default.units="native", vp="qq"),
+                  textGrob(x=-7, y=0:10*10, 0:10*10, default.units="native", gp=gpar(cex=0.7), just="right", vp="qq"),
+                  polylineGrob(x=rep(0:10*10, each=2), y=rep(c(103,106), 11), id=rep(1:11, each=2), default.units="native", vp="qq"),
+                  textGrob(x=0:10*10, y=109, 0:10*10, default.units="native", gp=gpar(cex=0.7), vp="qq"),
+                  textGrob(x=45, y=123, "QQ-Plot: Student Growth Percentiles", default.units="native", vp="qq"),
+                  textGrob(x=50, y=115, "Theoretical SGP Distribution", default.units="native", gp=gpar(cex=0.7), vp="qq"),
+                  textGrob(x=-17, y=50, "Empirical SGP Distribution", default.units="native", gp=gpar(cex=0.7), rot=90, vp="qq")))))
+} 
+
+
+############################################################################
+###
+### Data Preparation & Checks
+###
+############################################################################
+
+if (missing(panel.data)) {
+   stop("User must supply student achievement data for student growth percentile calculations. NOTE: data is now supplied to function using panel.data argument. See help page for details.")
+}
+if (!(class(panel.data) %in% c("matrix", "data.frame", "list", "SGP"))) {
+     stop("Supplied panel.data not of a supported class. See help for details of supported classes")
+}
+if (class(panel.data) %in% c("list", "SGP") & !("Panel_Data" %in% names(panel.data))) {
+     stop("Supplied panel.data missing Panel_Data")
+}
+if (class(panel.data) %in% c("list", "SGP")) {
+     if (!class(panel.data$Panel_Data) == "data.frame") {
+        stop("Supplied panel.data$Panel_Data is not a data.frame")   
+     }
+}
+if (!missing(sgp.labels)) {
+     if (!is.list(sgp.labels)) {
+     stop("Please specify an appropriate list of SGP function labels (sgp.labels). See help page for details.")
+}}
+if (!identical(names(sgp.labels), c("my.year", "my.subject"))) {
+     stop("Please specify an appropriate list for sgp.labels. See help page for details.")
+}
+if (!missing(use.my.knots.boundaries)) {
+     if (!(class(panel.data) %in% c("list", "SGP"))) {
+     stop("use.my.knots.boundaries is only appropriate when panel data is of class list or SGP. See help page for details.")
+     }
+     if (!is.list(use.my.knots.boundaries)) {
+          stop("Please specify an appropriate list for use.my.knots.boundaries. See help page for details.")
+     }
+     if (!identical(names(use.my.knots.boundaries), c("my.year", "my.subject"))) {
+          stop("Please specify an appropriate list for use.my.knots.boundaries. See help page for details.")
+     }
+     tmp.path.knots.boundaries <- toupper(paste(use.my.knots.boundaries$my.subject, ".", use.my.knots.boundaries$my.year, sep=""))
+     if (is.null(panel.data[["Knots_Boundaries"]]) | is.null(panel.data[["Knots_Boundaries"]][[tmp.path.knots.boundaries]])) {
+          stop("Knots and Boundaries indicated by use.my.knots.boundaries are not included.")
+     }
+}
+if (!missing(use.my.coefficient.matrices)) {
+     if (!(class(panel.data) %in% c("list", "SGP"))) {
+     stop("use.my.coefficient.matrices is only appropriate when panel data is of class list or SGP. See help page for details.")
+     }
+     if (!is.list(use.my.coefficient.matrices)) {
+          stop("Please specify an appropriate list for use.my.coefficient.matrices. See help page for details.")
+     }
+     if (!all(names(use.my.coefficient.matrices) %in% c("my.year", "my.subject"))) {
+          stop("Please specify an appropriate list for use.my.coefficient.matrices. See help page for details.")
+     }
+     tmp.path.coefficient.matrices <- toupper(paste(use.my.coefficient.matrices$my.subject, ".", use.my.coefficient.matrices$my.year, sep=""))
+     if (is.null(panel.data[["Coefficient_Matrices"]]) | is.null(panel.data[["Coefficient_Matrices"]][[tmp.path.coefficient.matrices]])) {
+          stop("Coefficient matrices indicated by use.my.coefficient.matrices are not included.")
+     }
+}
+if (is.character(sgp.quantiles)) {
+     sgp.quantiles <- toupper(sgp.quantiles)
+     if (!(sgp.quantiles %in% c("PERCENTILES", "DECILES", "QUINTILES", "QUARTILES"))) {
+          stop("Character options for sgp.quantiles include Percentiles, Deciles, Quintiles, Quartiles. Other options available by specifying a numeric quantity. See help page for details.")
+}} 
+if (is.numeric(sgp.quantiles)) {
+     if (!(all(sgp.quantiles > 0) & all(sgp.quantiles < 1))) {
+          stop("Specify sgp.quantiles as as a vector of probabilities between 0 and 1.")
+}}
+if (!missing(percentile.cuts)) {
+     if (sgp.quantiles != "PERCENTILES") {
+          stop("percentile.cuts only appropriate for growth percentiles. Set sgp.quantiles to Percentiles to produce requested percentile.cuts.")
+     }
+     if (!all(percentile.cuts %in% 0:100)) {
+          stop("Specified percentile.cuts must be integers between 0 and 100.")
+}}
+
+
+### Create object to store the studentGrowthPercentiles objects
+
+sgp.labels <- lapply(sgp.labels, toupper)
+tmp.path <- paste(sgp.labels$my.subject, sgp.labels$my.year, sep=".")
+if (missing(use.my.knots.boundaries)) {
+   tmp.path.knots.boundaries <- tmp.path
+}
+if (missing(use.my.coefficient.matrices)) {
+   tmp.path.coefficient.matrices <- tmp.path
+}
+tmp.objects <- c("Coefficient_Matrices", "Goodness_of_Fit", "Knots_Boundaries", "Panel_Data", "SGPercentiles") 
+
+for (i in tmp.objects) {
+   assign(i, list())
+   if (class(panel.data) %in% c("SGP", "list")) {
+     if (!is.null(panel.data[[i]])) {
+         assign(i, panel.data[[i]])
+   }}
+}
+
+
+### Create Panel_Data based upon class of input data
+
+if (class(panel.data) == "matrix") {
+     Panel_Data <- as.data.frame(panel.data, stringsAsFactors=FALSE)
+}
+if (class(panel.data) == "list" & class(panel.data$Panel_Data) != "data.frame") {
+     Panel_Data <- as.data.frame(panel.data$Panel_Data, stringsAsFactors=FALSE)
+}
+if (class(panel.data) == "data.frame") {
+     Panel_Data <- panel.data
+}
+if (class(panel.data) %in% c("list", "SGP")) {
+         Panel_Data <- panel.data$Panel_Data
+} 
+
+
+### Create ss.data from Panel_Data
+
+if (!missing(panel.data.vnames)) {
+     ss.data <- subset(Panel_Data, select=panel.data.vnames)
+} else {
+     ss.data <- Panel_Data
+}
+if (dim(ss.data)[2] %% 2 != 1) {
+     stop(paste("Number of columns of supplied panel data (", dim(ss.data)[2], ") does not conform to data requirements. See help page for details."))
+}
+
+num.panels <- (dim(ss.data)[2]-1)/2
+
+
+### Rename variables in ss.data based upon grade progression
+
+if (!missing(grade.progression)) {
+     tmp.gp <- grade.progression
+     by.grade <- TRUE
+     if (length(grade.progression) > num.panels) {
+          stop("Supplied grade.progression exceeds number of panels in provided data.")
+}}
+if (!missing(subset.grade) & missing(grade.progression)) {
+     tmp.gp <- (subset.grade-num.panels+1):subset.grade
+     by.grade <- TRUE
+}
+if (missing(subset.grade) & missing(grade.progression)) {
+     tmp.gp <- 1:num.panels
+     by.grade <- FALSE
+}
+if (!missing(num.prior)) {
+     if (length(num.prior) > 1 | !((num.prior-round(num.prior)) < .Machine$double.eps^0.5) | num.prior <= 0) {
+          stop("Specified num.prior not positive integer(s)")
+     }
+     if (num.prior > length(tmp.gp)-1) {
+          stop("Specified num.prior exceeds number of panels of data supplied")
+     } else {
+          tmp.gp <- tail(tmp.gp, num.prior+1)
+}} else {
+     num.prior <- length(tmp.gp)-1
+}
+
+tmp.last <- tail(tmp.gp, 1)
+GD <- paste("GD", tmp.gp, sep="")
+SS <- paste("SS", tmp.gp, sep="")
+names(ss.data) <- NA
+names(ss.data)[c(1, (1+num.panels-num.prior):(1+num.panels), (1+2*num.panels-num.prior):(1+2*num.panels))] <- c("ID", GD, SS)
+
+
+### Create Knots and Boundaries if requested (uses only grades in tmp.gp)
+
+if (missing(use.my.knots.boundaries)) {
+     tmp.list <- .create.knots.boundaries(ss.data, by.grade)
+     Knots_Boundaries[[tmp.path.knots.boundaries]][names(tmp.list)] <- tmp.list
+}
+
+knot.names <- names(Knots_Boundaries[[tmp.path.knots.boundaries]])
+
+
+### QR Calculations: coefficient matrices are saved/read into/from panel.data$Coefficient_Matrices
+
+if (missing(use.my.coefficient.matrices)) {
+      taus <- .create_taus(sgp.quantiles)
+      for (k in seq(num.prior)) {
+             tmp.matrix <- .create.coefficient.matrices(ss.data, k, by.grade)
+             Coefficient_Matrices[[tmp.path.coefficient.matrices]][[paste("qrmatrix_", tmp.last, "_", k, sep="")]] <- tmp.matrix 
+      }
+}
+
+matrix.names <- names(Coefficient_Matrices[[tmp.path.coefficient.matrices]])
+
+
+### Calculate growth percentiles (if requested) and percentile cuts (if requested)
+
+if (calculate.sgps) {
+    max.order <- .get.max.matrix.order(matrix.names, tmp.last)
+    if (max.order < num.prior) {
+        stop("Number of priors requested exceeds maximum order of supplied coefficient matrices")
+    }
+    if (max.order > num.prior) {
+                max.order <- num.prior
+                message(paste("Maximum coefficient matrix order (max.order=", max.order, ") exceeds that of specified number of priors, 
+                               (num.prior=", num.prior, "). Only matrices of order up to num.prior=", num.prior, " will be used."))
+    }
+    tmp.quantiles <- tmp.percentile.cuts <- vector("list", max.order)
+
+    for (j in 1:max.order) {
+         tmp.data <- .get.panel.data(ss.data, j, by.grade)
+         tmp.predictions <- .get.percentile.predictions(tmp.data) 
+         tmp.quantiles[[j]] <- .get.quantiles(tmp.predictions, tmp.data)
+         if (!missing(percentile.cuts)) {
+            tmp.percentile.cuts[[j]] <- .get.percentile.cuts(tmp.predictions, tmp.data)
+         }
+    }
+
+    quantile.data <- merge.all(tmp.quantiles, all=TRUE)
+}
+
+
+### Merge in percentile cut (if requested)
+
+if (!missing(percentile.cuts)) {
+    cuts.data <- merge.all(tmp.percentile.cuts, all=TRUE)
+}
+
+
+### Calculate highest order growth quantile and percentile cuts (if requested)
+
+if (calculate.sgps) {
+    tmp.best <- apply(quantile.data, 1, .return.best.sgp)
+    if (missing(print.other.gp)) {
+       quantile.data <- data.frame(ID=quantile.data$ID, SGP=tmp.best, stringsAsFactors=FALSE)
+    } else {
+       quantile.data <- data.frame(quantile.data, SGP=tmp.best, stringsAsFactors=FALSE)
+    }
+
+    if (!missing(percentile.cuts)){
+       cuts.best <- t(apply(cuts.data[,-1], 1, .return.best.percuts, numpercentilecuts=length(percentile.cuts)))
+       cuts.best <- round(cuts.best, digits=percuts.digits)
+       colnames(cuts.best) <- paste("CUT_", percentile.cuts, sep="")
+       quantile.data <- data.frame(quantile.data, cuts.best, stringsAsFactors=FALSE)
+    }
+
+    SGPercentiles[[tmp.path]] <- rbind(SGPercentiles[[tmp.path]], quantile.data)
+}
+
+
+### Perform goodness-of-fit analyses (if requested)
+
+if (goodness.of.fit) {
+    tmp.figure <- .goodness.of.fit(ss.data[,c("ID", tail(head(SS, -1),1))], quantile.data[,c("ID", "SGP")])
+    Goodness_of_Fit[[tmp.path]][[paste("grade_", tmp.last, sep="")]] <- tmp.figure 
+}
+
+
+### Return SGP Object
+
+list(Coefficient_Matrices=Coefficient_Matrices, 
+     Goodness_of_Fit=Goodness_of_Fit, 
+     Knots_Boundaries=Knots_Boundaries,
+     Panel_Data=Panel_Data, 
+     SGPercentiles=SGPercentiles)
 
 } ## END studentGrowthPercentile Function
-

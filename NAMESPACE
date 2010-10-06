@@ -3,6 +3,8 @@
     require(quantreg)
     require(grid)
     require(gtools)
+    require(data.table)
+    require(reshape)
     load(SGP)
 }
 
@@ -10,5 +12,3 @@ export(
     "studentGrowthPercentiles",
     "studentGrowthProjections"
 )
-
-
