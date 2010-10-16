@@ -1,4 +1,21 @@
 ==============================
+Changes in version: SGP_0.0-6.4
+
+  o Fixed bug associated with goodness-of-fit table production when no SGPs are requested.
+
+Changes in version: SGP_0.0-6.3
+
+  o Fixed issue with argument calculate.sgps in studentGrowthPercentile function.
+
+Changes in version: SGP_0.0-6.2
+
+  o Cleaned up documentation.
+  o Corrected data.table bug in studentGrowthProjections.
+
+Changes in version: SGP_0.0-6.1
+
+  o Fixed scoping issue with data.table implementation in studentGrowthProjections.
+
 Changes in version: SGP_0.0-6
 
   o studentGrowthPercentiles and studentGrowthProjections function now produce a list with results (Knot_Boundaries, Coefficient_Matrices, Goodness_of_Fit, SGPercentiles, SGProjections) embedded.

@@ -1,6 +1,6 @@
 Package: SGP
-Version: 0.0-6
-Date: 2010-09-30
+Version: 0.0-6.4
+Date: 2010-10-16
 Title: Student Growth Percentile and Percentile Growth
         Projection/Trajectory Functions
 Depends: R (>= 2.7.0), splines, quantreg, grid, gtools, data.table,
@@ -13,7 +13,7 @@ Description: Functions to calculate student growth percentiles and
         percentile growth projections/trajectories for students using
         large scale, longitudinal assessment data.  Functions use
         quantile regression to estimate the conditional density
-        associated with each students achievement history.  Percentile
+        associated with each student's achievement history.  Percentile
         growth projections/trajectories are calculated using the
         coefficient matrices derived from the quantile regression
         analyses and specify what percentile growth is required for
@@ -23,6 +23,6 @@ LazyData: Yes
 License: file LICENSE
 Repository: CRAN
 Repository/R-Forge/Project: sgp
-Repository/R-Forge/Revision: 17
-Date/Publication: 2010-10-06 06:30:05
-Packaged: 2010-10-04 20:39:57 UTC; rforge
+Repository/R-Forge/Revision: 36
+Date/Publication: 2010-10-21 10:48:42
+Packaged: 2010-10-18 20:59:30 UTC; rforge

@@ -5,7 +5,8 @@
 \description{
 A dataset comprising a subset of five years of state assessment reading data suitable for student growth percentile
 and percentile growth projection/trajectory analyses. The dataset is used in examples provided in the documentation
-for the \code{studentGrowthPercentiles} and \code{studentGrowthProjections} functions and serves as an exemplar for user construction 
+for the \code{studentGrowthPercentiles} and \cr
+\code{studentGrowthProjections} functions, and serves as an exemplar for user construction 
 of their own datasets for growth percentile analyses. 
 }
 \usage{data(sgpData)}
