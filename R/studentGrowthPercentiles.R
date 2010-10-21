@@ -114,10 +114,7 @@ merge.all <- function(.list, ...){
 .create_taus <- function(sgp.quantiles) {
       if (is.character(sgp.quantiles)) {
          taus <- switch(sgp.quantiles,
-                        PERCENTILES = (1:100-0.5)/100,
-                        DECILES     = 1:10/10,
-                        QUINTILES   = 1:5/5,
-                        QUARTILES   = 1:4/4)
+                        PERCENTILES = (1:100-0.5)/100)
       }
 
       if (is.numeric(sgp.quantiles)) {
@@ -301,11 +298,11 @@ if (!missing(use.my.coefficient.matrices)) {
 }
 if (is.character(sgp.quantiles)) {
      sgp.quantiles <- toupper(sgp.quantiles)
-     if (!(sgp.quantiles %in% c("PERCENTILES", "DECILES", "QUINTILES", "QUARTILES"))) {
-          stop("Character options for sgp.quantiles include Percentiles, Deciles, Quintiles, Quartiles. Other options available by specifying a numeric quantity. See help page for details.")
+     if (sgp.quantiles != "PERCENTILES") {
+          stop("Character options for sgp.quantiles include only Percentiles at this time. Other options available by specifying a numeric quantity. See help page for details.")
 }} 
 if (is.numeric(sgp.quantiles)) {
-     if (!(all(sgp.quantiles > 0) & all(sgp.quantiles < 1))) {
+     if (!(all(sgp.quantiles > 0 & sgp.quantiles < 1))) {
           stop("Specify sgp.quantiles as as a vector of probabilities between 0 and 1.")
 }}
 if (!missing(percentile.cuts)) {
@@ -315,7 +312,9 @@ if (!missing(percentile.cuts)) {
      if (!all(percentile.cuts %in% 0:100)) {
           stop("Specified percentile.cuts must be integers between 0 and 100.")
 }}
-
+if (!calculate.sgps & goodness.of.fit) {
+     warning("Goodness-of-Fit tables only produced when calculating SGPs.")
+}
 
 ### Create object to store the studentGrowthPercentiles objects
 
@@ -448,22 +447,9 @@ if (calculate.sgps) {
             tmp.percentile.cuts[[j]] <- .get.percentile.cuts(tmp.predictions, tmp.data)
          }
     }
-
     quantile.data <- merge.all(tmp.quantiles, all=TRUE)
-}
-
-
-### Merge in percentile cut (if requested)
-
-if (!missing(percentile.cuts)) {
-    cuts.data <- merge.all(tmp.percentile.cuts, all=TRUE)
-}
-
-
-### Calculate highest order growth quantile and percentile cuts (if requested)
-
-if (calculate.sgps) {
     tmp.best <- apply(quantile.data, 1, .return.best.sgp)
+
     if (missing(print.other.gp)) {
        quantile.data <- data.frame(ID=quantile.data$ID, SGP=tmp.best, stringsAsFactors=FALSE)
     } else {
@@ -471,6 +457,7 @@ if (calculate.sgps) {
     }
 
     if (!missing(percentile.cuts)){
+       cuts.data <- merge.all(tmp.percentile.cuts, all=TRUE)
        cuts.best <- t(apply(cuts.data[,-1], 1, .return.best.percuts, numpercentilecuts=length(percentile.cuts)))
        cuts.best <- round(cuts.best, digits=percuts.digits)
        colnames(cuts.best) <- paste("CUT_", percentile.cuts, sep="")
@@ -478,16 +465,12 @@ if (calculate.sgps) {
     }
 
     SGPercentiles[[tmp.path]] <- rbind(SGPercentiles[[tmp.path]], quantile.data)
-}
 
-
-### Perform goodness-of-fit analyses (if requested)
-
-if (goodness.of.fit) {
-    tmp.figure <- .goodness.of.fit(ss.data[,c("ID", tail(head(SS, -1),1))], quantile.data[,c("ID", "SGP")])
-    Goodness_of_Fit[[tmp.path]][[paste("grade_", tmp.last, sep="")]] <- tmp.figure 
-}
-
+    if (goodness.of.fit) {
+        tmp.figure <- .goodness.of.fit(ss.data[,c("ID", tail(head(SS, -1),1))], quantile.data[,c("ID", "SGP")])
+        Goodness_of_Fit[[tmp.path]][[paste("grade_", tmp.last, sep="")]] <- tmp.figure 
+    }
+} ## End if calculate.sgps
 
 ### Return SGP Object
 

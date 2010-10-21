@@ -150,6 +150,9 @@ function(panel.data,                                   ## REQUIRED  A List objec
 
 .get.trajectories.and.cuts <- function(percentile.trajectories, trajectories.tf, cuts.tf, projection.unit=projection.unit) {
 
+    percentile.trajectories$ID <- as.integer(percentile.trajectories$ID) 
+    percentile.trajectories <- data.table(percentile.trajectories, key="ID")
+
     if (trajectories.tf) {
        traj.arg <- paste("percentile.trajectories[, as.list(round(c(",paste(colnames(percentile.trajectories)[-1], "[c(", 
                           paste(percentile.trajectory.values+1, collapse=","), ")]", sep="", collapse=", "), "), digits=", projcuts.digits, ")), by=ID]", sep="")
@@ -352,8 +355,7 @@ grade.projection.sequence.priors <- .get.grade.projection.sequence.priors(grade.
                                                                           max.order.tf=missing(max.order.for.progression)) 
 
 percentile.trajectories <- .get.percentile.trajectories(ss.data)
-percentile.trajectories$ID <- as.integer(percentile.trajectories$ID)  #### CODE to REMOVE when data.table is better integrated
-percentile.trajectories <- data.table(percentile.trajectories, key="ID")  #### CODE to REMOVE when data.table is better integrated
+
 
 ### Select specific percentile trajectories and calculate cutscores
 
@@ -370,9 +372,7 @@ trajectories.and.cuts <- .get.trajectories.and.cuts(percentile.trajectories,
 
 if (is.null(SGProjections[[tmp.path]])) SGProjections[[tmp.path]] <- .unget.data.table(as.data.table(trajectories.and.cuts), ss.data)
 else SGProjections[[tmp.path]] <- rbind.fill(SGProjections[[tmp.path]], .unget.data.table(as.data.table(trajectories.and.cuts), ss.data))
-print(head(SGProjections[[tmp.path]]))
-print(head(ss.data))
-#SGProjections[[tmp.path]] <- .unget.data.table(as.data.table(SGProjections[[tmp.path]]), ss.data)
+
 
 ### Return SGP Object
 
