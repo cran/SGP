@@ -34,9 +34,10 @@ studentGrowthPercentiles(panel.data,
   from earliest to most recent, are the next variables/columns, and student scale score variables for each year, from earliest to latest, are the remaining 
   variables/columns. See \code{\link{sgpData}} for an exemplar data set. NOTE: The column position of the variables IS IMPORTANT, NOT the names of the variables. 
   }
-  \item{sgp.labels}{REQUIRED. A list, \code{sgp.labels}, of the form  \code{list(my.year= ,} \cr
-  \code{my.subject= )}. The user-specified values are used to save the student growth percentiles, coefficient matrices, knots/boundaries, and goodness of fit results in an orderly fashion using an appropriate combination of year & 
-  subject.
+  \item{sgp.labels}{REQUIRED. A list, \code{sgp.labels}, of the form  \code{list(my.year= ,} \cr 
+  \code{my.subject= )} or \code{list(my.year= , my.subject= , my.grade)}. The user-specified values are used to save the student growth percentiles, 
+  coefficient matrices, knots/boundaries, and goodness of fit results in an orderly fashion using an appropriate combination of year & 
+  subject & grade.
   }
   \item{panel.data.vnames}{Vector of variables to use in student growth percentile calculations. If not specified, function attempts to use all available variables.
   }
@@ -121,32 +122,103 @@ Koenker, R. (2005). \emph{Quantile regression}. Cambridge: Cambridge University 
 
 
 \examples{
-### Calculate 4th grade student growth percentiles
+## Calculate 4th grade student growth percentiles using included sgpData
 
-my.sgpData <- studentGrowthPercentiles(panel.data=sgpData,
+sgp_g4 <- studentGrowthPercentiles(panel.data=sgpData,
                 sgp.labels=list(my.year=2010, my.subject="Reading"),
                 percentile.cuts=c(1,35,65,99),
-                grade.progression=3:4)
+                subset.grade=4,
+                num.prior=1)
 
+## NOTE: \code{grade.progression} can be used in place of \code{subset.grade} and \code{num.prior} 
+ 
+sgp_g4_v2 <- studentGrowthPercentiles(panel.data=sgpData,
+                   sgp.labels=list(my.year=2010, my.subject="Reading"),
+                   percentile.cuts=c(1,35,65,99),
+                   grade.progression=c(3,4))
 
-## Loop to calculate all SGPs for all grades without percentile cuts
+identical(sgp_g4$SGPercentiles, sgp_g4_v2$SGPercentiles)
+
 \dontrun{
+## NOTE: Goodness of Fit results are stored as a graphical object in the
+## Goodness_of_Fit slot. To view or save (using any R ouput device) try:
+
+grid.draw(sgp_g4$Goodness_of_Fit$READING.2010$GRADE_4)
+
+pdf(file="Grade_4_Reading_2010_GOF.pdf", width=8.5, height=4.5)
+   grid.draw(sgp_g4$Goodness_of_Fit$READING.2010$GRADE_4)
+dev.off()
+
+# Other grades
+
+sgp_g5 <- studentGrowthPercentiles(panel.data=sgpData,
+                sgp.labels=list(my.year=2010, my.subject="Reading"),
+                percentile.cuts=c(1,35,65,99),
+                grade.progression=3:5)
+
+sgp_g6 <- studentGrowthPercentiles(panel.data=sgpData,
+                sgp.labels=list(my.year=2010, my.subject="Reading"),
+                percentile.cuts=c(1,35,65,99),
+                grade.progression=3:6)
+
+sgp_g7 <- studentGrowthPercentiles(panel.data=sgpData,
+                sgp.labels=list(my.year=2010, my.subject="Reading"),
+                percentile.cuts=c(1,35,65,99),
+                grade.progression=3:7)
+
+sgp_g8 <- studentGrowthPercentiles(panel.data=sgpData,
+                sgp.labels=list(my.year=2010, my.subject="Reading"),
+                percentile.cuts=c(1,35,65,99),
+                grade.progression=4:8)
+
+## All output of studentGrowthPercentiles (e.g., coefficient matrices) is contained in the object
+## See, for example, names(sgp_g8), for all included objects
+## Results are stored in the slot SGPercentiles
+
+# Combine all results
+
+sgp_all <- rbind(sgp_g4$SGPercentiles,
+                 sgp_g5$SGPercentiles,
+                 sgp_g6$SGPercentiles,
+                 sgp_g7$SGPercentiles,
+                 sgp_g8$SGPercentiles)
+
+# Save SGP results to .csv file
+
+write.csv(sgp_all, file="sgp_all.csv", row.names=FALSE, quote=FALSE, na="")
+
+
+## NOTE: studentGrowthPercentiles ADDs results to the current SGP object.
+## This allows one to "recycle" the object for multiple grades and subjects as desired 
+
+# Loop to calculate all SGPs for all grades without percentile cuts
 
 my.grade.sequences <- list(3:4, 3:5, 3:6, 3:7, 4:8)
+my.sgpData <- list(Panel_Data=sgpData)   ### Put sgpData into Panel_Data slot
 
 for (i in seq_along(my.grade.sequences)) {
-     my.sgpData <- studentGrowthPercentiles(panel.data=sgpData,
+     my.sgpData <- studentGrowthPercentiles(panel.data=my.sgpData,
                      sgp.labels=list(my.year=2010, my.subject="Reading"),
                      grade.progression=my.grade.sequences[[i]])
 }
+
 #  Save Student Growth Percentiles results to a .csv file:
 
 write.csv(my.sgpData$SGPercentiles$READING.2010, 
-file= "2010_Reading_SGPercentiles.csv", row.names=FALSE, quote=FALSE)}
+file="2010_Reading_SGPercentiles.csv", row.names=FALSE, quote=FALSE, na="")
+
+# Create pdfs of all Goodness of Fit results:
+
+for (i in names(my.sgpData$Goodness_of_Fit$READING.2010)) {
+    pdf(file=paste(i, "_Reading_2010_GOF.pdf", sep=""), width=8.5, height=4.5)
+       grid.draw(my.sgpData[["Goodness_of_Fit"]][["READING.2010"]][[i]])
+    dev.off()
+}
+
 
 ## Loop to calculate all SGPs for all grades using 2006 to 2009 data 
-## (embedding results in my.sgpData from previous example)
-\dontrun{
+## Using pre-calculated SGP matrices. Embedding results in my.sgpData 
+## from previous example.
 
 my.grade.sequences <- list(3:4, 3:5, 3:6, 4:7, 5:8)
 
@@ -158,10 +230,6 @@ for (i in seq_along(my.grade.sequences)) {
                      sgp.labels=list(my.year=2009, my.subject="Reading"),
                      grade.progression=my.grade.sequences[[i]])
 }
-#  Save Student Growth Percentiles results to a .csv file:
-
-write.csv(my.sgpData$SGPercentiles$READING.2009, 
-file= "2010_Reading_SGPercentiles.csv", row.names=FALSE, quote=FALSE)
 }}
 
 \keyword{ misc }
