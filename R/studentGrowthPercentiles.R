@@ -49,14 +49,21 @@ merge.all <- function(.list, ...){
                                     as.numeric(x[best.block.start + 0:(numpercentilecuts-1)])
 }
 
+.create.path <- function(labels) {
+	toupper(sub('\\.+$', '', do.call(paste, c(labels[c(2,1,3)], sep="."))))
+}
+
 .create.knots.boundaries <- function(data, by.grade) {
                         tmp.list <- vector('list', 3*length(tmp.gp))
                         if (by.grade) {
-                         tmp.stack <- data.frame(GRADE=stack(lapply(data[,2:(2+num.panels-1)], as.character))[,1], SCORE=stack(data[,(2+num.panels):(2+2*num.panels-1)])[,1]) 
+                         tmp.stack <- data.frame(GRADE=as.vector(sapply(data[,2:(2+num.panels-1)], as.character)), 
+                                                 SCORE=as.vector(sapply(data[,(2+num.panels):(2+2*num.panels-1)], as.numeric))) 
                         } else {
-                         tmp.stack <- data.frame(GRADE=rep(tmp.gp, each=dim(data)[1]), SCORE=stack(data[,(2+2*num.panels-1-length(tmp.gp)+1):(2+2*num.panels-1)])[,1])
+                         tmp.stack <- data.frame(GRADE=rep(tmp.gp, each=dim(data)[1]), 
+                                                 SCORE=as.vector(sapply(data[,(2+2*num.panels-1-length(tmp.gp)+1):(2+2*num.panels-1)], as.numeric)))
                         }
-                        for (i in seq_along(tmp.gp)) {
+ 
+                       for (i in seq_along(tmp.gp)) {
                          tmp.list[[3*i-2]] <- round(as.vector(quantile(subset(tmp.stack, tmp.stack$GRADE==tmp.gp[i])[,2], probs=knot.cut.percentiles, na.rm=T)), digits=3)
                          tmp.list[[3*i-1]] <- round(as.vector(extendrange(subset(tmp.stack, tmp.stack$GRADE==tmp.gp[i])[,2], f=0.1)), digits=3)  
                          tmp.list[[3*i]] <- round(as.vector(extendrange(subset(tmp.stack, tmp.stack$GRADE==tmp.gp[i])[,2], f=0.0)), digits=3)  
@@ -67,16 +74,15 @@ merge.all <- function(.list, ...){
 
 .get.panel.data <- function(data, k, by.grade) {
                str1 <- paste(" & !is.na(", tail(SS, 1), ")", sep="")
-               str2 <- paste(" & ", tail(GD, 1), "==", tmp.last, sep="")
+               str2 <- paste(" & ", tail(GD, 1), "== \"", tmp.last, "\"", sep="")
                str3 <- tail(SS, 1)
-
                for (i in 2:(k+1)) {
                     str1 <- paste(str1, " & !is.na(", rev(SS)[i], ")", sep="")
-                    str2 <- paste(str2, " & ", rev(GD)[i], "==", rev(tmp.gp)[i], sep="")
+                    str2 <- paste(str2, " & ", rev(GD)[i], "== \"", rev(tmp.gp)[i], "\"", sep="")
                     str3 <- paste(rev(SS)[i], ", ", str3, sep="")
                }
                if (by.grade) {
-                  eval(parse(text=paste("return(subset(data,", substring(str1, 3), str2, ", select=c(ID, ", str3 ,")))", sep="")))
+        	  eval(parse(text=paste("return(subset(data,", substring(str1, 3), str2, ", select=c(ID, ", str3 ,")))", sep="")))
                } else {
                   eval(parse(text=paste("return(subset(data,", substring(str1, 3), ", select=c(ID, ", str3 ,")))", sep="")))
                }
@@ -96,14 +102,14 @@ merge.all <- function(.list, ...){
 
 .check.knots.boundaries <- function(names, grade) {
                                      tmp <- do.call(rbind, strsplit(names, "_"))
-                                     if (!grade %in% as.numeric(tmp[tmp[,1]=="knots", 2])) stop(paste("knots_", grade, " not found in Knot_Boundaries.", sep=""))
-                                     if (!grade %in% as.numeric(tmp[tmp[,1]=="boundaries", 2])) stop(paste("boundaries_", grade, " not found in Knot_Boundaries.", sep=""))                           
+                                     if (!grade %in% tmp[tmp[,1]=="knots", 2]) stop(paste("knots_", grade, " not found in Knot_Boundaries.", sep=""))
+                                     if (!grade %in% tmp[tmp[,1]=="boundaries", 2]) stop(paste("boundaries_", grade, " not found in Knot_Boundaries.", sep=""))                           
 }
 
 .check.my.coefficient.matrices <- function(names, grade, order) {
                                      tmp <- do.call(rbind, strsplit(names, "_"))
-                                     if (!grade %in% as.numeric(tmp[,2])) stop(paste("Coefficient matrix associated with grade ", grade, " not found.", sep=""))
-                                     if (!order %in% as.numeric(tmp[tmp[,2]==grade,3])) stop(paste("Coefficient matrix associated with grade ", grade, "order ", order, " not found.", sep=""))
+                                     if (!grade %in% tmp[,2]) stop(paste("Coefficient matrix associated with grade ", grade, " not found.", sep=""))
+                                     if (!order %in% tmp[tmp[,2]==grade,3]) stop(paste("Coefficient matrix associated with grade ", grade, "order ", order, " not found.", sep=""))
 }
 
 .get.max.matrix.order <- function(names, grade) {
@@ -207,8 +213,10 @@ merge.all <- function(.list, ...){
                         viewport(layout.pos.row=2, layout.pos.col=2, xscale=c(-25,110), yscale=c(-8,130), name="qq"))
 
    grobs <- gTree(childrenvp=layout.vp,
+	          name=paste(sgp.labels$my.subject, ".", sgp.labels$my.year, ".GRADE.", tmp.last, sep=""), 
                   children=gList(gTree(vp="layout",
                   childrenvp=components,
+	          name=paste("CHILDREN.", sgp.labels$my.subject, ".", sgp.labels$my.year, ".GRADE.", tmp.last, sep=""), 
                   children=gList(
                   rectGrob(gp=gpar(fill="grey95"), vp="title"),
                   textGrob(x=0.5, y=0.65, "Student Growth Percentile Goodness-of-Fit Descriptives", gp=gpar(cex=1.25), vp="title"),
@@ -248,14 +256,14 @@ merge.all <- function(.list, ...){
 if (missing(panel.data)) {
    stop("User must supply student achievement data for student growth percentile calculations. NOTE: data is now supplied to function using panel.data argument. See help page for details.")
 }
-if (!(class(panel.data) %in% c("matrix", "data.frame", "list", "SGP"))) {
+if (!(is.matrix(panel.data) | is.list(panel.data))) {
      stop("Supplied panel.data not of a supported class. See help for details of supported classes")
 }
 if (class(panel.data) %in% c("list", "SGP") & !("Panel_Data" %in% names(panel.data))) {
      stop("Supplied panel.data missing Panel_Data")
 }
 if (class(panel.data) %in% c("list", "SGP")) {
-     if (!class(panel.data$Panel_Data) == "data.frame") {
+     if (!is.data.frame(panel.data$Panel_Data)) {
         stop("Supplied panel.data$Panel_Data is not a data.frame")   
      }
 }
@@ -263,7 +271,8 @@ if (!missing(sgp.labels)) {
      if (!is.list(sgp.labels)) {
      stop("Please specify an appropriate list of SGP function labels (sgp.labels). See help page for details.")
 }}
-if (!identical(names(sgp.labels), c("my.year", "my.subject"))) {
+if (!identical(names(sgp.labels), c("my.year", "my.subject")) &
+    !identical(names(sgp.labels), c("my.year", "my.subject", "my.grade"))) {
      stop("Please specify an appropriate list for sgp.labels. See help page for details.")
 }
 if (!missing(use.my.knots.boundaries)) {
@@ -273,10 +282,11 @@ if (!missing(use.my.knots.boundaries)) {
      if (!is.list(use.my.knots.boundaries)) {
           stop("Please specify an appropriate list for use.my.knots.boundaries. See help page for details.")
      }
-     if (!identical(names(use.my.knots.boundaries), c("my.year", "my.subject"))) {
+     if (!identical(names(use.my.knots.boundaries), c("my.year", "my.subject")) & 
+	 !identical(names(use.my.knots.boundaries), c("my.year", "my.subject", "my.grade"))) {
           stop("Please specify an appropriate list for use.my.knots.boundaries. See help page for details.")
      }
-     tmp.path.knots.boundaries <- toupper(paste(use.my.knots.boundaries$my.subject, ".", use.my.knots.boundaries$my.year, sep=""))
+     tmp.path.knots.boundaries <- .create.path(use.my.knots.boundaries)
      if (is.null(panel.data[["Knots_Boundaries"]]) | is.null(panel.data[["Knots_Boundaries"]][[tmp.path.knots.boundaries]])) {
           stop("Knots and Boundaries indicated by use.my.knots.boundaries are not included.")
      }
@@ -288,10 +298,11 @@ if (!missing(use.my.coefficient.matrices)) {
      if (!is.list(use.my.coefficient.matrices)) {
           stop("Please specify an appropriate list for use.my.coefficient.matrices. See help page for details.")
      }
-     if (!all(names(use.my.coefficient.matrices) %in% c("my.year", "my.subject"))) {
+     if (!identical(names(use.my.coefficient.matrices), c("my.year", "my.subject")) &
+	 !identical(names(use.my.coefficient.matrices), c("my.year", "my.subject", "my.grade"))) {
           stop("Please specify an appropriate list for use.my.coefficient.matrices. See help page for details.")
      }
-     tmp.path.coefficient.matrices <- toupper(paste(use.my.coefficient.matrices$my.subject, ".", use.my.coefficient.matrices$my.year, sep=""))
+     tmp.path.coefficient.matrices <- .create.path(use.my.coefficient.matrices)
      if (is.null(panel.data[["Coefficient_Matrices"]]) | is.null(panel.data[["Coefficient_Matrices"]][[tmp.path.coefficient.matrices]])) {
           stop("Coefficient matrices indicated by use.my.coefficient.matrices are not included.")
      }
@@ -319,7 +330,7 @@ if (!calculate.sgps & goodness.of.fit) {
 ### Create object to store the studentGrowthPercentiles objects
 
 sgp.labels <- lapply(sgp.labels, toupper)
-tmp.path <- paste(sgp.labels$my.subject, sgp.labels$my.year, sep=".")
+tmp.path <- .create.path(sgp.labels)
 if (missing(use.my.knots.boundaries)) {
    tmp.path.knots.boundaries <- tmp.path
 }
@@ -339,17 +350,17 @@ for (i in tmp.objects) {
 
 ### Create Panel_Data based upon class of input data
 
-if (class(panel.data) == "matrix") {
+if (is.matrix(panel.data)) {
      Panel_Data <- as.data.frame(panel.data, stringsAsFactors=FALSE)
 }
-if (class(panel.data) == "list" & class(panel.data$Panel_Data) != "data.frame") {
+if (identical(class(panel.data), "list") & !identical(class(panel.data$Panel_Data), "data.frame")) {
      Panel_Data <- as.data.frame(panel.data$Panel_Data, stringsAsFactors=FALSE)
 }
-if (class(panel.data) == "data.frame") {
+if (identical(class(panel.data), "data.frame")) {
      Panel_Data <- panel.data
 }
 if (class(panel.data) %in% c("list", "SGP")) {
-         Panel_Data <- panel.data$Panel_Data
+     Panel_Data <- panel.data$Panel_Data
 } 
 
 
@@ -464,15 +475,17 @@ if (calculate.sgps) {
        quantile.data <- data.frame(quantile.data, cuts.best, stringsAsFactors=FALSE)
     }
 
-    SGPercentiles[[tmp.path]] <- rbind(SGPercentiles[[tmp.path]], quantile.data)
+    SGPercentiles[[tmp.path]] <- rbind.fill(SGPercentiles[[tmp.path]], quantile.data)
 
     if (goodness.of.fit) {
         tmp.figure <- .goodness.of.fit(ss.data[,c("ID", tail(head(SS, -1),1))], quantile.data[,c("ID", "SGP")])
-        Goodness_of_Fit[[tmp.path]][[paste("grade_", tmp.last, sep="")]] <- tmp.figure 
+        Goodness_of_Fit[[tmp.path]][[paste("GRADE_", tmp.last, sep="")]] <- tmp.figure 
     }
 } ## End if calculate.sgps
 
-### Return SGP Object
+### Announce Completion & Return SGP Object
+
+print(paste("Finished SGP Analysis: Subject ", sgp.labels$my.subject, ", Year ", sgp.labels$my.year, ", Grade Progression ", paste(tmp.gp, collapse=", "), sep="")) 
 
 list(Coefficient_Matrices=Coefficient_Matrices, 
      Goodness_of_Fit=Goodness_of_Fit, 

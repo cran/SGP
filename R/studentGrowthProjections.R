@@ -30,6 +30,10 @@ function(panel.data,                                   ## REQUIRED  A List objec
                             else return(x)
 }
 
+.create.path <- function(labels) {
+	toupper(sub('\\.+$', '', do.call(paste, c(labels[c(2,1,3)], sep="."))))
+}
+
 .get.max.matrix.order <- function(names, grade) {
                             tmp <- do.call(rbind, strsplit(names, "_"))
                             tmp.vec <- vector("numeric", length(grade))
@@ -149,15 +153,12 @@ function(panel.data,                                   ## REQUIRED  A List objec
 }
 
 .get.trajectories.and.cuts <- function(percentile.trajectories, trajectories.tf, cuts.tf, projection.unit=projection.unit) {
-
-    percentile.trajectories$ID <- as.integer(percentile.trajectories$ID) 
-    percentile.trajectories <- data.table(percentile.trajectories, key="ID")
-
     if (trajectories.tf) {
-       traj.arg <- paste("percentile.trajectories[, as.list(round(c(",paste(colnames(percentile.trajectories)[-1], "[c(", 
-                          paste(percentile.trajectory.values+1, collapse=","), ")]", sep="", collapse=", "), "), digits=", projcuts.digits, ")), by=ID]", sep="")
-       tmp.traj <- eval(parse(text=traj.arg))
-       if (projection.unit=="GRADE") {
+      tmp.traj <- round(percentile.trajectories[seq(dim(percentile.trajectories)[1]) %% 100 %in% ((percentile.trajectory.values+1) %% 100), 
+                        colnames(percentile.trajectories)])
+      tmp.traj <- reshape(data.table(tmp.traj, CUT=rep(percentile.trajectory.values, dim(tmp.traj)[1]/length(percentile.trajectory.values))), 
+	                  idvar="ID", timevar="CUT", direction="wide")
+      if (projection.unit=="GRADE") {
            names(tmp.traj) <- c("ID", do.call(paste, c(expand.grid("P", percentile.trajectory.values, "_PROJ_SS", grade.projection.sequence), sep="")))
        } else {
            names(tmp.traj) <- c("ID", do.call(paste, c(expand.grid("P", percentile.trajectory.values, "_PROJ_YEAR", seq_along(grade.projection.sequence)), sep="")))
@@ -166,6 +167,9 @@ function(panel.data,                                   ## REQUIRED  A List objec
        if (!cuts.tf) return(tmp.traj)
     }
     if (cuts.tf) {
+       percentile.trajectories$ID <- as.integer(percentile.trajectories$ID) 
+       percentile.trajectories <- data.table(percentile.trajectories, key="ID")
+print(head(percentile.trajectories))
        k <- 1
        cuts.arg <- character(sum(sapply(tmp.cutscores[paste("GRADE_", grade.projection.sequence, sep="")], length)))
        names.arg <- character(length(cuts.arg))
@@ -181,8 +185,10 @@ function(panel.data,                                   ## REQUIRED  A List objec
               k <- k+1
           }
        }
-       arg <- paste("as.list(c(", paste(cuts.arg, collapse=", "), "))", sep="")  
+       arg <- paste("list(", paste(cuts.arg, collapse=", "), ")", sep="")  
+print(paste("percentile.trajectories[,", arg, ", by=ID]", sep=""))
        tmp.cuts <- eval(parse(text=paste("percentile.trajectories[,", arg, ", by=ID]", sep="")))
+#stop(paste("percentile.trajectories[,", arg, ", by=ID]", sep=""))
        names(tmp.cuts) <- c("ID", names.arg)
        key(tmp.cuts) <- "ID"
        if (!trajectories.tf) {
@@ -220,10 +226,11 @@ if (missing(sgp.labels)) {
      if (!is.list(sgp.labels)) {
           stop("Please specify an appropriate list of SGP function labels (sgp.labels). See help page for details.")
      }
-     if (!(all(names(sgp.labels) %in% c("my.year", "my.subject")) & all(c("my.year", "my.subject") %in% names(sgp.labels)))) {
+     if (!identical(names(sgp.labels), c("my.year", "my.subject")) & 
+	 !identical(names(sgp.labels), c("my.year", "my.subject", "my.grade"))) {
           stop("Please specify an appropriate list for sgp.labels. See help page for details.")
      }
-     tmp.path <- toupper(paste(sgp.labels$my.subject, ".", sgp.labels$my.year, sep=""))
+     tmp.path <- .create.path(sgp.labels)
 }
 
 if (missing(grade.progression)) {
@@ -234,10 +241,11 @@ if (!missing(use.my.knots.boundaries)) {
      if (!is.list(use.my.knots.boundaries)) {
           stop("Please specify an appropriate list for use.my.knots.boundaries. See help page for details.")
      }
-     if (!identical(names(use.my.knots.boundaries), c("my.year", "my.subject"))) {
+     if (!identical(names(use.my.knots.boundaries), c("my.year", "my.subject")) &
+	 !identical(names(use.my.knots.boundaries), c("my.year", "my.subject", "my.grade"))) {
           stop("Please specify an appropriate list for use.my.knots.boundaries. See help page for details.")
      }
-     tmp.path.knots.boundaries <- toupper(paste(use.my.knots.boundaries$my.subject, ".", use.my.knots.boundaries$my.year, sep=""))
+     tmp.path.knots.boundaries <- .create.path(use.my.knots.boundaries)
      if (is.null(panel.data$Knots_Boundaries) | is.null(panel.data$Knots_Boundaries[[tmp.path.knots.boundaries]])) {
           stop("Knots and Boundaries indicated by argument use.my.knots.boundaries are not included.")
 }} else {
@@ -248,10 +256,11 @@ if (!missing(use.my.coefficient.matrices)) {
      if (!is.list(use.my.coefficient.matrices)) {
           stop("Please specify an appropriate list for use.my.coefficient.matrices. See help page for details.")
      }
-     if (!identical(names(use.my.coefficient.matrices) %in% c("my.year", "my.subject"))) {
+     if (!identical(names(use.my.coefficient.matrices), c("my.year", "my.subject")) |
+	 !identical(names(use.my.coefficient.matrices), c("my.year", "my.subject", "my.grade"))) {
           stop("Please specify an appropriate list for use.my.coefficient.matrices. See help page for details.")
      }
-     tmp.path.coefficient.matrices <- toupper(paste(use.my.coefficient.matrices$my.subject, ".", use.my.coefficient.matrices$my.year, sep=""))
+     tmp.path.coefficient.matrices <- .create.path(use.my.coefficient.matrices)
      if (is.null(panel.data$Coefficient_Matrices) | is.null(panel.data$Coefficient_Matrices[[tmp.path.coefficient.matrices]])) {
           stop("Coefficient matrices indicated by argument use.my.coefficient.matrices are not included.")
 }} else {
@@ -267,7 +276,7 @@ if (!missing(performance.level.cutscores)) {
      }}
      if (is.list(performance.level.cutscores)) {
           if (names(performance.level.cutscores) %in% "my.subject") {
-              tmp.path.cutscores <- toupper(paste(performance.level.cutscores$my.subject, sep=""))
+              tmp.path.cutscores <- toupper(performance.level.cutscores$my.subject)
               if (is.null(panel.data$Cutscores[[tmp.path.cutscores]])) {
                  stop(paste("Cutscores in path panel.data$Cutscores$", tmp.path.cutscores, " not found. See help page for details.", sep=""))
               }

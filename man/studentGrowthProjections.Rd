@@ -143,7 +143,8 @@ for (i in seq_along(my.grade.progressions)) {
 ##  Save the Student Growth Projections Results to a .csv file:
 write.csv(my.sgpData$SGProjections$READING.2010, 
 file= "2010_Reading_SGProjections.csv", row.names=FALSE, quote=FALSE)
-}}
+}
+}
 
 \keyword{ misc }
 \keyword{ models }

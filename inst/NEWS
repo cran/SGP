@@ -1,7 +1,15 @@
 ==============================
+Changes in version: SGP_0.0-6.5
+
+  o Added my.grade to sgp.labels to accomodate situations where my.year and my.subject are not unique 
+  o Fixed bugs associated with use of data.tables.
+  o Changed license to GPL-3.
+  o Fixed bug associated with argument print.other.gp=TRUE.
+
 Changes in version: SGP_0.0-6.4
 
   o Fixed bug associated with goodness-of-fit table production when no SGPs are requested.
+  o Fixed studentGrowthPercentiles function to work with character grade levels as well as numeric.
 
 Changes in version: SGP_0.0-6.3
 
