@@ -1,7 +1,17 @@
 ==============================
+Changes in version: SGP_0.0-6.6
+
+  o For use.my.knots.and.boundaries user can now supply a two letter state acronym to access embedded, baseline knots and boudaries compiled from work with states.  
+  o Fixed goodness of fit printouts so that they show appropriate number of digits.  
+  o Fixed DESCRIPTION and eliminated NAMESPACE file.  
+  o Added extensive documentation to stateData file and fixed typos.  
+  o Updated documentation.  
+  o Added date() to finishing message when studentGrowthPercentiles completes an analysis.  
+  o Added exact.grade.progression option to studentGrowthPercentiles to accomodate rare situations where one wants the exact grade progression supplied to be run. 
+
 Changes in version: SGP_0.0-6.5
 
-  o Added my.grade to sgp.labels to accomodate situations where my.year and my.subject are not unique 
+  o Added my.grade to sgp.labels to accomodate situations where my.year and my.subject are not unique. 
   o Fixed bugs associated with use of data.tables.
   o Changed license to GPL-3.
   o Fixed bug associated with argument print.other.gp=TRUE.

@@ -16,9 +16,9 @@ are calculated using the coefficient matrices derived from the student growth pe
 \tabular{ll}{
 Package: \tab SGP\cr
 Type: \tab Package\cr
-Version: \tab 0.0-6.5\cr
-Date: \tab 2010-11-18\cr
-License: \tab Creative Commons Attribution + ShareAlike (by-sa)\cr
+Version: \tab 0.0-6.6\cr
+Date: \tab 2010-12-23\cr
+License: \tab GPL-3 + LICENSE\cr
 LazyLoad: \tab yes\cr
 }
 Calculation of student growth percentiles is typically performed by grade and subject. Data for growth percentile calculation must be specifically formatted. 
