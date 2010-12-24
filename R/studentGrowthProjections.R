@@ -169,7 +169,7 @@ function(panel.data,                                   ## REQUIRED  A List objec
     if (cuts.tf) {
        percentile.trajectories$ID <- as.integer(percentile.trajectories$ID) 
        percentile.trajectories <- data.table(percentile.trajectories, key="ID")
-print(head(percentile.trajectories))
+
        k <- 1
        cuts.arg <- character(sum(sapply(tmp.cutscores[paste("GRADE_", grade.projection.sequence, sep="")], length)))
        names.arg <- character(length(cuts.arg))
@@ -186,9 +186,8 @@ print(head(percentile.trajectories))
           }
        }
        arg <- paste("list(", paste(cuts.arg, collapse=", "), ")", sep="")  
-print(paste("percentile.trajectories[,", arg, ", by=ID]", sep=""))
+
        tmp.cuts <- eval(parse(text=paste("percentile.trajectories[,", arg, ", by=ID]", sep="")))
-#stop(paste("percentile.trajectories[,", arg, ", by=ID]", sep=""))
        names(tmp.cuts) <- c("ID", names.arg)
        key(tmp.cuts) <- "ID"
        if (!trajectories.tf) {
@@ -269,10 +268,13 @@ if (!missing(use.my.coefficient.matrices)) {
 
 if (!missing(performance.level.cutscores)) {
      if (is.character(performance.level.cutscores)) {
-         if (!(performance.level.cutscores %in% state.abb)) {
-           stop("To use state cutscores, supply a two letter state abbreviation")
+         if (!(performance.level.cutscores %in% names(stateData))) {
+           stop("\nTo use state cutscores, supply an appropriate two letter state abbreviation.  \nRequested state may not be included. See help page for details.\n\n")
+         }
+         if (is.null(names(stateData[[performance.level.cutscores]][["Achievement"]][["Cutscores"]]))) {
+           stop("\nCutscores are currently not implemented for the state indicated. \nPlease contact the SGP package administrator to have your cutscores included in the package.\n\n")
          } else {
-           tmp.cutscores <- stateData$Cutscores[[performance.level.cutscores]][[toupper(sgp.labels$my.subject)]]
+           tmp.cutscores <- stateData[[performance.level.cutscores]][["Achievement"]][["Cutscores"]][[toupper(sgp.labels$my.subject)]]
      }}
      if (is.list(performance.level.cutscores)) {
           if (names(performance.level.cutscores) %in% "my.subject") {
@@ -383,7 +385,9 @@ if (is.null(SGProjections[[tmp.path]])) SGProjections[[tmp.path]] <- .unget.data
 else SGProjections[[tmp.path]] <- rbind.fill(SGProjections[[tmp.path]], .unget.data.table(as.data.table(trajectories.and.cuts), ss.data))
 
 
-### Return SGP Object
+### Announce Completion & Return SGP Object
+
+print(paste("Finished Growth Projection Analysis ", date(), ": Subject: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(grade.progression, collapse=", "), sep="")) 
 
 list(Coefficient_Matrices=panel.data$Coefficient_Matrices,
      Cutscores=Cutscores,

@@ -123,6 +123,7 @@ my.sgpData <- list(Panel_Data = sgpData)
 for (i in seq_along(my.grade.sequences)) {
      my.sgpData <- studentGrowthPercentiles(panel.data=my.sgpData,
                      sgp.labels=list(my.year=2010, my.subject="Reading"),
+                     use.my.knots.boundaries="CO",
                      grade.progression=my.grade.sequences[[i]])
 }
 
@@ -136,7 +137,7 @@ for (i in seq_along(my.grade.progressions)) {
                       projcuts.digits=0,
                       projection.unit="GRADE",
                       performance.level.cutscores="CO",
-                      percentile.trajectory.values=NULL,
+                      percentile.trajectory.values=c(25, 50, 75),
                       grade.progression=my.grade.progressions[[i]])
 }
 
