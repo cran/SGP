@@ -7,20 +7,20 @@
 
 \usage{
 studentGrowthProjections(panel.data, 
-         sgp.labels,               
-         grade.progression,       
-         max.forward.progression, 
-         max.order.for.progression,  
-         use.my.knots.boundaries,   
-         use.my.coefficient.matrices,  
-         panel.data.vnames,         
-         performance.level.cutscores, 
-         chunk.size=5000,          
-         convert.0and100=TRUE,    
-         projection.unit="YEAR",       
-         percentile.trajectory.values=1:99, 
-         isotonize=TRUE,     
-         projcuts.digits=2)
+                         sgp.labels,               
+                         grade.progression,       
+                         max.forward.progression, 
+                         max.order.for.progression,  
+                         use.my.knots.boundaries,   
+                         use.my.coefficient.matrices,  
+                         panel.data.vnames,         
+                         performance.level.cutscores, 
+                         chunk.size=5000,          
+                         convert.0and100=TRUE,    
+                         projection.unit="YEAR",       
+                         percentile.trajectory.values=1:99, 
+                         isotonize=TRUE,     
+                         projcuts.digits=2)
 }
 
 \arguments{
@@ -58,16 +58,17 @@ studentGrowthProjections(panel.data,
   }
   \item{performance.level.cutscores}{Argument for supplying performance level cutscores to be used for determining growth-to-standard percentile growth trajectory calculations. Argument accepts a two letter state acronymn (e.g., "CO") that retrieves cutscores that are automatically embedded in a data set contained in the SGP package. Argument also accepts a subject specific list of the form:
   \preformatted{
-    performance.level.cutscores <- list(MATH =
-    		        list(GRADE_3=c(cut1, cut2, cut3),
-                  GRADE_4=c(cut1, cut2, cut3),
-                  GRADE_5=c(cut1, cut2, cut3),
-                  GRADE_6=c(cut1, cut2, cut3),
-                  GRADE_7=c(cut1, cut2, cut3),
-                  GRADE_8=c(cut1, cut2, cut3)))
-   }
-  If cuts are not desired leave the cutscore unspecified, which is the default. Note that the subject name must match that provided by 
-  \code{sgp.labels}. If your state's cutscores are not included in the \code{\link{stateData}} data set or are incorrect, please contact 
+  performance.level.cutscores <- list(
+         Reading=list(GRADE_3=c(cut1, cut2, cut3),
+                      GRADE_4=c(cut1, cut2, cut3),
+                       . . .
+                      GRADE_8=c(cut1, cut2, cut3)),
+            Math=list(GRADE_3=c(cut1, cut2, cut3),
+                       . . .
+                      GRADE_7=c(cut1, cut2, cut3),
+                      GRADE_8=c(cut1, cut2, cut3)))}
+  Note that the subject name must match that provided by \code{sgp.labels}. If cuts are not desired leave the cutscore unspecified, which is the default. 
+  If your state's cutscores are not included in the \code{\link{stateData}} data set or are incorrect, please contact 
   \email{dbetebenner@nciea.org} to have them added or corrected!
   }
   \item{chunk.size}{An integer (default of 5,000) indicating the number of rows in the block of data to process separately (so that the program doesn't overwhelm memory). 
@@ -144,7 +145,7 @@ for (i in seq_along(my.grade.progressions)) {
 ##  Save the Student Growth Projections Results to a .csv file:
 write.csv(my.sgpData$SGProjections$READING.2010, 
 file= "2010_Reading_SGProjections.csv", row.names=FALSE, quote=FALSE)
-}
+}  
 }
 
 \keyword{ misc }
