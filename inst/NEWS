@@ -1,4 +1,14 @@
 ==============================
+Changes in version: SGP_0.0-6.7
+
+  o Added functionality to calculate confidence intervals (calculate.confidence.intervals) of student growth percentiles using CSEMs from state assessment data.  
+  o Added argument print.sgp.order to request that the order of the student growth percentile be provided as well as the student growth percentile.  
+  o Integrated data.table functionality into studentGrowthPercentiles function to significantly increase speed of some calculations.  
+  o Removed INDEX file from package.  
+  o studentGrowthPercentiles now converts all input scores to numeric.   
+  o Added data to stateData file.  
+
+==============================
 Changes in version: SGP_0.0-6.6
 
   o For use.my.knots.and.boundaries user can now supply a two letter state acronym to access embedded, baseline knots and boudaries compiled from work with states.  

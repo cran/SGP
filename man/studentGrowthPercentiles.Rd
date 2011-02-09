@@ -4,7 +4,8 @@
 \description{
 Function to calculate student growth percentiles using large scale assessment data. 
 Outputs growth percentiles for each student and supplies various options as function arguments.
-Results from this function are utilized to calculate percentile growth projections/trajectories.   
+Results from this function are utilized to calculate percentile growth projections/trajectories
+using the \code{\link{studentGrowthProjections}} function.   
 }
 \usage{
 studentGrowthPercentiles(panel.data,                                                    
@@ -16,7 +17,9 @@ studentGrowthPercentiles(panel.data,
                          percentile.cuts,                                
                          use.my.knots.boundaries,                       
                          use.my.coefficient.matrices,                 
-                         print.other.gp,                             
+                         calculate.confidence.intervals,
+                         print.other.gp=FALSE,                             
+                         print.sgp.order=FALSE,
                          calculate.sgps=TRUE,                                       
                          rq.method="br",                                           
                          knot.cut.percentiles=c(0.2,0.4,0.6,0.8),
@@ -70,11 +73,15 @@ studentGrowthPercentiles(panel.data,
    coefficient matrices to use for student growth percentile calculations. Can be used to calculate baseline referenced student growth percentiles or to calculate student growth percentiles for small groups of excluded students without recalculating an entire set of data. If missing, coefficient matrices are calculated based upon the provided data and stores them in \cr
  \code{panel.data$Coefficient_Matrices$my.year.my.subject} where \code{my.year} and \code{my.subject} are provided by \code{sgp.labels}.
   }
+ \item{calculate.confidence.intervals}{A list of the form \code{list(state= , confidence.quantiles= , simulation.iterations= , distribution= , round= )} specifying the \code{state} from which to use the CSEMs (note, CSEM data must be embedded in stateData set. To have your state CSEMs embedded in the \code{stateData} set, please contact the package administrator), \code{confidence.quantiles} to report from the simulated SGPs calculated for each student, \code{simulation.iterations} indicating the number of simulated SGPs to calculate, \code{distribution} indicating whether to the the normal or skew normal to calculate SGPs, and \code{round} (defaults to 1) giving the level to round to. If requested, simulations are calculated and simulated SGPs are stored in \code{panel.data$Simulated_SGPs}.
+  } 
   \item{print.other.gp}{Boolean argument (defaults to FALSE) indicating whether growth percentiles of all orders should be returned. The default returns only the highest order growth percentile for each student.
   }
-  \item{calculate.sgps}{Boolean argument (defaults to TRUE) indicating whether student growth percentiles should be calculated following coefficient matrix calculation. 
+  \item{print.sgp.order}{Boolean argument (defaults to FALSE) indicating whether the order of the growth percentile should be provided in addition to the SGP itself.
   }
-  \item{rq.method}{Argument to define the estimation method used in the quantile regression calculations. The default is the the \code{"br"} method referring to the Barrodale and Robert's l1 estimation detailed in Koenker (2005) and in the help for the quantile regression package.
+  \item{calculate.sgps}{Boolean argument (defaults to TRUE) indicating whether student growth percentiles should be calculated following coefficient matrix calculation.
+  } 
+  \item{rq.method}{Argument to define the estimation method used in the quantile regression calculations. The default is the the \code{"br"} method referring to the Barrodale and Robert's L1 estimation detailed in Koenker (2005) and in the help for the quantile regression package.
   }
   \item{knot.cut.percentiles}{Argument that specifies the quantiles to be used for calculation of B-spline knots. Default is to place knots at the 0.2, 0.4, 0.6, and 0.8 quantiles. 
   }
@@ -102,10 +109,10 @@ studentGrowthPercentiles(panel.data,
 
 \details{Typical use of the function is to submit a data frame to the function containing records of all students across all grades, allowing the function to subset 
 out specific grade progressions using \code{grade.progression}. Additional uses include using precalculated results to recalculate SGPs for baseline referencing.
-The examples provide code for use in analyzing assessment data across multiple grades. 
+\code{\link{studentGrowthPercentiles}} examples provide code for use in analyzing assessment data across multiple grades. 
 }
 
-\value{Function returns an object of class list containing the following lists: Coefficient_Matrices, Goodness_of_Fit, Knots_Boundaries, Panel_Data, SGPercentiles.
+\value{Function returns an object of class list containing objects: Coefficient_Matrices, Goodness_of_Fit, Knots_Boundaries, Panel_Data, SGPercentiles, Simulated_SGPs.
 }
 
 \references{
@@ -144,8 +151,8 @@ sgp_g4_v2 <- studentGrowthPercentiles(panel.data=sgpData,
 
 identical(sgp_g4$SGPercentiles, sgp_g4_v2$SGPercentiles)
 
-## Established state Knots and Boundaries are available in the supplied stateData file and
-## used by supplying the appropriate two letter state acronym
+## Established state Knots and Boundaries are available in the supplied stateData
+## file and used by supplying the appropriate two letter state acronym.
  
 sgp_g4_CO <- studentGrowthPercentiles(panel.data=sgpData,
                    sgp.labels=list(my.year=2010, my.subject="Reading"),
@@ -184,9 +191,9 @@ sgp_g8 <- studentGrowthPercentiles(panel.data=sgpData,
                 percentile.cuts=c(1,35,65,99),
                 grade.progression=4:8)
 
-## All output of studentGrowthPercentiles (e.g., coefficient matrices) is contained in the object
-## See, for example, names(sgp_g8), for all included objects
-## Results are stored in the slot SGPercentiles
+## All output of studentGrowthPercentiles (e.g., coefficient matrices) is contained
+## in the object.  See, for example, names(sgp_g8), for all included objects.
+## Results are stored in the slot SGPercentiles.
 
 # Combine all results
 
@@ -202,7 +209,7 @@ write.csv(sgp_all, file="sgp_all.csv", row.names=FALSE, quote=FALSE, na="")
 
 
 ## NOTE: studentGrowthPercentiles ADDs results to the current SGP object.
-## This allows one to "recycle" the object for multiple grades and subjects as desired 
+## This allows one to "recycle" the object for multiple grades and subjects as desired. 
 
 # Loop to calculate all SGPs for all grades without percentile cuts
 
@@ -230,18 +237,16 @@ for (i in names(my.sgpData$Goodness_of_Fit$READING.2010)) {
 
 
 ## Loop to calculate all SGPs for all grades using 2006 to 2009 data 
-## Using pre-calculated SGP matrices. Embedding results in my.sgpData 
-## from previous example.
 
 my.grade.sequences <- list(3:4, 3:5, 3:6, 4:7, 5:8)
 
 for (i in seq_along(my.grade.sequences)) {
-     my.sgpData <- studentGrowthPercentiles(panel.data=my.sgpData,
-                     panel.data.vnames=c("ID", "GRADE_2006", 
-                          "GRADE_2007", "GRADE_2008", "GRADE_2009",
-                          "SS_2006", "SS_2007", "SS_2008", "SS_2009"),
-                     sgp.labels=list(my.year=2009, my.subject="Reading"),
-                     grade.progression=my.grade.sequences[[i]])
+	my.sgpData_2009 <- studentGrowthPercentiles(panel.data=my.sgpData,
+		panel.data.vnames=c("ID", "GRADE_2006", 
+			"GRADE_2007", "GRADE_2008", "GRADE_2009",
+			"SS_2006", "SS_2007", "SS_2008", "SS_2009"),
+		sgp.labels=list(my.year=2009, my.subject="Reading"),
+		grade.progression=my.grade.sequences[[i]])
 }
 }
 }

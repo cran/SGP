@@ -1,14 +1,17 @@
 Package: SGP
-Version: 0.0-6.6
-Date: 2010-12-23
+Version: 0.0-6.7
+Date: 2011-2-6
 Title: Student Growth Percentile and Percentile Growth
         Projection/Trajectory Functions
-Depends: R (>= 2.7.0), data.table, grid, gtools, quantreg, plyr,
-        splines
+Author@R: c(person("Damian", "Betebenner",
+        email="dbetebenner@nciea.org"), person("Adam", "Van Iwaarden",
+        email="Vaniwaarden@colorado.edu"))
 Author: Damian W. Betebenner <dbetebenner@nciea.org>, with
-        contributions from Adam Van Iwaarden, Jonathan Weeks, Jinnie
-        Choi, Marie Huchton, Xin Wei, and Hi Shin Shim
+        contributions from Adam Van Iwaarden, Jonathan Weeks, John
+        Stewart, Jinnie Choi, Marie Huchton, Xin Wei, and Hi Shin Shim
 Maintainer: Damian W. Betebenner <dbetebenner@nciea.org>
+Depends: R (>= 2.10), data.table, grid, gtools, plyr, quantreg, sn,
+        splines
 Description: Functions to calculate student growth percentiles and
         percentile growth projections/trajectories for students using
         large scale, longitudinal assessment data.  Functions use
@@ -18,11 +21,12 @@ Description: Functions to calculate student growth percentiles and
         coefficient matrices derived from the quantile regression
         analyses and specify what percentile growth is required for
         students to reach future achievement targets.
+URL: https://r-forge.r-project.org/projects/sgp/
 LazyLoad: Yes
 LazyData: Yes
 License: GPL-3 | file LICENSE
 Repository: CRAN
 Repository/R-Forge/Project: sgp
-Repository/R-Forge/Revision: 70
-Date/Publication: 2010-12-24 15:28:09
-Packaged: 2010-12-23 21:44:02 UTC; rforge
+Repository/R-Forge/Revision: 86
+Date/Publication: 2011-02-09 10:48:01
+Packaged: 2011-02-08 21:41:21 UTC; rforge
