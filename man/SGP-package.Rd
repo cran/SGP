@@ -2,7 +2,7 @@
 \alias{SGP-package}
 \alias{SGP}
 \docType{package}
-\title{Functions to calculate student growth percentiles and percentile growth projections/trajectories following methodology found in Betebenner (2008,2009)
+\title{Functions to calculate student growth percentiles and percentile growth projections/trajectories following methodology found in Betebenner (2008, 2009)
 }
 \description{
 SGP contains two functions, \code{studentGrowthPercentiles} and \code{studentGrowthProjections}, used to calculate 
@@ -16,8 +16,8 @@ are calculated using the coefficient matrices derived from the student growth pe
 \tabular{ll}{
 Package: \tab SGP\cr
 Type: \tab Package\cr
-Version: \tab 0.0-6.7\cr
-Date: \tab 2011-2-6\cr
+Version: \tab 0.0-6.8\cr
+Date: \tab 2011-2-18\cr
 License: \tab GPL-3 + LICENSE\cr
 LazyLoad: \tab yes\cr
 }

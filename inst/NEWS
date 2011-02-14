@@ -1,4 +1,11 @@
-==============================
+Changes in version: SGP_0.0-6.8
+
+  o Includes additional dummy data set, sgpData_LONG, to be used in upcoming operational examples.
+  o Updated documentation.
+  o studentGrowthPercentiles outputs SGPs as integer instead of numeric.
+  o studentGrowthProjections outputs SGP cuts as integer instead of numeric.
+  o Fixed bug on how studentGrowthPercentiles handles panel.data supplied as a matrix.
+
 Changes in version: SGP_0.0-6.7
 
   o Added functionality to calculate confidence intervals (calculate.confidence.intervals) of student growth percentiles using CSEMs from state assessment data.  
@@ -8,7 +15,6 @@ Changes in version: SGP_0.0-6.7
   o studentGrowthPercentiles now converts all input scores to numeric.   
   o Added data to stateData file.  
 
-==============================
 Changes in version: SGP_0.0-6.6
 
   o For use.my.knots.and.boundaries user can now supply a two letter state acronym to access embedded, baseline knots and boudaries compiled from work with states.  

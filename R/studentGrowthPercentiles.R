@@ -155,7 +155,7 @@ function(panel.data,           ## REQUIRED
 			tmp[tmp==0] <- 1
 			tmp[tmp==100] <- 99
 		}
-		return(tmp)
+		return(as.integer(tmp))
 	}
 
 	.get.percentile.cuts <- function(data1) {
@@ -386,9 +386,10 @@ function(panel.data,           ## REQUIRED
 	if (is.matrix(panel.data)) {
 		Panel_Data <- as.data.frame(panel.data, stringsAsFactors=FALSE)
 	}
-	if (identical(class(panel.data), "list") & !identical(class(panel.data$Panel_Data), "data.frame")) {
-		Panel_Data <- as.data.frame(panel.data$Panel_Data, stringsAsFactors=FALSE)
-	}
+	if (identical(class(panel.data), "list")) {
+        	if (!identical(class(panel.data$Panel_Data), "data.frame")) {
+			Panel_Data <- as.data.frame(panel.data$Panel_Data, stringsAsFactors=FALSE)
+	}}
 	if (identical(class(panel.data), "data.frame")) {
 		Panel_Data <- panel.data
 	}
@@ -458,7 +459,7 @@ function(panel.data,           ## REQUIRED
 	}
 	knot.names <- names(Knots_Boundaries[[tmp.path.knots.boundaries]])
 
-### QR Calculations: coefficient matrices are saved/read into/from panel.data$Coefficient_Matrices
+	### QR Calculations: coefficient matrices are saved/read into/from panel.data$Coefficient_Matrices
 
 	if (missing(use.my.coefficient.matrices)) {
 		taus <- .create_taus(sgp.quantiles)
@@ -495,16 +496,16 @@ function(panel.data,           ## REQUIRED
 				for (k in seq(calculate.confidence.intervals$simulation.iterations)) { 
 					set.seed(k)
 					if (k==1) {
-						tmp.csem.quantiles[[j]] <- data.frame(ID=tmp.data$ID, 
-						Sim_SGP_1 <- .get.quantiles(tmp.predictions, .csem.score.simulator(unlist(tmp.data[, tail(SS,1), with=FALSE]),
-							tmp.last,
-							sgp.labels$my.subject,
-							calculate.confidence.intervals$state,
-							calculate.confidence.intervals$distribution,
-							calculate.confidence.intervals$round)))
+						tmp.csem.quantiles[[j]] <- data.frame(ID=tmp.data$ID,
+						Sim_SGP_1=.get.quantiles(tmp.predictions, .csem.score.simulator(tmp.data[[tail(SS,1)]],
+								tmp.last,
+								sgp.labels$my.subject,
+								calculate.confidence.intervals$state,
+								calculate.confidence.intervals$distribution,
+								calculate.confidence.intervals$round)))
 					} else {
 						tmp.csem.quantiles[[j]] <- cbind(tmp.csem.quantiles[[j]], 
-							.get.quantiles(tmp.predictions, .csem.score.simulator(unlist(tmp.data[, tail(SS,1), with=FALSE]),
+							.get.quantiles(tmp.predictions, .csem.score.simulator(tmp.data[[tail(SS,1)]],
 								tmp.last,
 								sgp.labels$my.subject,
 								calculate.confidence.intervals$state,
