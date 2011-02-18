@@ -1,6 +1,6 @@
 Package: SGP
-Version: 0.0-6.7
-Date: 2011-2-6
+Version: 0.0-6.8
+Date: 2011-2-18
 Title: Student Growth Percentile and Percentile Growth
         Projection/Trajectory Functions
 Author@R: c(person("Damian", "Betebenner",
@@ -27,6 +27,6 @@ LazyData: Yes
 License: GPL-3 | file LICENSE
 Repository: CRAN
 Repository/R-Forge/Project: sgp
-Repository/R-Forge/Revision: 86
-Date/Publication: 2011-02-09 10:48:01
-Packaged: 2011-02-08 21:41:21 UTC; rforge
+Repository/R-Forge/Revision: 87
+Date/Publication: 2011-02-14 20:09:38
+Packaged: 2011-02-13 21:41:56 UTC; rforge

@@ -29,10 +29,11 @@ of their own datasets for growth percentile analyses.
 
 \note{All datasets used with \code{studentGrowthPercentiles} and \code{studentGrowthProjections} must be specifically formatted as \emph{wide} format files. The first 
 variable/column is the student ID variable. The next set of columns provide the grade of the student across all the years provided in the dataset (possibly missing). 
-The last set of columns provide the scales scores of the student in the respective grades.} 
+The last set of columns provide the scales scores of the student in the respective grades. Multi-year operational analyses benefit from putting data in long format.
+See \code{sgpData_LONG} and associated documentation for a comprehensive account.} 
 
 
-\seealso{\code{\link{studentGrowthPercentiles}}, \code{\link{studentGrowthProjections}}}
+\seealso{\code{\link{studentGrowthPercentiles}}, \code{\link{studentGrowthProjections}}, \code{\link{sgpData_LONG}}}
 
-\source{Anonymized state assessment data}
+\source{Anonymized student level state assessment data}
 \keyword{datasets}

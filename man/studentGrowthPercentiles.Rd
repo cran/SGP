@@ -58,7 +58,7 @@ studentGrowthPercentiles(panel.data,
   grades, setting \code{subset.grade=5} selects out those students in grade five in the most recent year of the data. If no sub-setting is desired,
   argument do not include the \code{subset.grade} argument. If \code{grade.progression} is supplied, then a subset grade is implicitly specified.
   }
-  \item{percentile.cuts}{Additional percentile cuts (supplied as a vector) associated with each student's conditional distribution. 
+  \item{percentile.cuts}{Additional percentile cuts (supplied as a vector) between 1 and 99 associated with each student's conditional distribution. 
    Default is to provide NO growth percentile cuts (scale scores associated with those growth percentiles) for each student.
   }
   \item{use.my.knots.boundaries}{A list of the form  \code{list(my.year= , my.subject= )} vector specifying a set of pre-calculated
@@ -246,6 +246,17 @@ for (i in seq_along(my.grade.sequences)) {
 			"GRADE_2007", "GRADE_2008", "GRADE_2009",
 			"SS_2006", "SS_2007", "SS_2008", "SS_2009"),
 		sgp.labels=list(my.year=2009, my.subject="Reading"),
+		grade.progression=my.grade.sequences[[i]])
+}
+
+## Loop to calculate all SGPs for all grades WITH 90% confidence intervals 
+
+my.grade.sequences <- list(3:4, 3:5, 3:6, 4:7, 5:8)
+
+for (i in seq_along(my.grade.sequences)) {
+	my.sgpData <- studentGrowthPercentiles(panel.data=my.sgpData,
+		sgp.labels=list(my.year=2010, my.subject="Reading"),
+                calculate.confidence.intervals=list(state="CO", confidence.quantiles=c(0.05, 0.95), simulation.iterations=5, distribution="Normal", round=1),
 		grade.progression=my.grade.sequences[[i]])
 }
 }
