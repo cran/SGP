@@ -1,26 +1,29 @@
 `studentGrowthPercentiles` <-
 function(panel.data,           ## REQUIRED
-        sgp.labels,            ## REQUIRED
-        panel.data.vnames,
-        grade.progression,
-        num.prior,
-        subset.grade,
-        percentile.cuts,
-        use.my.knots.boundaries,
-        use.my.coefficient.matrices,
-        calculate.confidence.intervals, 
-        print.other.gp=FALSE,
-        print.sgp.order=FALSE, 
-        calculate.sgps=TRUE, 
-        rq.method="br",
-        knot.cut.percentiles=c(0.2,0.4,0.6,0.8),
-        exact.grade.progression.sequence=FALSE,
-        convert.0and100=TRUE,
-        sgp.quantiles="Percentiles",
-        percuts.digits=0,
-        isotonize=TRUE,
-        convert.using.loss.hoss=TRUE,
-        goodness.of.fit=TRUE) {
+	sgp.labels,            ## REQUIRED
+	panel.data.vnames,
+	grade.progression,
+	num.prior,
+	subset.grade,
+	percentile.cuts,
+	growth.levels, 
+	use.my.knots.boundaries,
+	use.my.coefficient.matrices,
+	calculate.confidence.intervals,
+	print.other.gp=FALSE,
+	print.sgp.order=FALSE, 
+	calculate.sgps=TRUE, 
+	rq.method="br",
+	knot.cut.percentiles=c(0.2,0.4,0.6,0.8),
+	exact.grade.progression.sequence=FALSE,
+	convert.0and100=TRUE,
+	sgp.quantiles="Percentiles",
+	percuts.digits=0,
+	isotonize=TRUE,
+	convert.using.loss.hoss=TRUE,
+	goodness.of.fit=TRUE) {
+
+	started.at=proc.time()
 
 	##########################################################
 	###
@@ -288,12 +291,32 @@ function(panel.data,           ## REQUIRED
 			stop("Please specify an appropriate list of SGP function labels (sgp.labels). See help page for details.")
 	}}
 	if (!identical(names(sgp.labels), c("my.year", "my.subject")) &
-		!identical(names(sgp.labels), c("my.year", "my.subject", "my.grade"))) {
+		!identical(names(sgp.labels), c("my.year", "my.subject", "my.extra.label"))) {
 		stop("Please specify an appropriate list for sgp.labels. See help page for details.")
 	}
 	sgp.labels <- lapply(sgp.labels, toupper)
 	tmp.path <- .create.path(sgp.labels)
 
+	if (!missing(growth.levels)) {
+		tmp.growth.levels <- list()
+		if (!is.list(growth.levels) & !is.character(growth.levels)) {
+			stop("growth.levels must be supplied as a list or character abbreviation. See help page for details.")
+		}
+		if (is.list(growth.levels)) {
+			if (!identical(names(growth.levels), c("my.cuts", "my.levels"))) {
+				stop("Please specify an appropriate list for growth.levels. See help page for details.")
+			} else {
+				tmp.growth.levels <- growth.levels
+			} 
+		}
+		if (is.character(growth.levels)) {
+			if (!growth.levels %in% names(stateData)) {
+				stop("Growth Level are currently not specified for the state indicated. Please contact the SGP package administrator to have your state's data included in the package")
+		}
+			tmp.growth.levels$my.cuts <- stateData[[growth.levels]][["Growth"]][["Cutscores"]][["Cuts"]]
+			tmp.growth.levels$my.levels <- stateData[[growth.levels]][["Growth"]][["Levels"]]
+		}
+	}
 	if (!missing(use.my.knots.boundaries)) {
 		if (!is.list(use.my.knots.boundaries) & !is.character(use.my.knots.boundaries)) {
 			stop("use.my.knots.boundaries must be supplied as a list or character abbreviation. See help page for details.")
@@ -303,7 +326,7 @@ function(panel.data,           ## REQUIRED
 				stop("use.my.knots.boundaries is only appropriate when panel data is of class list or SGP. See help page for details.")
 			}
 			if (!identical(names(use.my.knots.boundaries), c("my.year", "my.subject")) & 
-				!identical(names(use.my.knots.boundaries), c("my.year", "my.subject", "my.grade"))) {
+				!identical(names(use.my.knots.boundaries), c("my.year", "my.subject", "my.extra.label"))) {
 					stop("Please specify an appropriate list for use.my.knots.boundaries. See help page for details.")
 			}
 			tmp.path.knots.boundaries <- .create.path(use.my.knots.boundaries)
@@ -317,9 +340,9 @@ function(panel.data,           ## REQUIRED
 		}
      		tmp.path.knots.boundaries <- tmp.path    
 		}
-		} else {
-     			tmp.path.knots.boundaries <- tmp.path
-		}
+	} else {
+     		tmp.path.knots.boundaries <- tmp.path
+	}
 
 	if (!missing(use.my.coefficient.matrices)) {
 		if (!(class(panel.data) %in% c("list", "SGP"))) {
@@ -329,7 +352,7 @@ function(panel.data,           ## REQUIRED
 			stop("Please specify an appropriate list for use.my.coefficient.matrices. See help page for details.")
 		}
 		if (!identical(names(use.my.coefficient.matrices), c("my.year", "my.subject")) & 
-			!identical(names(use.my.coefficient.matrices), c("my.year", "my.subject", "my.grade"))) {
+			!identical(names(use.my.coefficient.matrices), c("my.year", "my.subject", "my.extra.label"))) {
 				stop("Please specify an appropriate list for use.my.coefficient.matrices. See help page for details.")
 		}
 		tmp.path.coefficient.matrices <- .create.path(use.my.coefficient.matrices)
@@ -491,18 +514,18 @@ function(panel.data,           ## REQUIRED
 		for (j in seq_along(orders)) {
 			tmp.data <- .get.panel.data(ss.data, orders[j], by.grade)
 			tmp.predictions <- .get.percentile.predictions(tmp.data)
-			tmp.quantiles[[j]] <- data.table(ID=tmp.data$ID, ORDER=j, SGP=.get.quantiles(tmp.predictions, unlist(tmp.data[,tail(SS,1), with=FALSE])))
+			tmp.quantiles[[j]] <- data.table(ID=tmp.data$ID, ORDER=j, SGP=.get.quantiles(tmp.predictions, tmp.data[[tail(SS,1)]]))
 			if (!missing(calculate.confidence.intervals)) {
 				for (k in seq(calculate.confidence.intervals$simulation.iterations)) { 
 					set.seed(k)
 					if (k==1) {
 						tmp.csem.quantiles[[j]] <- data.frame(ID=tmp.data$ID,
-						Sim_SGP_1=.get.quantiles(tmp.predictions, .csem.score.simulator(tmp.data[[tail(SS,1)]],
-								tmp.last,
-								sgp.labels$my.subject,
-								calculate.confidence.intervals$state,
-								calculate.confidence.intervals$distribution,
-								calculate.confidence.intervals$round)))
+						SGP_SIM_1=.get.quantiles(tmp.predictions, .csem.score.simulator(tmp.data[[tail(SS,1)]],
+							tmp.last,
+							sgp.labels$my.subject,
+							calculate.confidence.intervals$state,
+							calculate.confidence.intervals$distribution,
+							calculate.confidence.intervals$round)))
 					} else {
 						tmp.csem.quantiles[[j]] <- cbind(tmp.csem.quantiles[[j]], 
 							.get.quantiles(tmp.predictions, .csem.score.simulator(tmp.data[[tail(SS,1)]],
@@ -511,7 +534,7 @@ function(panel.data,           ## REQUIRED
 								calculate.confidence.intervals$state,
 								calculate.confidence.intervals$distribution,
 								calculate.confidence.intervals$round)))
-								names(tmp.csem.quantiles[[j]])[k+1]<-paste("Sim_SGP_", k, sep="")
+								names(tmp.csem.quantiles[[j]])[k+1]<-paste("SGP_SIM", k, sep="_")
 					}
 				} ## END k loop
 			} ## END CSEM analysis
@@ -531,8 +554,13 @@ function(panel.data,           ## REQUIRED
 			if (print.sgp.order) {
 				quantile.data <- quantile.data[c(which(!duplicated(quantile.data))[-1]-1, nrow(quantile.data))]
 			} else {
-				quantile.data <- quantile.data[c(which(!duplicated(quantile.data))[-1]-1, nrow(quantile.data)) ,c("ID", "SGP"), with=FALSE]
+				quantile.data <- quantile.data[c(which(!duplicated(quantile.data))[-1]-1, nrow(quantile.data)), c("ID", "SGP"), with=FALSE]
 			}
+		}
+
+		if (!missing(growth.levels)) {
+			quantile.data <- data.table(quantile.data, SGP_LEVEL=factor(findInterval(quantile.data$SGP, tmp.growth.levels$my.cuts), 
+				labels=tmp.growth.levels$my.levels))
 		}
 
 		if (!missing(calculate.confidence.intervals)) {
@@ -562,13 +590,15 @@ function(panel.data,           ## REQUIRED
 
 	### Announce Completion & Return SGP Object
 
-	print(paste("Finished SGP Analysis ", date(), ". Subject: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(tmp.gp, collapse=", "), sep="")) 
+	message(paste("Finished SGP Student Growth Percentile Analysis ", date(), " in ", timetaken(started.at), ".\nSubject: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(tmp.gp, collapse=", "), " ", sgp.labels$my.extra.label, sep="")) 
 
-	list(Coefficient_Matrices=Coefficient_Matrices, 
+	list(Coefficient_Matrices=Coefficient_Matrices,
+		Cutscores=panel.data[["Cutscores"]], 
 		Goodness_of_Fit=Goodness_of_Fit, 
 		Knots_Boundaries=Knots_Boundaries,
 		Panel_Data=Panel_Data, 
 		SGPercentiles=SGPercentiles,
+		SGProjections=panel.data[["SGProjections"]],
 		Simulated_SGPs=Simulated_SGPs)
 
 } ## END studentGrowthPercentile Function

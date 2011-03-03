@@ -8,7 +8,8 @@ assessment name and abbreviation, growth cutscores and labels, information on ve
 at the state level. The cutscores, in particular, are currently used by the \code{\link{studentGrowthProjections}} function to calculate growth-to-standard/projection 
 values by supplying a state's two letter acronym to the argument \code{performance.level.cutscores}. In the future, this list will expand to include other relevant data 
 about the state assessment system. States currently included in the data set are Arizona (AZ), Colorado (CO), Connecticut (CT), Idaho (ID), Indiana (IN), 
-Maine (ME), Massachusetts (MA), Missouri (MO), Nevada (NV), New Hampshire (NH), New York (NY), Rhode Island (RI), Vermont (VT), Virginia (VA), and Wisconsin (WI).  
+Maine (ME), Massachusetts (MA), Missouri (MO), Nevada (NV), New Hampshire (NH), New York (NY), Rhode Island (RI), Vermont (VT), Virginia (VA), Wisconsin (WI) and
+Demonstration (DEMO).  
 }
 \usage{stateData}
 
