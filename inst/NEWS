@@ -1,3 +1,17 @@
+Changes in version: SGP_0.0-6.9
+
+  o Added additional argument to studentGrowthPercentiles, growth.levels, allowing user to get a variable indicating the level of growth based upon state or user specified cuts and labels.
+  o Changed my.grade argument in sgp.labels to my.extra.label to better reflect nature of argument. This argument is now available in use.my.knots.boundaries and use.my.coefficient.matrices in both the studentGrowthPercentiles and studentGrowthProjections functions.
+  o Changed output names of studentGrowthProjections results to better indicate GRADE.
+  o Changed compression on stateData file to xz.
+  o Changed default values of projection.unit and projcut.digits in studentGrowthProjections to GRADE and 0, respectively.
+  o Added wrapper functions prepareSGP, analyzeSGP, combineSGP, and summarizeSGP to facilitate operational SGP analyses.
+  o use.my.knots.boundaries with studentGrowthProjections now allows state to be supplied.
+  o Added time elapsed to studentGrowthPercentiles and studentGrowthProjections print out.
+  o Fixed bugs and updated documentation/examples.
+  o Added requirement to data.table depends for version >= 1.5.3.
+  o Changed default of percentile.trajectory.values from 1:99 to NULL (which seemed much more sensible).
+
 Changes in version: SGP_0.0-6.8
 
   o Includes additional dummy data set, sgpData_LONG, to be used in upcoming operational examples.
