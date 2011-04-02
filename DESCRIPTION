@@ -1,17 +1,24 @@
 Package: SGP
-Version: 0.0-6.9
-Date: 2011-3-3
-Title: Student Growth Percentile and Percentile Growth
-        Projection/Trajectory Functions
+Version: 0.0-7.0
+Date: 2011-4-2
+Title: SGP: An R Package for the Calculation and Visualization of
+        Student Growth Percentiles.
 Author@R: c(person("Damian", "Betebenner",
         email="dbetebenner@nciea.org"), person("Adam", "Van Iwaarden",
         email="Vaniwaarden@colorado.edu"))
 Author: Damian W. Betebenner <dbetebenner@nciea.org>, with
         contributions from Adam Van Iwaarden, Jonathan Weeks, John
-        Stewart, Jinnie Choi, Marie Huchton, Xin Wei, and Hi Shin Shim
+        Stewart, Jinnie Choi, Xin Wei, and Hi Shin Shim. With special
+        thanks to State Department of Education analysts: Rebecca Gau
+        (Arizona), Marie Huchton (Colorado), Dr. Wes Bruce (Indiana),
+        Robert Hochsegang (Indiana), Robert Lee (Massachusetts), Soo
+        Yeon Cho (Missouri), Ana Karantonis (Rhode Island), Dr. Deborah
+        Jonas (Virginia), Dr. Philip Olsen (Wisconsin), Nick Stroud
+        (Wisconsin).
 Maintainer: Damian W. Betebenner <dbetebenner@nciea.org>
-Depends: R (>= 2.10), data.table (>= 1.5.3), foreach, grid, gtools,
-        plyr, quantreg, sn, splines
+Depends: R (>= 2.10), colorspace, data.table (>= 1.5.3), foreach, grid,
+        gridBase, gtools, plyr, quantreg, sn, splines
+Suggests: pdf2
 Description: Functions to calculate student growth percentiles and
         percentile growth projections/trajectories for students using
         large scale, longitudinal assessment data.  Functions use
@@ -21,12 +28,13 @@ Description: Functions to calculate student growth percentiles and
         coefficient matrices derived from the quantile regression
         analyses and specify what percentile growth is required for
         students to reach future achievement targets.
-URL: https://r-forge.r-project.org/projects/sgp/
+URL: http://cran.r-project.org/web/packages/SGP/,
+        https://r-forge.r-project.org/projects/sgp/
 LazyLoad: Yes
 LazyData: Yes
-License: GPL-3 | file LICENSE
+License: CC BY-SA 3.0 US | CC BY-NC-SA 3.0 + file LICENSE
 Repository: CRAN
 Repository/R-Forge/Project: sgp
-Repository/R-Forge/Revision: 101
-Date/Publication: 2011-03-06 09:46:32
-Packaged: 2011-03-04 21:43:09 UTC; rforge
+Repository/R-Forge/Revision: 118
+Date/Publication: 2011-04-04 09:05:28
+Packaged: 2011-04-03 20:42:54 UTC; rforge

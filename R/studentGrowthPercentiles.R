@@ -24,6 +24,7 @@ function(panel.data,           ## REQUIRED
 	goodness.of.fit=TRUE) {
 
 	started.at=proc.time()
+        message(paste("\tStarted studentGrowthPercentiles", date()))
 
 	##########################################################
 	###
@@ -57,9 +58,9 @@ function(panel.data,           ## REQUIRED
 		}
  
 		for (i in seq_along(tmp.gp)) {
-		tmp.list[[3*i-2]] <- round(as.vector(quantile(subset(tmp.stack, tmp.stack$GRADE==tmp.gp[i])[,2], probs=knot.cut.percentiles, na.rm=TRUE)), digits=3)
-		tmp.list[[3*i-1]] <- round(as.vector(extendrange(subset(tmp.stack, tmp.stack$GRADE==tmp.gp[i])[,2], f=0.1)), digits=3)  
-		tmp.list[[3*i]] <- round(as.vector(extendrange(subset(tmp.stack, tmp.stack$GRADE==tmp.gp[i])[,2], f=0.0)), digits=3)  
+		tmp.list[[3*i-2]] <- round(as.vector(quantile(subset(tmp.stack, tmp.stack[["GRADE"]]==tmp.gp[i])[,2], probs=knot.cut.percentiles, na.rm=TRUE)), digits=3)
+		tmp.list[[3*i-1]] <- round(as.vector(extendrange(subset(tmp.stack, tmp.stack[["GRADE"]]==tmp.gp[i])[,2], f=0.1)), digits=3)  
+		tmp.list[[3*i]] <- round(as.vector(extendrange(subset(tmp.stack, tmp.stack[["GRADE"]]==tmp.gp[i])[,2], f=0.0)), digits=3)  
 		}
 		names(tmp.list) <- paste(rep(c("knots_", "boundaries_", "loss.hoss_"), length(tmp.gp)), rep(tmp.gp, each=3), sep="")
 		return(tmp.list) 
@@ -75,7 +76,7 @@ function(panel.data,           ## REQUIRED
 
 	.unget.data.table <- function(my.data, my.lookup) {
 		key(my.data) <- "ID"; ORIGINAL.ID <- NULL
-		my.data$ID <- my.lookup[my.data$ID, ORIGINAL.ID]
+		my.data[["ID"]] <- my.lookup[my.data[["ID"]], ORIGINAL.ID]
 		return(as.data.frame(my.data))
 	}
 
@@ -100,11 +101,11 @@ function(panel.data,           ## REQUIRED
 		mod <- character()
 		for (i in rev(tmp.gp)[2:(k+1)]) {
 			.check.knots.boundaries(knot.names, i)
-			knt <- paste("Knots_Boundaries$", tmp.path.knots.boundaries, "$knots_", i, sep="")
-			bnd <- paste("Knots_Boundaries$", tmp.path.knots.boundaries, "$boundaries_", i, sep="")
+			knt <- paste("Knots_Boundaries[['", tmp.path.knots.boundaries, "']][['knots_", i, "']]", sep="")
+			bnd <- paste("Knots_Boundaries[['", tmp.path.knots.boundaries, "']][['boundaries_", i, "']]", sep="")
 			mod <- paste(mod, " + bs(SS", i, ", knots=", knt, ", Boundary.knots=", bnd, ")", sep="")
 		}
-		eval(parse(text=paste("rq(SS", tmp.last, " ~ ", substring(mod,4), ", tau=taus, data=tmp.data, method=rq.method)$coefficients", sep="")))
+		eval(parse(text=paste("rq(SS", tmp.last, " ~ ", substring(mod,4), ", tau=taus, data=tmp.data, method=rq.method)[['coefficients']]", sep="")))
 	}
 
 	.check.knots.boundaries <- function(names, grade) {
@@ -140,10 +141,10 @@ function(panel.data,           ## REQUIRED
 		mod <- character()
 		for (k in 1:j) {
 			int <- "cbind(rep(1, dim(data)[1]),"
-			knt <- paste("Knots_Boundaries$", tmp.path.knots.boundaries, "$knots_", rev(tmp.gp)[k+1], sep="")
-			bnd <- paste("Knots_Boundaries$", tmp.path.knots.boundaries, "$boundaries_", rev(tmp.gp)[k+1], sep="")
+			knt <- paste("Knots_Boundaries[['", tmp.path.knots.boundaries, "']][['knots_", rev(tmp.gp)[k+1], "']]", sep="")
+			bnd <- paste("Knots_Boundaries[['", tmp.path.knots.boundaries, "']][['boundaries_", rev(tmp.gp)[k+1], "']]", sep="")
 			mod <- paste(mod, ", bs(data$SS", rev(tmp.gp)[k+1], ", knots=", knt, ", Boundary.knots=", bnd, ")", sep="")
-			mat <- paste(") %*% Coefficient_Matrices$", tmp.path.coefficient.matrices, "$qrmatrix_", tmp.last, "_", k, sep="")
+			mat <- paste(") %*% Coefficient_Matrices[['", tmp.path.coefficient.matrices, "']][['qrmatrix_", tmp.last, "_", k, "']]", sep="")
 			.check.my.coefficient.matrices(matrix.names, tmp.last, k)
 		}	
 		tmp <- eval(parse(text=paste(int, substring(mod, 2), mat, sep="")))
@@ -248,18 +249,16 @@ function(panel.data,           ## REQUIRED
 					textGrob(x=-17, y=50, "Empirical SGP Distribution", default.units="native", gp=gpar(cex=0.7), rot=90, vp="qq")))))
 	} 
 
-	.csem.score.simulator <- function(scale_scores, grade, content_area, state, distribution="Normal", round=1) {
+	.csem.score.simulator <- function(scale_scores, grade, content_area, state, distribution="Skew-Normal", round=1) {
 		min.max <- stateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area]][[paste("loss.hoss_", grade, sep="")]]
 		CSEM_Data <- stateData[[state]][["Assessment_Program_Information"]][["CSEM"]][
-			stateData[[state]][["Assessment_Program_Information"]][["CSEM"]]$GRADE==grade & 
-			stateData[[state]][["Assessment_Program_Information"]][["CSEM"]]$CONTENT_AREA==content_area,]
-		CSEM_Function <- splinefun(CSEM_Data$SCALE_SCORE, CSEM_Data$SCALE_SCORE_CSEM)
+			stateData[[state]][["Assessment_Program_Information"]][["CSEM"]][["GRADE"]]==grade & 
+			stateData[[state]][["Assessment_Program_Information"]][["CSEM"]][["CONTENT_AREA"]]==content_area,]
+		CSEM_Function <- splinefun(CSEM_Data[["SCALE_SCORE"]], CSEM_Data[["SCALE_SCORE_CSEM"]])
 		tmp.scale <- CSEM_Function(scale_scores)
-		tmp.shape <- 0.01*((min.max[1]+min.max[2])/2 - scale_scores)/(pmin(abs(scale_scores - min.max[2]), 
-				abs(scale_scores - min.max[1]))/((min.max[2]-min.max[1])/2))
-		tmp.shape[scale_scores==min.max[2]] <- -Inf; tmp.shape[scale_scores==min.max[1]] <- Inf
-		if(distribution == "Skew-Normal") tmp.score<-round_any(as.numeric(rsn(length(scale_scores), location=scale_scores, scale=tmp.scale, shape=tmp.shape)), round)
-		if(distribution == "Normal") tmp.score<-round_any(as.numeric(rnorm(length(scale_scores), mean=scale_scores, sd=tmp.scale)), round)
+		tmp.shape <- tan((pi/2)*((min.max[1]+min.max[2]) - 2*scale_scores)/(min.max[2]-min.max[1]))
+		if(distribution=="Skew-Normal") tmp.score <- round_any(as.numeric(rsn(length(scale_scores), location=scale_scores, scale=tmp.scale, shape=tmp.shape)), round)
+		if(distribution=="Normal") tmp.score <- round_any(as.numeric(rnorm(length(scale_scores), mean=scale_scores, sd=tmp.scale)), round)
 		tmp.score[tmp.score < min.max[1]] <- min.max[1]
 		tmp.score[tmp.score > min.max[2]] <- min.max[2]
 		return(tmp.score)
@@ -282,7 +281,7 @@ function(panel.data,           ## REQUIRED
 		stop("Supplied panel.data missing Panel_Data")
 	}
 	if (class(panel.data) %in% c("list", "SGP")) {
-		if (!is.data.frame(panel.data$Panel_Data)) {
+		if (!is.data.frame(panel.data[["Panel_Data"]])) {
 			stop("Supplied panel.data$Panel_Data is not a data.frame")   
 	}}
 
@@ -313,8 +312,8 @@ function(panel.data,           ## REQUIRED
 			if (!growth.levels %in% names(stateData)) {
 				stop("Growth Level are currently not specified for the state indicated. Please contact the SGP package administrator to have your state's data included in the package")
 		}
-			tmp.growth.levels$my.cuts <- stateData[[growth.levels]][["Growth"]][["Cutscores"]][["Cuts"]]
-			tmp.growth.levels$my.levels <- stateData[[growth.levels]][["Growth"]][["Levels"]]
+			tmp.growth.levels[["my.cuts"]] <- stateData[[growth.levels]][["Growth"]][["Cutscores"]][["Cuts"]]
+			tmp.growth.levels[["my.levels"]] <- stateData[[growth.levels]][["Growth"]][["Levels"]]
 		}
 	}
 	if (!missing(use.my.knots.boundaries)) {
@@ -410,14 +409,14 @@ function(panel.data,           ## REQUIRED
 		Panel_Data <- as.data.frame(panel.data, stringsAsFactors=FALSE)
 	}
 	if (identical(class(panel.data), "list")) {
-        	if (!identical(class(panel.data$Panel_Data), "data.frame")) {
-			Panel_Data <- as.data.frame(panel.data$Panel_Data, stringsAsFactors=FALSE)
+        	if (!identical(class(panel.data[["Panel_Data"]]), "data.frame")) {
+			Panel_Data <- as.data.frame(panel.data[["Panel_Data"]], stringsAsFactors=FALSE)
 	}}
 	if (identical(class(panel.data), "data.frame")) {
 		Panel_Data <- panel.data
 	}
 	if (class(panel.data) %in% c("list", "SGP")) {
-		Panel_Data <- panel.data$Panel_Data
+		Panel_Data <- panel.data[["Panel_Data"]]
 	} 
 
 	### Create ss.data from Panel_Data
@@ -482,7 +481,7 @@ function(panel.data,           ## REQUIRED
 	}
 	knot.names <- names(Knots_Boundaries[[tmp.path.knots.boundaries]])
 
-	### QR Calculations: coefficient matrices are saved/read into/from panel.data$Coefficient_Matrices
+	### QR Calculations: coefficient matrices are saved/read into/from panel.data[["Coefficient_Matrices"]]
 
 	if (missing(use.my.coefficient.matrices)) {
 		taus <- .create_taus(sgp.quantiles)
@@ -514,12 +513,12 @@ function(panel.data,           ## REQUIRED
 		for (j in seq_along(orders)) {
 			tmp.data <- .get.panel.data(ss.data, orders[j], by.grade)
 			tmp.predictions <- .get.percentile.predictions(tmp.data)
-			tmp.quantiles[[j]] <- data.table(ID=tmp.data$ID, ORDER=j, SGP=.get.quantiles(tmp.predictions, tmp.data[[tail(SS,1)]]))
+			tmp.quantiles[[j]] <- data.table(ID=tmp.data[["ID"]], ORDER=j, SGP=.get.quantiles(tmp.predictions, tmp.data[[tail(SS,1)]]))
 			if (!missing(calculate.confidence.intervals)) {
 				for (k in seq(calculate.confidence.intervals$simulation.iterations)) { 
 					set.seed(k)
 					if (k==1) {
-						tmp.csem.quantiles[[j]] <- data.frame(ID=tmp.data$ID,
+						tmp.csem.quantiles[[j]] <- data.frame(ID=tmp.data[["ID"]],
 						SGP_SIM_1=.get.quantiles(tmp.predictions, .csem.score.simulator(tmp.data[[tail(SS,1)]],
 							tmp.last,
 							sgp.labels$my.subject,
@@ -540,7 +539,7 @@ function(panel.data,           ## REQUIRED
 			} ## END CSEM analysis
 
 			if (!missing(percentile.cuts)) {
-				tmp.percentile.cuts[[j]] <- data.table(ID=tmp.data$ID, .get.percentile.cuts(tmp.predictions))
+				tmp.percentile.cuts[[j]] <- data.table(ID=tmp.data[["ID"]], .get.percentile.cuts(tmp.predictions))
 			}
 			if (goodness.of.fit & j==1) prior.ss <- tmp.data[, tail(head(SS, -1),1), with=FALSE]
 		} ## END j loop
@@ -549,7 +548,7 @@ function(panel.data,           ## REQUIRED
 
 		if (print.other.gp) {
 			quantile.data <- data.table(reshape(quantile.data, idvar="ID", timevar="ORDER", direction="wide"),
-				SGP=quantile.data[c(which(!duplicated(quantile.data))[-1]-1, nrow(quantile.data))]$SGP)
+				SGP=quantile.data[c(which(!duplicated(quantile.data))[-1]-1, nrow(quantile.data))][["SGP"]])
 		} else {
 			if (print.sgp.order) {
 				quantile.data <- quantile.data[c(which(!duplicated(quantile.data))[-1]-1, nrow(quantile.data))]
@@ -559,8 +558,8 @@ function(panel.data,           ## REQUIRED
 		}
 
 		if (!missing(growth.levels)) {
-			quantile.data <- data.table(quantile.data, SGP_LEVEL=factor(findInterval(quantile.data$SGP, tmp.growth.levels$my.cuts), 
-				labels=tmp.growth.levels$my.levels))
+			quantile.data <- data.table(quantile.data, SGP_LEVEL=factor(findInterval(quantile.data[["SGP"]], tmp.growth.levels[["my.cuts"]]), 
+				labels=tmp.growth.levels[["my.levels"]]))
 		}
 
 		if (!missing(calculate.confidence.intervals)) {
@@ -590,7 +589,8 @@ function(panel.data,           ## REQUIRED
 
 	### Announce Completion & Return SGP Object
 
-	message(paste("Finished SGP Student Growth Percentile Analysis ", date(), " in ", timetaken(started.at), ".\nSubject: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(tmp.gp, collapse=", "), " ", sgp.labels$my.extra.label, sep="")) 
+	message(paste("\tSubject: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(tmp.gp, collapse=", "), " ", sgp.labels$my.extra.label, sep=""))
+	message(paste("\tFinished SGP Student Growth Percentile Analysis", date(), "in", timetaken(started.at), "\n")) 
 
 	list(Coefficient_Matrices=Coefficient_Matrices,
 		Cutscores=panel.data[["Cutscores"]], 
@@ -601,4 +601,4 @@ function(panel.data,           ## REQUIRED
 		SGProjections=panel.data[["SGProjections"]],
 		Simulated_SGPs=Simulated_SGPs)
 
-} ## END studentGrowthPercentile Function
+} ## END studentGrowthPercentiles Function

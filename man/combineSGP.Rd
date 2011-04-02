@@ -7,26 +7,20 @@
 }
 
 \usage{
-combineSGP(sgp_object=sgp_object,
-	years=years,
-	content_areas=content_areas,
-	sgp.percentiles=sgp.percentiles,
-	sgp.projections.lagged=sgp.projections.lagged,
-	state=state)
+combineSGP(sgp_object,
+	state,
+	sgp.percentiles=TRUE,
+	sgp.projections.lagged=TRUE)
 }
 
 \arguments{
   \item{sgp_object}{A list containing both \code{Student} (from \code{prepareSGP}) and \code{SGP} (from \code{analyzeSGP}) slots. 
   }
-  \item{years}{A vector indicating what years are being analyzed.
-  }
-  \item{content_areas}{A vector indicating what content areas are being analyzed.
+  \item{state}{Acronym for which state is to be used for the lagged projections and growth to standard analyses.
   }
   \item{sgp.percentiles}{A boolean variable indicating whether to combine student growth percentiles.
   }
   \item{sgp.projections.lagged}{A boolean variable indicating whether to combine lagged projections and calculate catch-up/keep-up values.
-  }
-  \item{state}{Acronym for which state is to be used for the lagged projections and growth to standard analyses.
   }
 }
 
@@ -34,16 +28,14 @@ combineSGP(sgp_object=sgp_object,
 \code{YEAR}, \code{ID} merged with student growth percentiles and/or lagged projection targets and catch up/keep up status.
 }
 
-\author{Damian W. Betebenner \email{dbetebenner@nciea.org} }
+\author{Damian W. Betebenner \email{dbetebenner@nciea.org}}
 
 \seealso{\code{\link{prepareSGP}}, \code{\link{analyzeSGP}}}
 
 \examples{
 \dontrun{
-## combineSGP is Step 3 of 5
-DEMO_Data <- prepareSGP(sgpData_LONG)
-DEMO_Data <- analyzeSGP(DEMO_Data)
-DEMO_Data <- combineSGP(DEMO_Data)
+## combineSGP is Step 3 of 5 of abcSGP
+DEMO_Data <- combineSGP(DEMO_Data, state="DEMO")
 }  
 }
 

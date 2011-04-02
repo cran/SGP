@@ -80,7 +80,7 @@ studentGrowthPercentiles(panel.data,
  \code{panel.data$Coefficient_Matrices$my.year.my.subject} where \code{my.year} and \code{my.subject} are provided by \code{sgp.labels}.
   }
  \item{calculate.confidence.intervals}{A list of the form \code{list(state= , confidence.quantiles= ,} \cr
- \code{simulation.iterations= , distribution= , round= )} specifying the \code{state} from which to use the CSEMs (note, CSEM data must be embedded in stateData set. To have your state CSEMs embedded in the \code{stateData} set, please contact the package administrator), \code{confidence.quantiles} to report from the simulated SGPs calculated for each student, \code{simulation.iterations} indicating the number of simulated SGPs to calculate, \code{distribution} indicating whether to the the normal or skew normal to calculate SGPs, and \code{round} (defaults to 1, which is an integer - see \code{round_any} from \code{plyr} package for details) giving the level to round to. If requested, simulations are calculated and simulated SGPs are stored in \code{panel.data$Simulated_SGPs}.
+ \code{simulation.iterations= , distribution= , round= )} specifying the \code{state} from which to use the CSEMs (note, CSEM data must be embedded in stateData set. To have your state CSEMs embedded in the \code{stateData} set, please contact the package administrator), \code{confidence.quantiles} to report from the simulated SGPs calculated for each student, \code{simulation.iterations} indicating the number of simulated SGPs to calculate, \code{distribution} indicating whether to the the \code{Normal} or \code{Skew-Normal} to calculate SGPs, and \code{round} (defaults to 1, which is an integer - see \code{round_any} from \code{plyr} package for details) giving the level to round to. If requested, simulations are calculated and simulated SGPs are stored in \code{panel.data$Simulated_SGPs}.
   } 
   \item{print.other.gp}{Boolean argument (defaults to FALSE) indicating whether growth percentiles of all orders should be returned. The default returns only the highest order growth percentile for each student.
   }
@@ -135,9 +135,9 @@ Dette, H. & Volgushev, S. (2008). Non-crossing non-parametric estimates of quant
 Koenker, R. (2005). \emph{Quantile regression}. Cambridge: Cambridge University Press.
 }
 
-\author{Damian W. Betebenner \email{dbetebenner@nciea.org} }
+\author{Damian W. Betebenner \email{dbetebenner@nciea.org}}
 
-\seealso{\code{\link{studentGrowthProjections}}, \code{\link{sgpData}}, \code{\link{stateData}}}
+\seealso{\code{\link{studentGrowthProjections}}, \code{\link{sgpData}}, \code{\link{sgpData_LONG}}, \code{\link{stateData}}}
 
 
 \examples{

@@ -16,6 +16,7 @@ function(panel.data,	## REQUIRED
 	projcuts.digits=0) {
 
 	started.at=proc.time()
+        message(paste("\tStarted studentGrowthProjections", date()))
 
 	##########################################################
 	###
@@ -80,7 +81,7 @@ function(panel.data,	## REQUIRED
 
 	.unget.data.table <- function(my.data, my.lookup) {
 		key(my.data) <- "ID"; ORIGINAL.ID <- NULL
-		my.data$ID <- my.lookup[my.data$ID, ORIGINAL.ID]
+		my.data[["ID"]] <- my.lookup[my.data[["ID"]], ORIGINAL.ID]
 		return(as.data.frame(my.data))
 	}
 
@@ -109,19 +110,19 @@ function(panel.data,	## REQUIRED
 
 		for (i in seq_along(grade.projection.sequence.priors)) {
 			tmp.gp <- grade.progression
-			tmp.data <- .get.panel.data(ss.data, grade.projection.sequence.priors[[i]][1], by.grade, subset.tf=!(ss.data$ID %in% completed.ids))
-			completed.ids <- c(tmp.data$ID, completed.ids)
+			tmp.data <- .get.panel.data(ss.data, grade.projection.sequence.priors[[i]][1], by.grade, subset.tf=!(ss.data[["ID"]] %in% completed.ids))
+			completed.ids <- c(tmp.data[["ID"]], completed.ids)
 			num.rows <- dim(tmp.data)[1]
 			tmp.data <- as.data.frame(sapply(tmp.data, rep, each=100))
 			for (j in seq_along(grade.projection.sequence.priors[[i]])) {
 				mod <- character()
 				int <- "cbind(rep(1, 100*num.rows),"
 				for (k in 1:grade.projection.sequence.priors[[i]][j]) {
-					knt <- paste("panel.data$Knots_Boundaries$", tmp.path.knots.boundaries, "$knots_", rev(tmp.gp)[k], sep="")
-					bnd <- paste("panel.data$Knots_Boundaries$", tmp.path.knots.boundaries, "$boundaries_", rev(tmp.gp)[k], sep="")
+					knt <- paste("panel.data[['Knots_Boundaries']][['", tmp.path.knots.boundaries, "']][['knots_", rev(tmp.gp)[k], "']]", sep="")
+					bnd <- paste("panel.data[['Knots_Boundaries']][['", tmp.path.knots.boundaries, "']][['boundaries_", rev(tmp.gp)[k], "']]", sep="")
 					mod <- paste(mod, ", bs(tmp.data$SS", rev(tmp.gp)[k], ", knots=", knt, ", Boundary.knots=", bnd, ")", sep="")
 				}
-				mat <- paste("panel.data$Coefficient_Matrices$", tmp.path.coefficient.matrices, "$qrmatrix_", grade.projection.sequence[j], "_", k, sep="")
+				mat <- paste("panel.data[['Coefficient_Matrices']][['", tmp.path.coefficient.matrices, "']][['qrmatrix_", grade.projection.sequence[j], "_", k, "']]", sep="")
 				.check.my.coefficient.matrices(matrix.names, grade.projection.sequence[j], k)
 				tmp.scores <- eval(parse(text=paste(int, substring(mod, 2), ")", sep="")))
 				tmp.matrix <- eval(parse(text=mat))
@@ -168,7 +169,7 @@ function(panel.data,	## REQUIRED
 			if (!cuts.tf) return(tmp.traj)
 		}
 		if (cuts.tf) {
-			percentile.trajectories$ID <- as.integer(percentile.trajectories$ID) 
+			percentile.trajectories[["ID"]] <- as.integer(percentile.trajectories[["ID"]]) 
 			percentile.trajectories <- data.table(percentile.trajectories, key="ID")
 
 			k <- 1
@@ -179,9 +180,9 @@ function(panel.data,	## REQUIRED
 					tmp <- tmp.cutscores[[paste("GRADE_", grade.projection.sequence[i], sep="")]][j]
 					cuts.arg[k] <- paste(".sgp.targets(SS", grade.projection.sequence[i], ", ", tmp, ", ", convert.0and100, ")", sep="")
 					if (projection.unit=="GRADE") {
-						names.arg[k] <- paste("LEVEL_", j, "SGP_TARGET_GRADE_", grade.projection.sequence[i], sep="")
+						names.arg[k] <- paste("LEVEL_", j, "_SGP_TARGET_GRADE_", grade.projection.sequence[i], sep="")
 					} else {
-						names.arg[k] <- paste("LEVEL_", j, "SGP_TARGET_YEAR_", i, sep="")
+						names.arg[k] <- paste("LEVEL_", j, "_SGP_TARGET_YEAR_", i, sep="")
 					}
 					k <- k+1
 				}
@@ -215,7 +216,7 @@ function(panel.data,	## REQUIRED
 		if (!(all(c("Panel_Data", "Coefficient_Matrices", "Knots_Boundaries") %in% names(panel.data)))) {
 			stop("Supplied panel.data missing Panel_Data, Coefficient_Matrices, and/or Knots_Boundaries. See help page for details")
 		}
-		if (!identical(class(panel.data$Panel_Data), "data.frame")) {
+		if (!identical(class(panel.data[["Panel_Data"]]), "data.frame")) {
 			stop("Supplied panel.data$Panel_Data is not a data.frame")	 
 	}}
 
@@ -272,7 +273,7 @@ function(panel.data,	## REQUIRED
 			stop("Please specify an appropriate list for use.my.coefficient.matrices. See help page for details.")
 			}
 			tmp.path.coefficient.matrices <- .create.path(use.my.coefficient.matrices)
-			if (is.null(panel.data$Coefficient_Matrices) | is.null(panel.data$Coefficient_Matrices[[tmp.path.coefficient.matrices]])) {
+			if (is.null(panel.data[["Coefficient_Matrices"]]) | is.null(panel.data[["Coefficient_Matrices"]][[tmp.path.coefficient.matrices]])) {
 				stop("Coefficient matrices indicated by argument use.my.coefficient.matrices are not included.")
 		}} else {
 			tmp.path.coefficient.matrices <- tmp.path
@@ -327,9 +328,9 @@ function(panel.data,	## REQUIRED
 	### Create ss.data from Panel_Data and rename variables in based upon grade.progression
 
 	if (!missing(panel.data.vnames)) {
-		ss.data <- subset(panel.data$Panel_Data, select=panel.data.vnames)
+		ss.data <- subset(panel.data[["Panel_Data"]], select=panel.data.vnames)
 	} else {
-		ss.data <- panel.data$Panel_Data
+		ss.data <- panel.data[["Panel_Data"]]
 	}
 	if (dim(ss.data)[2] %% 2 != 1) {
 		stop(paste("Number of columns of supplied panel data (", dim(ss.data)[2], ") does not conform to data requirements. See help page for details."))
@@ -350,8 +351,8 @@ function(panel.data,	## REQUIRED
 
 	### Get Knots_Boudaries and Coefficient_Matrices names
 
-	knot.names <- names(panel.data$Knots_Boundaries[[tmp.path.knots.boundaries]])
-	matrix.names <- names(panel.data$Coefficient_Matrices[[tmp.path.coefficient.matrices]])
+	knot.names <- names(panel.data[["Knots_Boundaries"]][[tmp.path.knots.boundaries]])
+	matrix.names <- names(panel.data[["Coefficient_Matrices"]][[tmp.path.coefficient.matrices]])
 
 	### Calculate growth projections/trajectories 
 
@@ -387,7 +388,8 @@ function(panel.data,	## REQUIRED
 
 	### Announce Completion & Return SGP Object
 
-	message(paste("Finished SGP Student Growth Projection/Trajectory Analysis ", date(), " in ", timetaken(started.at), ".\nSubject: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(grade.progression, collapse=", "), " ", sgp.labels$my.extra.label, sep="")) 
+	message(paste("\tSubject: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(grade.progression, collapse=", "), " ", sgp.labels$my.extra.label, sep="")) 
+	message(paste("\tFinished studentGrowthProjections", date(), "in", timetaken(started.at), "\n")) 
 
 	list(Coefficient_Matrices=panel.data[["Coefficient_Matrices"]],
 		Cutscores=Cutscores,
