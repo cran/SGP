@@ -1,32 +1,36 @@
 `summarizeSGP` <- 
 function(sgp_object,
+	state,
 	years,
 	content_areas,
-	state = "DEMO",
 	sgp.summaries=list(MEDIAN_SGP="median_na(SGP)",
 		MEDIAN_SGP_COUNT="num_non_missing(SGP)",
-		PERCENT_AT_ABOVE_PROFICIENT="percent_in_category(ACHIEVEMENT_LEVEL, list(c(1,4)), list(1:5))",
+		PERCENT_AT_ABOVE_PROFICIENT="percent_in_category(ACHIEVEMENT_LEVEL, list(c('Proficient', 'Advanced')), list(c('Unsatisfactory', 'Partially Proficient', 'Proficient', 'Advanced')))",
 		PERCENT_AT_ABOVE_PROFICIENT_COUNT="num_non_missing(ACHIEVEMENT_LEVEL)"),
-	summary.groups=list(institution=c("STATE", "SCHOOL_NUMBER"),
+	summary.groups=list(institution=c("STATE", "DISTRICT_NUMBER", "SCHOOL_NUMBER"),
 		content="CONTENT_AREA",
 		time="YEAR",
 		institution_level="GRADE",
-		demographic=c("GENDER", "ETHNICITY", "FREE_REDUCED_LUNCH_STATUS", "ELL_STATUS", "CATCH_KEEP_UP"),
-		institution_inclusion=list(STATE="OCTOBER_ENROLLMENT_STATUS", SCHOOL_NUMBER="OCTOBER_ENROLLMENT_STATUS")),
+		demographic=c("GENDER", "ETHNICITY", "FREE_REDUCED_LUNCH_STATUS", "ELL_STATUS", "IEP_STATUS", "GIFTED_AND_TALENTED_PROGRAM_STATUS", "CATCH_UP_KEEP_UP_STATUS"),
+		institution_inclusion=list(STATE="STATE_ENROLLMENT_STATUS", DISTRICT_NUMBER="DISTRICT_ENROLLMENT_STATUS", SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS")),
 	confidence.interval.groups=list(institution="SCHOOL_NUMBER",
 		content="CONTENT_AREA",
 		time="YEAR",
 		institution_level= NULL,
 		demographic=NULL,
-		institution_inclusion=list(STATE=NULL, SCHOOL_NUMBER="OCTOBER_ENROLLMENT_STATUS"))) {
+		institution_inclusion=list(STATE=NULL, DISTRICT_NUMBER=NULL, SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS"))) {
+
+        started.at <- proc.time()
+        message(paste("Started summarizeSGP", date()))
 
 	if (missing(sgp_object)) {
 		stop("User must supply a list containing a Student slot with long data. See documentation for details.")
 	}
 
 	## If missing years and content_areas then determine year(s), and content_area(s) for summaries
+
 	if (missing(content_areas)) {
-			content_areas <- unique(sgp_object[["Student"]]["VALID_CASE"]$CONTENT_AREA)
+		content_areas <- unique(sgp_object[["Student"]]["VALID_CASE"]$CONTENT_AREA)
 		}
 	if (missing(years)) {
 		for (i in content_areas) {
@@ -35,14 +39,16 @@ function(sgp_object,
 	}
 
 	## Functions
+
 	rbind.all <- function(.list, ...){
 		if(length(.list)==1) return(.list[[1]])
 		Recall(c(list(rbind(.list[[1]], .list[[2]], ...)), .list[-(1:2)]), ...)
 	}
 
 	group.format <- function(my.group) {
-		if (is.null(my.group)) c("")
-		else {
+		if (is.null(my.group)) {
+			c("")
+		} else {
 			c("", unlist(lapply(my.group, function(x) paste(", ", x, sep=""))))
 		}
 	}
@@ -62,20 +68,26 @@ function(sgp_object,
 	return(unlist(tmp.result))
 	}
 
+	percent_at_above_target <- function(sgp, target, result.digits=1) {
+		tmp.logical <- sgp >= target
+		tmp.pct <- round(sum(tmp.logical, na.rm=TRUE)/sum(!is.na(tmp.logical))*100, digits=result.digits)
+		return(tmp.pct)
+	}
+
 	sgpSummary <- function(sgp.groups.to.summarize, confidence.interval.groups.to.summarize) {
-		SGP_SIM <- V1 <- NULL  ## To prevent R CMD check warnings
-		ListExpr <- parse(text=paste("quote(as.list(c(",paste(unlist(sgp.summaries), collapse=", "),")))",sep=""))
+  		SGP_SIM <- V1 <- .SD <- NULL  ## To prevent R CMD check warning
+		ListExpr <- parse(text=paste("quote(as.list(c(", paste(unlist(sgp.summaries), collapse=", "),")))",sep=""))
 		ByExpr <- parse(text=paste("quote(list(", paste(sgp.groups.to.summarize, collapse=", "), "))", sep=""))
 		tmp <- tmp.dt[, eval(eval(ListExpr)), by=eval(eval(ByExpr))]
 		names(tmp)[-seq(length(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))))] <- unlist(strsplit(names(sgp.summaries), "[.]"))
 		if (confidence.interval.groups.to.summarize) {
 			SIM_ByExpr1 <- parse(text=paste("quote(list(", paste(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))
-				[!(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))) %in% key(tmp.dt)], collapse=", "), 
-				", SGP_SIM, SGP_SIM_ITERATION))", sep=""))
-			SIM_ByExpr2 <- parse(text=paste("quote(list(", paste(sgp.groups.to.summarize, collapse=", "), ", SGP_SIM_ITERATION))", sep=""))
-			tmp.sim <- long.sim.data[tmp.dt, eval(eval(SIM_ByExpr1))][!is.na(SGP_SIM)][,
-				median(as.numeric(SGP_SIM)), by=eval(eval(SIM_ByExpr2))][,
-				as.list(round(quantile(V1, probs=c(0.025, 0.975))),0), by=eval(eval(ByExpr))]
+  				[!(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))) %in% key(tmp.dt)], collapse=", "), 
+			  	", ", paste(names(tmp.simulation.dt)[grep("SGP_SIM_", names(tmp.simulation.dt))], collapse=", "), "))", sep=""))
+			SIM_ByExpr2 <- parse(text=paste("quote(list(", paste(sgp.groups.to.summarize, collapse=", "), "))", sep=""))
+			tmp.sim <- tmp.dt[tmp.simulation.dt, eval(eval(SIM_ByExpr1))][, -(1:2), with=FALSE][,
+				lapply(.SD, median_na), by=eval(eval(SIM_ByExpr2))][, 
+				as.list(round(apply(.SD, 1, quantile, probs=c(0.025, 0.975)))), by=eval(eval(SIM_ByExpr2))]
 			names(tmp.sim)[(dim(tmp.sim)[2]-1):dim(tmp.sim)[2]] <- c("LOWER_MEDIAN_SGP_95_CONF_BOUND", "UPPER_MEDIAN_SGP_95_CONF_BOUND")
 			tmp <- data.table(merge.data.frame(tmp, tmp.sim, by = unlist(strsplit(as.character(sgp.groups.to.summarize), ", ")),all=TRUE))
 		}
@@ -83,20 +95,17 @@ function(sgp_object,
 		return(tmp)
 	}
 
-	combineSims <- function(tmp_sgp_object) {
+	combineSims <- function(sgp_object) {
 		tmp.list <- list()
-		tmp.names <- names(tmp_sgp_object[["SGP"]][["Simulated_SGPs"]]) 
-		for(i in tmp.names) {
-			tmp.list[[i]] <- data.frame(data.frame(ID=rep(tmp_sgp_object[["SGP"]][["Simulated_SGPs"]][[i]][,1], 
-				dim(tmp_sgp_object[["SGP"]][["Simulated_SGPs"]][[i]])[2]-1),
-				stack(tmp_sgp_object[["SGP"]][["Simulated_SGPs"]][[i]][,-1])),
-				YEAR=as.integer(unlist(strsplit(i, "[.]"))[2]),
-				CONTENT_AREA=unlist(strsplit(i, "[.]"))[1])
+		tmp.names <- names(sgp_object[["SGP"]][["Simulated_SGPs"]]) 
+		for (i in tmp.names) {
+			tmp.list[[i]] <- data.frame(sgp_object[["SGP"]][["Simulated_SGPs"]][[i]],
+				CONTENT_AREA=unlist(strsplit(i, "[.]"))[1],
+				YEAR=type.convert(unlist(strsplit(i, "[.]"))[2]))
 		}
-		tmp.simulation.dt <- data.table(rbind.all(tmp.list), VALID_CASE=factor(1, levels=1:2, labels=c("VALID_CASE", "INVALID_CASE")),
-				key=paste(key(tmp.dt), collapse=","))
-		names(tmp.simulation.dt)[2:3] <- c("SGP_SIM", "SGP_SIM_ITERATION")
-		return(tmp.simulation.dt)
+	
+		data.table(rbind.all(tmp.list), VALID_CASE=factor(1, levels=1:2, labels=c("VALID_CASE", "INVALID_CASE")),
+			key=paste(key(tmp.dt), collapse=","))
 	}
 	 
 	## Take subset of data
@@ -104,10 +113,11 @@ function(sgp_object,
 	tmp.dt <- data.table(STATE=state, sgp_object[["Student"]][CJ("VALID_CASE", content_areas, years), mult="all"], key="VALID_CASE, ID, CONTENT_AREA, YEAR")
 
 	if (!is.null(confidence.interval.groups)) {
-		long.sim.data <- combineSims(sgp_object); gc()
+		tmp.simulation.dt <- combineSims(sgp_object); gc()
 	}
 
 	## Set up options for use with doMC
+
 	mc.options <- list(preschedule = FALSE, set.seed = FALSE)
 
 	## Create summary tables
@@ -120,26 +130,28 @@ function(sgp_object,
 			group.format(summary.groups[["institution_inclusion"]][[i]]),
 			group.format(summary.groups[["demographic"]])), sep=""))
 
-	if (!is.null(confidence.interval.groups)) {
-		ci.groups <- do.call(paste, c(expand.grid(i,
-			group.format(confidence.interval.groups[["content"]]),
-			group.format(confidence.interval.groups[["time"]]),
-			group.format(confidence.interval.groups[["institution_level"]]),
-			group.format(confidence.interval.groups[["institution_inclusion"]][[i]]),
-			group.format(confidence.interval.groups[["demographic"]])), sep=""))
-	}
+		if (!is.null(confidence.interval.groups)) {
+			ci.groups <- do.call(paste, c(expand.grid(i,
+				group.format(confidence.interval.groups[["content"]]),
+				group.format(confidence.interval.groups[["time"]]),
+				group.format(confidence.interval.groups[["institution_level"]]),
+				group.format(confidence.interval.groups[["institution_inclusion"]][[i]]),
+				group.format(confidence.interval.groups[["demographic"]])), sep=""))
+		}
 
-	if (is.null(confidence.interval.groups)) {
-		j  <- NULL ## To prevent R CMD check warnings
-		sgp_object[["Summary"]][[i]] <- foreach(i=iter(sgp.groups), j=iter(rep(FALSE, length(sgp.groups))), 
-			.options.multicore = mc.options, .packages="data.table", .inorder=FALSE) %dopar% {return(sgpSummary(i, j))}
-		names(sgp_object[["Summary"]][[i]]) <- gsub(", ", ".", sgp.groups)
-	} else {
-		j  <- NULL ## To prevent R CMD check warnings
-		sgp_object[["Summary"]][[i]] <- foreach(i=iter(sgp.groups), j=iter(sgp.groups %in% ci.groups), 
-			.options.multicore = mc.options, .packages="data.table", .inorder=FALSE) %dopar% {return(sgpSummary(i, j))}
-		names(sgp_object[["Summary"]][[i]]) <- gsub(", ", ".", sgp.groups)
+		if (is.null(confidence.interval.groups)) {
+			j <- k <- NULL ## To prevent R CMD check warnings
+			sgp_object[["Summary"]][[i]] <- foreach(j=iter(sgp.groups), k=iter(rep(FALSE, length(sgp.groups))), 
+				.options.multicore = mc.options, .packages="data.table", .inorder=FALSE) %dopar% {return(sgpSummary(j, k))}
+			names(sgp_object[["Summary"]][[i]]) <- gsub(", ", "__", sgp.groups)
+		} else {
+			j <- k <- NULL ## To prevent R CMD check warnings
+			sgp_object[["Summary"]][[i]] <- foreach(j=iter(sgp.groups), k=iter(sgp.groups %in% ci.groups), 
+				.options.multicore = mc.options, .packages="data.table", .inorder=FALSE) %dopar% {return(sgpSummary(j, k))}
+			names(sgp_object[["Summary"]][[i]]) <- gsub(", ", "__", sgp.groups)
 		}
 	} ## END summary.groups$institution summary loop
-return(sgp_object)
-} ## END summarizeSGP function
+
+        message(paste("Finished summarizeSGP", date(), "in", timetaken(started.at), "\n"))
+	return(sgp_object)
+} ## END summarizeSGP Function

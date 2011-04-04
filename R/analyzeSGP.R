@@ -1,6 +1,6 @@
 `analyzeSGP` <- 
-function(sgp_object=sgpData_LONG,
-	state="DEMO",
+function(sgp_object,
+	state,
 	years,
 	content_areas,
 	grades,
@@ -9,11 +9,15 @@ function(sgp_object=sgpData_LONG,
 	sgp.projections=TRUE,
 	sgp.projections.lagged=TRUE,
 	simulate.sgps=FALSE) {
+
+        started.at <- proc.time()
+        message(paste("Started analyzeSGP", date()))
+
 	## Function to return sgp.config based upon a supplied year and content_area
 
 	.get.config <- function(content_area, year, grades) {
                 tmp.data <- sgp_object[["Student"]][J("VALID_CASE", content_area), c("YEAR", "GRADE"), with=FALSE]
-		.sgp.panel.years <- seq(min(tmp.data$YEAR, na.rm=TRUE), year)
+		.sgp.panel.years <- sort(unique(tmp.data$YEAR))[1:which(sort(unique(tmp.data$YEAR)) == year)]
                 .sgp.content.areas <- rep(content_area, length(.sgp.panel.years))
                 .sgp.grade.sequences <- lapply(grades, function(x) tail(seq(min(tmp.data$GRADE, na.rm=TRUE), x), length(.sgp.panel.years)))
                 list(sgp.content.areas=.sgp.content.areas, sgp.panel.years=.sgp.panel.years, sgp.grade.sequences=.sgp.grade.sequences) 
@@ -60,7 +64,7 @@ function(sgp_object=sgpData_LONG,
 	if (sgp.percentiles | sgp.projections | sgp.projections.lagged) {
                 for (sgp.iter in sgp.config) {
 			sgp_object[["SGP"]][["Panel_Data"]] <- 
-				as.data.frame(reshape(sgp_object[["Student"]][J("VALID_CASE", sgp.iter$sgp.content.areas, as.integer(sgp.iter$sgp.panel.years)), mult="all"],
+				as.data.frame(reshape(sgp_object[["Student"]][J("VALID_CASE", sgp.iter$sgp.content.areas, sgp.iter$sgp.panel.years), mult="all"],
 					idvar="ID",
 					timevar="YEAR",
 					drop=names(sgp_object[["Student"]])[!names(sgp_object[["Student"]]) %in% c("ID", "YEAR", "GRADE", "SCALE_SCORE")],
@@ -74,6 +78,7 @@ function(sgp_object=sgpData_LONG,
 						sgp_object[["SGP"]] <- studentGrowthPercentiles(panel.data=sgp_object[["SGP"]],
 							sgp.labels=list(my.year=tail(sgp.iter$sgp.panel.years, 1), my.subject=tail(sgp.iter$sgp.content.areas, 1)),
 							use.my.knots.boundaries=state,
+							growth.levels=state,
 							panel.data.vnames=sgp.vnames,
 							grade.progression=k,
 							calculate.confidence.intervals=list(state=state,  
@@ -86,6 +91,7 @@ function(sgp_object=sgpData_LONG,
 						sgp_object[["SGP"]] <- studentGrowthPercentiles(panel.data=sgp_object[["SGP"]],
 							sgp.labels=list(my.year=tail(sgp.iter$sgp.panel.years, 1), my.subject=tail(sgp.iter$sgp.content.areas, 1)),
 							use.my.knots.boundaries=state,
+							growth.levels=state,
 							panel.data.vnames=sgp.vnames,
 							grade.progression=k)
 					} ## END k loop
@@ -107,6 +113,7 @@ function(sgp_object=sgpData_LONG,
 						grade.progression=k)
 				}
 			} ## END sgp.projections
+
 			if (sgp.projections.lagged) {
 				sgp.vnames <- c("ID", paste("GRADE", head(sgp.iter$sgp.panel.years, -1), sep="."), 
 					paste("SCALE_SCORE", head(sgp.iter$sgp.panel.years, -1), sep="."))
@@ -125,6 +132,8 @@ function(sgp_object=sgpData_LONG,
 			} ## END sgp.projections.lagged
 		} ## END sgp.iter loop
 	} ## END if
-return(sgp_object)
-} ## END analyzeSGP function
+
+        message(paste("Finished analyzeSGP", date(), "in", timetaken(started.at), "\n"))
+	return(sgp_object)
+} ## END analyzeSGP Function
 

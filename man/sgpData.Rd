@@ -14,16 +14,16 @@ of their own datasets for growth percentile analyses.
   A data frame of student level observations for five years on the following variables.
   \describe{
     \item{\code{ID}}{Student ID}
-    \item{\code{GRADE_2006}}{Student Grade Tested 2006, possibly missing}
     \item{\code{GRADE_2007}}{Student Grade Tested 2007, possibly missing}
     \item{\code{GRADE_2008}}{Student Grade Tested 2008, possibly missing}
     \item{\code{GRADE_2009}}{Student Grade Tested 2009, possibly missing}
     \item{\code{GRADE_2010}}{Student Grade Tested 2010, possibly missing}
-    \item{\code{SS_2006}}{Student Scale Score 2006, possibly missing}
+    \item{\code{GRADE_2011}}{Student Grade Tested 2011, possibly missing}
     \item{\code{SS_2007}}{Student Scale Score 2007, possibly missing}
     \item{\code{SS_2008}}{Student Scale Score 2008, possibly missing}
     \item{\code{SS_2009}}{Student Scale Score 2009, possibly missing}
     \item{\code{SS_2010}}{Student Scale Score 2010, possibly missing}
+    \item{\code{SS_2011}}{Student Scale Score 2011, possibly missing}
   }
 }
 

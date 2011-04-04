@@ -1,3 +1,13 @@
+Changes in version: SGP_0.0-7.0
+
+  o Changed LICENSE to Creative Commons CC BY-NC-SA 3.0 and CC BY-SA 3.0 for graphics producing and non-graphics producing functions, respectively. 
+  o combineSGP now calculates SGP targets based upon catch-up/keep-up to proficient growth-to-standard recommendations. 
+  o Cleaned up documentation for analyzeSGP, combineSGP, and summarizeSGP. 
+  o Fixed numerous bugs in analyzeSGP, combineSGP, and summarizeSGP. 
+  o Added Missouri, New York, Colorado, and Massachusetts CSEMs to stateData. 
+  o Added two graphical functions bubblePlot and studentGrowthPlot to the package.  
+  o Added fields to sgpData_LONG including IEP_STATUS, DISTRICT_NUMBER, DISTRICT_NAME, SCHOOL_ENROLLMENT_STATUS, DISTRICT_ENROLLMENT_STATUS, STATE_ENROLLMENT_STATUS to better reflect the structure of state data sets.  
+
 Changes in version: SGP_0.0-6.9
 
   o Added additional argument to studentGrowthPercentiles, growth.levels, allowing user to get a variable indicating the level of growth based upon state or user specified cuts and labels.

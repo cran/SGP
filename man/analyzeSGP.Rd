@@ -6,8 +6,8 @@
 }
 
 \usage{
-analyzeSGP(sgp_object=sgpData_LONG,
-           state="DEMO",
+analyzeSGP(sgp_object,
+           state,
            years,
            content_areas,
            grades,
@@ -50,17 +50,14 @@ See examples for use cases.
 \code{YEAR}, \code{ID} and the student growth percentile and/or student growth projection/trajectory results in the \code{SGP} slot. 
 }
 
-\author{Damian W. Betebenner \email{dbetebenner@nciea.org} }
+\author{Damian W. Betebenner \email{dbetebenner@nciea.org}}
 
 \seealso{\code{\link{prepareSGP}}, \code{\link{combineSGP}}}
 
 \examples{
 \dontrun{
-## analyzeSGP is Step 2 of 5
-DEMO_Data <- prepareSGP(sgpData_LONG)
-DEMO_Data <- analyzeSGP(DEMO_Data)
-DEMO_Data <- combineSGP(DEMO_Data)
-DEMO_Data <- summarizeSGP(DEMO_Data)
+## analyzeSGP is Step 2 of 5 of abcSGP
+DEMO_Data <- analyzeSGP(DEMO_Data, state="DEMO")
 }  
 }
 

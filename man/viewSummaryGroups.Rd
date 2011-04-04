@@ -1,5 +1,5 @@
-\name{ viewSummaryGroups}
-\alias{ viewSummaryGroups}
+\name{viewSummaryGroups}
+\alias{viewSummaryGroups}
 \title{View summary and confidence interval groups that will be used in \code{\link{summarizeSGP}}}
 \description{
  Utility function that produces a data.frame from the lists of user supplied summary and confidence interval group variables. Intended to complement \code{\link{summarizeSGP}} and promote proper group summary specification.
@@ -7,22 +7,19 @@
 
 \usage{
  viewSummaryGroups(
-     summary.groups=list(institution=c("STATE", "SCHOOL_NUMBER"),
-        content="CONTENT_AREA",
-        time="YEAR",
-        institution_level="GRADE",
-        demographic=c("GENDER", "ETHNICITY", "FREE_REDUCED_LUNCH_STATUS", 
-             "ELL_STATUS", "CATCH_KEEP_UP"),
-        institution_inclusion=list(STATE="OCTOBER_ENROLLMENT_STATUS",
-              SCHOOL_NUMBER="OCTOBER_ENROLLMENT_STATUS")),
-    confidence.interval.groups=list(institution="SCHOOL_NUMBER",
-        content="CONTENT_AREA",
-        time="YEAR",
-        institution_level= NULL,
-        demographic=NULL,
-        institution_inclusion=list(STATE=NULL,
-              SCHOOL_NUMBER="OCTOBER_ENROLLMENT_STATUS")),
-    confidence.interval.groups.only=FALSE)
+        summary.groups=list(institution=c("STATE", "DISTRICT_NUMBER", "SCHOOL_NUMBER"),
+                content="CONTENT_AREA",
+                time="YEAR",
+                institution_level="GRADE",
+                demographic=c("GENDER", "ETHNICITY", "FREE_REDUCED_LUNCH_STATUS", "ELL_STATUS", "IEP_STATUS", "GIFTED_AND_TALENTED_PROGRAM_STATUS", "CATCH_UP_KEEP_UP_STATUS"),
+                institution_inclusion=list(STATE="STATE_ENROLLMENT_STATUS", DISTRICT_NUMBER="DISTRICT_ENROLLMENT_STATUS", SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS")),
+        confidence.interval.groups=list(institution="SCHOOL_NUMBER",
+                content="CONTENT_AREA",
+                time="YEAR",
+                institution_level=NULL,
+                demographic=NULL,
+                institution_inclusion=list(STATE=NULL, DISTRICT_NUMBER=NULL, SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS")),
+        confidence.interval.groups.only=FALSE)
 }
 
 \arguments{
@@ -40,9 +37,9 @@
 \value{Function returns data.frame containing the summary group permutations and a Boolean vector indicating whether or not the permutation will also have a 95\% confidence interval provided when the summary table is produced using \code{\link{summarizeSGP}}.
 }
 
-\author{Damian W. Betebenner \email{dbetebenner@nciea.org} }
+\author{Adam Van Iwaarden \email{Vaniwaarden@colorado.edu}}
 
-\seealso{\code{\link{prepareSGP}}, \code{\link{analyzeSGP}}, \code{\link{combineSGP}}}
+\seealso{\code{\link{summarizeSGP}}}
 
 \examples{
 \dontrun{

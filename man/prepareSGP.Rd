@@ -18,14 +18,14 @@ prepareSGP(long_data)
 \code{YEAR}, \code{ID}. 
 }
 
-\author{Damian W. Betebenner \email{dbetebenner@nciea.org} }
+\author{Damian W. Betebenner \email{dbetebenner@nciea.org}}
 
 \seealso{\code{\link{sgpData_LONG}}}
 
 \examples{
 \dontrun{
+## prepareSGP is Step 1 of 5 of abcSGP
 DEMO_Data <- prepareSGP(sgpData_LONG)
-
 }  
 }
 
