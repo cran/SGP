@@ -32,15 +32,15 @@ function(
 			group.format(summary.groups[["institution_inclusion"]][[i]]),
 			group.format(summary.groups[["demographic"]])), sep=""))
 
-		if (!is.null(confidence.interval.groups)) {
+		if (!is.null(confidence.interval.groups) & i %in% confidence.interval.groups$institution) {
 			ci.groups <- do.call(paste, c(expand.grid(i,
 				group.format(confidence.interval.groups[["content"]]),
 				group.format(confidence.interval.groups[["time"]]),
 				group.format(confidence.interval.groups[["institution_level"]]),
 				group.format(confidence.interval.groups[["institution_inclusion"]][[i]]),
 				group.format(confidence.interval.groups[["demographic"]])), sep=""))
-		}
-		tmp <- data.frame(Summary_Groups = sgp.groups, Confidence_Interval_Calculated = sgp.groups %in% ci.groups)
+      tmp <- data.frame(Summary_Groups = sgp.groups, Confidence_Interval_Calculated = ci.groups %in% sgp.groups)
+		} else tmp <- data.frame(Summary_Groups = sgp.groups, Confidence_Interval_Calculated = FALSE)
 		groups.to.summarize <- rbind(groups.to.summarize, tmp)
 	} ## END summary.groups$institution
 	if(confidence.interval.groups.only) groups.to.summarize <- groups.to.summarize[groups.to.summarize$Confidence_Interval_Calculated==TRUE,]

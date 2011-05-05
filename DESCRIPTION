@@ -1,8 +1,8 @@
 Package: SGP
-Version: 0.0-7.0
-Date: 2011-4-2
-Title: SGP: An R Package for the Calculation and Visualization of
-        Student Growth Percentiles.
+Version: 0.0-8.0
+Date: 2011-5-5
+Title: An R Package for the Calculation and Visualization of Student
+        Growth Percentiles.
 Author@R: c(person("Damian", "Betebenner",
         email="dbetebenner@nciea.org"), person("Adam", "Van Iwaarden",
         email="Vaniwaarden@colorado.edu"))
@@ -35,6 +35,6 @@ LazyData: Yes
 License: CC BY-SA 3.0 US | CC BY-NC-SA 3.0 + file LICENSE
 Repository: CRAN
 Repository/R-Forge/Project: sgp
-Repository/R-Forge/Revision: 118
-Date/Publication: 2011-04-04 09:05:28
-Packaged: 2011-04-03 20:42:54 UTC; rforge
+Repository/R-Forge/Revision: 125
+Date/Publication: 2011-05-08 05:45:44
+Packaged: 2011-05-06 20:47:34 UTC; rforge

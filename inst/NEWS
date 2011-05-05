@@ -1,3 +1,14 @@
+Changes in version: SGP_0.0-8.0
+
+  o Implemented more intelligent error handling for missing arguments in studentGrowthPercentiles and studentGrowthProjections passed from analyzeSGP. 
+  o Change default argument for simulate.sgps in analyzeSGP to TRUE. 
+  o Added Georgia and Nevada to stateData. 
+  o combineSGP now creates CATCH_UP_KEEP_UP_STATUS and CATCH_UP_KEEP_UP_STATUS_INITIAL variables if requesting lagged projections. 
+  o Parallelized analyzeSGP using foreach. 
+  o Fixed incorrect naming of percentile cuts in studentGrowthProjections function. 
+  o Achievement Level in sgpData_LONG is now an ORDERED factor. 
+  o Corrected numerous bugs in studentGrowthProjections (Thanks to New Hampshire Department of Education/Deb Wiswell and Tim Kurtz) that led to incorrect catch-up/keep-up results.
+
 Changes in version: SGP_0.0-7.0
 
   o Changed LICENSE to Creative Commons CC BY-NC-SA 3.0 and CC BY-SA 3.0 for graphics producing and non-graphics producing functions, respectively. 

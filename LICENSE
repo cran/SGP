@@ -4,7 +4,7 @@ Functions in the SGP package are issued under two different licenses:
   o All other functions are issued under CC BY-SA 3.0: http://creativecommons.org/licenses/by-sa/3.0/us/
 
 In particular note that the bubblePlot and studentGrowthPlot functions are NOT to 
-be used for any commericial purpose. This restriction does not apply to the other functions.
+be used for any commercial purpose. This restriction does not apply to the other functions.
 
 Use of this package for any purpose requires attribution: 
 

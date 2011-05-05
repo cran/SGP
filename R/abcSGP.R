@@ -12,7 +12,7 @@ function(sgp_object,
 	save.intermediate.results=FALSE,
 	sgp.summaries=list(MEDIAN_SGP="median_na(SGP)",
 		MEDIAN_SGP_TARGET="median_na(SGP_TARGET)",
-		PERCENT_AT_ABOVE_SGP_TARGET="percent_at_above_target(SGP, SGP_TARGET)",
+		PERCENT_CATCHING_UP_KEEPING_UP="percent_in_category(CATCH_UP_KEEP_UP_STATUS, list(c('Catch Up: Yes', 'Keep Up: Yes')), list(c('Catch Up: Yes', 'Catch Up: No', 'Keep Up: Yes', 'Keep Up: No')))",
 		MEDIAN_SGP_COUNT="num_non_missing(SGP)",
 		PERCENT_AT_ABOVE_PROFICIENT="percent_in_category(ACHIEVEMENT_LEVEL, list(c('Proficient', 'Advanced')), list(c('Unsatisfactory', 'Partially Proficient', 'Proficient', 'Advanced')))",
 		PERCENT_AT_ABOVE_PROFICIENT_COUNT="num_non_missing(ACHIEVEMENT_LEVEL)"),
@@ -20,7 +20,7 @@ function(sgp_object,
 		content="CONTENT_AREA",
 		time="YEAR",
 		institution_level="GRADE",
-		demographic=c("GENDER", "ETHNICITY", "FREE_REDUCED_LUNCH_STATUS", "ELL_STATUS", "IEP_STATUS", "GIFTED_AND_TALENTED_PROGRAM_STATUS", "CATCH_UP_KEEP_UP_STATUS"),
+		demographic=c("GENDER", "ETHNICITY", "FREE_REDUCED_LUNCH_STATUS", "ELL_STATUS", "IEP_STATUS", "GIFTED_AND_TALENTED_PROGRAM_STATUS", "CATCH_UP_KEEP_UP_STATUS_INITIAL"),
 		institution_inclusion=list(STATE="STATE_ENROLLMENT_STATUS", DISTRICT_NUMBER="DISTRICT_ENROLLMENT_STATUS", SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS")),
 	confidence.interval.groups=list(institution="SCHOOL_NUMBER",
 		content="CONTENT_AREA",
@@ -63,7 +63,8 @@ function(sgp_object,
 	### analyzeSGP ###
 
 	if ("analyzeSGP" %in% steps) {
-		abcSGP_TMP_Data <- analyzeSGP(sgp_object=abcSGP_TMP_Data,
+		abcSGP_TMP_Data <- analyzeSGP(
+			sgp_object=abcSGP_TMP_Data,
 			state=state,
 			content_areas=content_areas,
 			years=years,
@@ -79,7 +80,8 @@ function(sgp_object,
 	### combineSGP ###
 
 	if ("combineSGP" %in% steps) {
-		abcSGP_TMP_Data <- combineSGP(sgp_object=abcSGP_TMP_Data,
+		abcSGP_TMP_Data <- combineSGP(
+			sgp_object=abcSGP_TMP_Data,
 			state=state,
 			sgp.percentiles=sgp.percentiles,
 			sgp.projections.lagged=sgp.projections.lagged)
@@ -91,7 +93,8 @@ function(sgp_object,
 	### summarizeSGP ###
 
 	if ("summarizeSGP" %in% steps) {
-		abcSGP_TMP_Data <- summarizeSGP(sgp_object=abcSGP_TMP_Data,
+		abcSGP_TMP_Data <- summarizeSGP(
+			sgp_object=abcSGP_TMP_Data,
 			state=state,
 			years=years, 
 			content_areas=content_areas, 

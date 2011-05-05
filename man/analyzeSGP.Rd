@@ -15,19 +15,20 @@ analyzeSGP(sgp_object,
            sgp.percentiles=TRUE,
            sgp.projections=TRUE,
            sgp.projections.lagged=TRUE,
-           simulate.sgps=FALSE)
+           simulate.sgps=TRUE,
+           goodness.of.fit.print=TRUE)
 }
 
 \arguments{
   \item{sgp_object}{A list containing long formatted data in the \code{Student} (from \code{\link{prepareSGP}}) slot. 
   }
-  \item{state}{Acronym indicating state associated with the data for access to embedded knot and boundaries and cutscores.
+  \item{state}{Acronym indicating state associated with the data for access to embedded knot and boundaries, cutscores, CSEMs, and other state related assessment data.
   }
-  \item{years}{A vector indicating years in which to produce student growth percentiles and/or student growth projections/trajectories. If left missing the 
-function will use the data to infer the years based upon the assumption of having at least three years of panel data for analyses.
+  \item{years}{A vector indicating year(s) in which to produce student growth percentiles and/or student growth projections/trajectories. If missing the 
+function will use the data to infer the year(s) based upon the assumption of having at least three years of panel data for analyses.
   }
-  \item{content_areas}{A vector indicating content areas in which to produce student growth percentiles and/or student growth projections/trajectories. 
-If left missing the function will use the data to infer the content areas available for analyses.
+  \item{content_areas}{A vector indicating content area(s) in which to produce student growth percentiles and/or student growth projections/trajectories. 
+If left missing the function will use the data to infer the content area(s) available for analyses.
   }
   \item{grades}{A vector indicating grades for which to calculate student growth percentiles and/or student growth projections/trajectories. 
 If left missing the function will use the data to infer all the grade progressions for student growth percentile and student growth projections/trajectories analyses.
@@ -42,11 +43,13 @@ See examples for use cases.
   }
   \item{sgp.projections.lagged}{Boolean variable indicating whether to calculate lagged student growth projections often used for growth to standard analyses. Defaults to TRUE.
   }
-  \item{simulate.sgps}{Boolean variable indicating whether to simulate SGP values for students based on test-specific Conditional Standard Errors of Measurement (CSEM).  Test CSEM data must be available for simulation and included in \code{\link{stateData}}.  This argument must be set to TRUE for confidence interval construction. Defaults to FALSE.
+  \item{simulate.sgps}{Boolean variable indicating whether to simulate SGP values for students based on test-specific Conditional Standard Errors of Measurement (CSEM).  Test CSEM data must be available for simulation and included in \code{\link{stateData}}.  This argument must be set to TRUE for confidence interval construction. Defaults to TRUE.
+  }
+  \item{goodness.of.fit.print}{Boolean variable indicating whether to print out Goodness of Fit figures as pdf into a directory labeled Goodness of Fit. Defaults to TRUE.
   }
 }
 
-\value{Function returns a list containing the long data set in the \code{Student} slot as a data.table keyed using \code{VALID_CASE}, \code{CONTENT_AREA}, 
+\value{Function returns a list containing the long data set in the \code{Student} slot as a \code{data.table} keyed using \code{VALID_CASE}, \code{CONTENT_AREA}, 
 \code{YEAR}, \code{ID} and the student growth percentile and/or student growth projection/trajectory results in the \code{SGP} slot. 
 }
 

@@ -2,7 +2,7 @@
 \alias{combineSGP}
 \title{Combine student data and SGP results}
 \description{
-  Utility function/exemplar used to merge student long data with results from studentGrowthPercentiles and/or studentGrowthProjections calculations. Default values of this
+  Utility function/exemplar used to merge student long data with results from student growth percentiles and/or student growth projections calculations. Default values of this
   function are designed to be used following use of other utility functions: \code{\link{prepareSGP}} and \code{\link{analyzeSGP}}.
 }
 
@@ -24,7 +24,7 @@ combineSGP(sgp_object,
   }
 }
 
-\value{Function returns a list containing the input long data set in the \code{Student} slot as a data.table keyed using \code{VALID_CASE}, \code{CONTENT_AREA}, 
+\value{Function returns a list containing the input long data set in the \code{Student} slot as a \code{data.table} keyed using \code{VALID_CASE}, \code{CONTENT_AREA}, 
 \code{YEAR}, \code{ID} merged with student growth percentiles and/or lagged projection targets and catch up/keep up status.
 }
 
