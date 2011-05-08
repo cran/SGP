@@ -2,7 +2,7 @@
 \alias{studentGrowthPlot}
 \title{Create a student growth and achievement chart}
 \description{Function used to produce individual student growth and achievement timelines/plots for based upon output from student growth percentile
-analyses. Function is integrated with \code{\link{stateData}} to accomodate state specific scales and nomenclature including performance
+analyses. Function is integrated with \code{\link{stateData}} to accommodate state specific scales and nomenclature including performance
 level names.}
 \usage{
 studentGrowthPlot(Scale_Scores,
@@ -16,7 +16,7 @@ studentGrowthPlot(Scale_Scores,
 }
 \arguments{
 	\item{Scale_Scores}{
-		A bector of historical scale scores.
+		A vector of historical scale scores.
 	}
 	\item{Plotting_Scale_Scores}{
 		A vector of scale scores used as the vertical coordinates for plotting. If supplied, \code{Scale_Scores} are used for text and Plotting_Scale_Scores

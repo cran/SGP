@@ -249,7 +249,7 @@ function(panel.data,           ## REQUIRED
 					textGrob(x=-17, y=50, "Empirical SGP Distribution", default.units="native", gp=gpar(cex=0.7), rot=90, vp="qq")))))
 	} 
 
-	.csem.score.simulator <- function(scale_scores, grade, content_area, state, distribution="Skew-Normal", round=1) {
+	.csem.score.simulator <- function(scale_scores, grade, content_area, state, distribution="Normal", round=1) {
 		min.max <- stateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area]][[paste("loss.hoss_", grade, sep="")]]
 		CSEM_Data <- stateData[[state]][["Assessment_Program_Information"]][["CSEM"]][
 			stateData[[state]][["Assessment_Program_Information"]][["CSEM"]][["GRADE"]]==grade & 
@@ -299,21 +299,22 @@ function(panel.data,           ## REQUIRED
 	if (!missing(growth.levels)) {
 		tmp.growth.levels <- list()
 		if (!is.list(growth.levels) & !is.character(growth.levels)) {
-			stop("growth.levels must be supplied as a list or character abbreviation. See help page for details.")
+			message("growth.levels must be supplied as a list or character abbreviation. See help page for details. studentGrowthPercentiles will be calculated without augmented growth.levels")
 		}
 		if (is.list(growth.levels)) {
 			if (!identical(names(growth.levels), c("my.cuts", "my.levels"))) {
-				stop("Please specify an appropriate list for growth.levels. See help page for details.")
+				message("Please specify an appropriate list for growth.levels. See help page for details. Student growth percentiles will be calculated without augmented growth.levels")
 			} else {
 				tmp.growth.levels <- growth.levels
 			} 
 		}
 		if (is.character(growth.levels)) {
 			if (!growth.levels %in% names(stateData)) {
-				stop("Growth Level are currently not specified for the state indicated. Please contact the SGP package administrator to have your state's data included in the package")
-		}
+				message("Growth Level are currently not specified for the state indicated. Please contact the SGP package administrator to have your state's data included in the package. Student growth percentiles will be calculated without augmented growth.levels")
+			} else {
 			tmp.growth.levels[["my.cuts"]] <- stateData[[growth.levels]][["Growth"]][["Cutscores"]][["Cuts"]]
 			tmp.growth.levels[["my.levels"]] <- stateData[[growth.levels]][["Growth"]][["Levels"]]
+			}
 		}
 	}
 	if (!missing(use.my.knots.boundaries)) {
@@ -333,10 +334,10 @@ function(panel.data,           ## REQUIRED
 				stop("Knots and Boundaries indicated by use.my.knots.boundaries are not included.")
 			}
 		}
-			if (is.character(use.my.knots.boundaries)) {
-				if (!use.my.knots.boundaries %in% names(stateData)) {
-					stop("Knots and Boundaries are currently not implemented for the state indicated. Please contact the SGP package administrator to have your Knots and Boundaries included in the package")
-		}
+		if (is.character(use.my.knots.boundaries)) {
+			if (!use.my.knots.boundaries %in% names(stateData)) {
+				message(paste("Knots and Boundaries are currently not implemented for the state indicated (", use.my.knots.boundaries, "). Knots and boundaries will be calculated from the data. Please contact the SGP package administrator to have your Knots and Boundaries included in the package", sep=""))
+			}
      		tmp.path.knots.boundaries <- tmp.path    
 		}
 	} else {
@@ -382,12 +383,17 @@ function(panel.data,           ## REQUIRED
 		warning("Goodness-of-Fit tables only produced when calculating SGPs.")
 	}
 	if (!missing(calculate.confidence.intervals)) {
+		csem.tf <- TRUE
 		if (!is.list(calculate.confidence.intervals)) {
-			stop("Please specify an appropriate list for calculate.confidence.intervals. See help page for details.")
+			message("Please specify an appropriate list for calculate.confidence.intervals. See help page for details. SGPs will be calculated without confidence intervals.")
+			csem.tf <- FALSE
 		}
 		if (!identical(names(calculate.confidence.intervals), c("state", "confidence.quantiles", "simulation.iterations", "distribution", "round"))) {
-			stop("Please specify an appropriate list for calculate.confidence.intervals including state, confidence.quantiles, simulation.iterations, distribution and round. See help page for details")
+			message("Please specify an appropriate list for calculate.confidence.intervals including state, confidence.quantiles, simulation.iterations, distribution and round. See help page for details. SGPs will be calculated without confidence intervals.")
+			csem.tf <- FALSE
 		}
+	} else {
+		csem.tf <- FALSE
 	}
 
 	### Create object to store the studentGrowthPercentiles objects
@@ -472,12 +478,17 @@ function(panel.data,           ## REQUIRED
 	### Create Knots and Boundaries if requested (uses only grades in tmp.gp)
 
 	if (missing(use.my.knots.boundaries)) {
-		tmp.knots <-  c(Knots_Boundaries[[tmp.path.knots.boundaries]], .create.knots.boundaries(ss.data, by.grade))
+		tmp.knots <- c(Knots_Boundaries[[tmp.path.knots.boundaries]], .create.knots.boundaries(ss.data, by.grade))
 		Knots_Boundaries[[tmp.path.knots.boundaries]] <- tmp.knots[!duplicated(names(tmp.knots))]
 	} else {
 		if (is.character(use.my.knots.boundaries)) {
-		Knots_Boundaries[[tmp.path.knots.boundaries]] <- stateData[[use.my.knots.boundaries]][["Achievement"]][["Knots_Boundaries"]][[sgp.labels$my.subject]]
-	}
+			if (!is.null(stateData[[use.my.knots.boundaries]][["Achievement"]][["Knots_Boundaries"]])) {
+				Knots_Boundaries[[tmp.path.knots.boundaries]] <- stateData[[use.my.knots.boundaries]][["Achievement"]][["Knots_Boundaries"]][[sgp.labels$my.subject]]
+			} else {
+				tmp.knots <- c(Knots_Boundaries[[tmp.path.knots.boundaries]], .create.knots.boundaries(ss.data, by.grade))
+					Knots_Boundaries[[tmp.path.knots.boundaries]] <- tmp.knots[!duplicated(names(tmp.knots))]
+			}
+		}
 	}
 	knot.names <- names(Knots_Boundaries[[tmp.path.knots.boundaries]])
 
@@ -514,7 +525,7 @@ function(panel.data,           ## REQUIRED
 			tmp.data <- .get.panel.data(ss.data, orders[j], by.grade)
 			tmp.predictions <- .get.percentile.predictions(tmp.data)
 			tmp.quantiles[[j]] <- data.table(ID=tmp.data[["ID"]], ORDER=j, SGP=.get.quantiles(tmp.predictions, tmp.data[[tail(SS,1)]]))
-			if (!missing(calculate.confidence.intervals)) {
+			if (csem.tf) {
 				for (k in seq(calculate.confidence.intervals$simulation.iterations)) { 
 					set.seed(k)
 					if (k==1) {

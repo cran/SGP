@@ -57,7 +57,7 @@ studentGrowthProjections(panel.data,
   \item{panel.data.vnames}{Vector of variables to use in percentile growth projection/trajectory calculations. If not specified, function attempts to use all available 
    variables.
   }
-  \item{performance.level.cutscores}{Argument for supplying performance level cutscores to be used for determining growth-to-standard percentile growth trajectory calculations. Argument accepts a two letter state acronymn (e.g., "CO") that retrieves cutscores that are automatically embedded in a data set contained in the SGP package. Argument also accepts a subject specific list of the form:
+  \item{performance.level.cutscores}{Argument for supplying performance level cutscores to be used for determining growth-to-standard percentile growth trajectory calculations. Argument accepts a two letter state acronym (e.g., "CO") that retrieves cutscores that are automatically embedded in a data set contained in the SGP package. Argument also accepts a subject specific list of the form:
   \preformatted{
   performance.level.cutscores <- list(
          Reading=list(GRADE_3=c(cut1, cut2, cut3),
@@ -118,14 +118,14 @@ Dette, H. & Volgushev, S. (2008). Non-crossing non-parametric estimates of quant
 
 \examples{
 \dontrun{
-## First calculate SGPs for 2010
+## First calculate SGPs for 2011
 my.grade.sequences <- list(3:4, 3:5, 3:6, 3:7, 4:8)
 my.sgpData <- list(Panel_Data = sgpData)
 
 for (i in seq_along(my.grade.sequences)) {
      my.sgpData <- studentGrowthPercentiles(panel.data=my.sgpData,
-                     sgp.labels=list(my.year=2010, my.subject="Reading"),
-                     use.my.knots.boundaries="CO",
+                     sgp.labels=list(my.year=2011, my.subject="Reading"),
+                     use.my.knots.boundaries="DEMO",
                      grade.progression=my.grade.sequences[[i]])
 }
 
@@ -135,17 +135,17 @@ my.grade.progressions <- list(3, 3:4, 3:5, 3:6, 4:7)
 
 for (i in seq_along(my.grade.progressions)) {
      my.sgpData <- studentGrowthProjections(panel.data=my.sgpData,
-                      sgp.labels=list(my.year=2010, my.subject="Reading"),
+                      sgp.labels=list(my.year=2011, my.subject="Reading"),
                       projcuts.digits=0,
                       projection.unit="GRADE",
-                      performance.level.cutscores="CO",
+                      performance.level.cutscores="DEMO",
                       percentile.trajectory.values=c(25, 50, 75),
                       grade.progression=my.grade.progressions[[i]])
 }
 
 ##  Save the Student Growth Projections Results to a .csv file:
-write.csv(my.sgpData$SGProjections$READING.2010, 
-file= "2010_Reading_SGProjections.csv", row.names=FALSE, quote=FALSE)
+write.csv(my.sgpData$SGProjections$READING.2011, 
+file= "2011_Reading_SGProjections.csv", row.names=FALSE, quote=FALSE)
 }  
 }
 

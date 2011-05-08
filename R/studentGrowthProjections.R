@@ -28,8 +28,8 @@ function(panel.data,	## REQUIRED
 		x[which(is.na(x))] <- approx(x, xout=which(is.na(x)))$y
 		bnd <- panel.data[["Knots_Boundaries"]][[tmp.path.knots.boundaries]][[paste("loss.hoss_", grade, sep="")]]
 		x[x < bnd[1]] <- bnd[1] ; x [x > bnd[2]] <- bnd[2]
-		if (iso) return(sort(x))
-		else return(x)
+		if (iso) return(round(sort(x), digits=5))
+		else return(round(x, digits=5))
 	}
 
 	.create.path <- function(labels) {
@@ -104,51 +104,52 @@ function(panel.data,	## REQUIRED
 	}
 
 	.get.percentile.trajectories <- function(ss.data) { 
-
 		tmp.percentile.trajectories <- vector("list", length(grade.projection.sequence.priors))
 		completed.ids <- NULL
 
 		for (i in seq_along(grade.projection.sequence.priors)) {
 			tmp.gp <- grade.progression
 			tmp.data <- .get.panel.data(ss.data, grade.projection.sequence.priors[[i]][1], by.grade, subset.tf=!(ss.data[["ID"]] %in% completed.ids))
-			completed.ids <- c(tmp.data[["ID"]], completed.ids)
-			num.rows <- dim(tmp.data)[1]
-			tmp.data <- as.data.frame(sapply(tmp.data, rep, each=100))
-			for (j in seq_along(grade.projection.sequence.priors[[i]])) {
-				mod <- character()
-				int <- "cbind(rep(1, 100*num.rows),"
-				for (k in 1:grade.projection.sequence.priors[[i]][j]) {
-					knt <- paste("panel.data[['Knots_Boundaries']][['", tmp.path.knots.boundaries, "']][['knots_", rev(tmp.gp)[k], "']]", sep="")
-					bnd <- paste("panel.data[['Knots_Boundaries']][['", tmp.path.knots.boundaries, "']][['boundaries_", rev(tmp.gp)[k], "']]", sep="")
-					mod <- paste(mod, ", bs(tmp.data$SS", rev(tmp.gp)[k], ", knots=", knt, ", Boundary.knots=", bnd, ")", sep="")
-				}
-				mat <- paste("panel.data[['Coefficient_Matrices']][['", tmp.path.coefficient.matrices, "']][['qrmatrix_", grade.projection.sequence[j], "_", k, "']]", sep="")
-				.check.my.coefficient.matrices(matrix.names, grade.projection.sequence[j], k)
-				tmp.scores <- eval(parse(text=paste(int, substring(mod, 2), ")", sep="")))
-				tmp.matrix <- eval(parse(text=mat))
-				num.chunks <- floor(num.rows/chunk.size)
-				chunk.list <- vector("list", num.chunks+1)
-				for (chunk in 0:num.chunks){
-					lower.index <- chunk*chunk.size
-					upper.index <- min((chunk+1)*chunk.size, num.rows)
-					quantile.list <- vector("list", 100)
-					for (m in 1:100) {
-						quantile.list[[m]] <-  tmp.scores[m+lower.index:(upper.index-1)*100,] %*% tmp.matrix[,m] 
+			if (!empty(tmp.data)) {
+				completed.ids <- c(tmp.data[["ID"]], completed.ids)
+				num.rows <- dim(tmp.data)[1]
+				tmp.data <- as.data.frame(sapply(tmp.data, rep, each=100))
+				for (j in seq_along(grade.projection.sequence.priors[[i]])) {
+					mod <- character()
+					int <- "cbind(rep(1, 100*num.rows),"
+					for (k in 1:grade.projection.sequence.priors[[i]][j]) {
+						knt <- paste("panel.data[['Knots_Boundaries']][['", tmp.path.knots.boundaries, "']][['knots_", rev(tmp.gp)[k], "']]", sep="")
+						bnd <- paste("panel.data[['Knots_Boundaries']][['", tmp.path.knots.boundaries, "']][['boundaries_", rev(tmp.gp)[k], "']]", sep="")
+						mod <- paste(mod, ", bs(tmp.data$SS", rev(tmp.gp)[k], ", knots=", knt, ", Boundary.knots=", bnd, ")", sep="")
 					}
-					chunk.list[[chunk+1]] <- apply(matrix(do.call(c, quantile.list), ncol=100), 1, 
-						function(x) .smooth.bound.iso.row(x, grade.projection.sequence[j]))
-				}
-				tmp.data <- data.frame(tmp.data, as.vector(do.call(cbind, chunk.list)))
-				names(tmp.data)[length(names(tmp.data))] <- paste("SS", grade.projection.sequence[j], sep="")
-				tmp.gp <- c(tmp.gp, grade.projection.sequence[j])
-			} ## Eng j loop
-			tmp.percentile.trajectories[[i]] <- tmp.data[,-(1:grade.projection.sequence.priors[[i]][1]+1)]
+					mat <- paste("panel.data[['Coefficient_Matrices']][['", tmp.path.coefficient.matrices, "']][['qrmatrix_", grade.projection.sequence[j], "_", k, "']]", sep="")
+					.check.my.coefficient.matrices(matrix.names, grade.projection.sequence[j], k)
+					tmp.scores <- eval(parse(text=paste(int, substring(mod, 2), ")", sep="")))
+					tmp.matrix <- eval(parse(text=mat))
+					num.chunks <- floor(num.rows/chunk.size)
+					chunk.list <- vector("list", num.chunks+1)
+					for (chunk in 0:num.chunks) {
+						lower.index <- chunk*chunk.size
+						upper.index <- min((chunk+1)*chunk.size, num.rows)
+						quantile.list <- vector("list", 100)
+						for (m in 1:100) {
+							quantile.list[[m]] <-  tmp.scores[m+lower.index:(upper.index-1)*100,] %*% tmp.matrix[,m] 
+						}
+						chunk.list[[chunk+1]] <- apply(matrix(do.call(c, quantile.list), ncol=100), 1, 
+							function(x) .smooth.bound.iso.row(x, grade.projection.sequence[j]))
+					}
+					tmp.data <- data.frame(tmp.data, as.vector(do.call(cbind, chunk.list)))
+					names(tmp.data)[length(names(tmp.data))] <- paste("SS", grade.projection.sequence[j], sep="")
+					tmp.gp <- c(tmp.gp, grade.projection.sequence[j])
+				} ## Eng j loop
+				tmp.percentile.trajectories[[i]] <- tmp.data[,-(1:grade.projection.sequence.priors[[i]][1]+1)]
+			} ## END if statement
 		} ## End i loop
 		do.call(rbind, tmp.percentile.trajectories)
 	} ## End function
 
-	.sgp.targets <- function(data, cut, convert0.and100) {
-		tmp <- which.min(c(data < cut, FALSE))
+	.sgp.targets <- function(data, cut, convert.0and100) {
+		tmp <- which.min(c(data < cut, FALSE))-1
 		tmp[tmp==101] <- 100
 		if (convert.0and100) {tmp[tmp==0] <- 1; tmp[tmp==100] <- 99}
 		return(as.integer(tmp))
@@ -157,14 +158,16 @@ function(panel.data,	## REQUIRED
 	.get.trajectories.and.cuts <- function(percentile.trajectories, trajectories.tf, cuts.tf, projection.unit=projection.unit) {
 		if (trajectories.tf) {
 			tmp.traj <- round(percentile.trajectories[seq(dim(percentile.trajectories)[1]) %% 100 %in% ((percentile.trajectory.values+1) %% 100), 
-					colnames(percentile.trajectories)])
+					colnames(percentile.trajectories)], digits=projcuts.digits)
 			tmp.traj <- reshape(data.table(tmp.traj, CUT=rep(percentile.trajectory.values, dim(tmp.traj)[1]/length(percentile.trajectory.values))), 
 				idvar="ID", timevar="CUT", direction="wide")
 			if (projection.unit=="GRADE") {
-				names(tmp.traj) <- c("ID", do.call(paste, c(expand.grid("P", percentile.trajectory.values, "_PROJ_GRADE_", grade.projection.sequence), sep="")))
+				tmp.vec <- expand.grid("P", percentile.trajectory.values, "_PROJ_GRADE_", grade.projection.sequence)
 			} else {
-				names(tmp.traj) <- c("ID", do.call(paste, c(expand.grid("P", percentile.trajectory.values, "_PROJ_YEAR_", seq_along(grade.projection.sequence)), sep="")))
+				tmp.vec <- expand.grid("P", percentile.trajectory.values, "_PROJ_YEAR_", seq_along(grade.projection.sequence))
 			}
+			tmp.vec <- tmp.vec[order(tmp.vec$Var2),]
+			names(tmp.traj) <- c("ID", do.call(paste, c(tmp.vec, sep="")))
 			key(tmp.traj) <- "ID"
 			if (!cuts.tf) return(tmp.traj)
 		}
@@ -187,7 +190,7 @@ function(panel.data,	## REQUIRED
 					k <- k+1
 				}
 			}
-			arg <- paste("list(", paste(cuts.arg, collapse=", "), ")", sep="")	
+			arg <- paste("list(", paste(cuts.arg, collapse=", "), ")", sep="")
 
 			tmp.cuts <- eval(parse(text=paste("percentile.trajectories[,", arg, ", by=ID]", sep="")))
 			names(tmp.cuts) <- c("ID", names.arg)
@@ -282,25 +285,32 @@ function(panel.data,	## REQUIRED
 	if (!missing(performance.level.cutscores)) {
 		if (is.character(performance.level.cutscores)) {
 			if (!(performance.level.cutscores %in% names(stateData))) {
-				stop("\nTo use state cutscores, supply an appropriate two letter state abbreviation.  \nRequested state may not be included. See help page for details.\n\n")
+				message("\nTo use state cutscores, supply an appropriate two letter state abbreviation. \nRequested state may not be included. See help page for details.\n\n")
+				tf.cutscores <- FALSE
 			}
 			if (is.null(names(stateData[[performance.level.cutscores]][["Achievement"]][["Cutscores"]]))) {
-				stop("\nCutscores are currently not implemented for the state indicated. \nPlease contact the SGP package administrator to have your cutscores included in the package.\n\n")
+				message("\nCutscores are currently not implemented for the state indicated. \nPlease contact the SGP package administrator to have your cutscores included in the package.\n\n")
+				tf.cutscores <- FALSE
 			} else {
 				tmp.cutscores <- stateData[[performance.level.cutscores]][["Achievement"]][["Cutscores"]][[toupper(sgp.labels$my.subject)]]
+				tf.cutscores <- TRUE
 		}}
 		if (is.list(performance.level.cutscores)) {
 			if (any(names(performance.level.cutscores) %in% sgp.labels$my.subject)) {
 				tmp.cutscores <- performance.level.cutscores[[sgp.labels$my.subject]]
+				tf.cutscores <- TRUE
 			} else {
 				stop("\nList of cutscores provided in performance.level.cutscores must include a subject name that matches my.subject in sgp.labels (CASE SENSITIVE). See help page for details.\n\n")
-		}}}
+				tf.cutscores <- FALSE
+	}}} else {
+		tf.cutscores <- FALSE
+	}
 
 	if (!(toupper(projection.unit)=="YEAR" | toupper(projection.unit)=="GRADE")) {
 		stop("Projection unit must be specified as either YEAR or GRADE. See help page for details.")
 	}
 
-	if (is.null(percentile.trajectory.values) & missing(performance.level.cutscores)) {
+	if (is.null(percentile.trajectory.values) & !tf.cutscores) {
 		stop("Either percentile trajectories and/or performance level cutscores must be supplied for the analyses.")
 	}
 
@@ -321,7 +331,7 @@ function(panel.data,	## REQUIRED
 		}
 	} 
 
-	if (!missing(performance.level.cutscores)) {
+	if (tf.cutscores) {
 		Cutscores[[sgp.labels$my.subject]] <- tmp.cutscores
 	}
 
@@ -375,13 +385,13 @@ function(panel.data,	## REQUIRED
 
 	### Select specific percentile trajectories and calculate cutscores
 
-	if (!missing(performance.level.cutscores)) {
+	if (tf.cutscores) {
 		tmp.cutscore.grades <- as.numeric(unlist(strsplit(names(tmp.cutscores), "_"))[seq(2,length(unlist(strsplit(names(tmp.cutscores), "_"))),by=2)])
 		if (!all(grade.projection.sequence %in% tmp.cutscore.grades)) {
 			stop("Cutscores provided do not include cutscores for grades in projection.")
 	}} 
 
-	trajectories.and.cuts <- .get.trajectories.and.cuts(percentile.trajectories, !is.null(percentile.trajectory.values), !missing(performance.level.cutscores), toupper(projection.unit))
+	trajectories.and.cuts <- .get.trajectories.and.cuts(percentile.trajectories, !is.null(percentile.trajectory.values), tf.cutscores, toupper(projection.unit))
 
 	if (is.null(SGProjections[[tmp.path]])) SGProjections[[tmp.path]] <- .unget.data.table(as.data.table(trajectories.and.cuts), ss.data)
 	else SGProjections[[tmp.path]] <- rbind.fill(SGProjections[[tmp.path]], .unget.data.table(as.data.table(trajectories.and.cuts), ss.data))

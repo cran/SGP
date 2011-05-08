@@ -65,7 +65,7 @@ studentGrowthPercentiles(panel.data,
   }
   \item{growth.levels}{A two letter state acronym or a list of the form \code{list(my.cuts= , my.levels= )} specifying a vector of cuts between 1 and 99 (e.g., 35, 65)
    and the associated qualitative levels associated with the cuts (e.g., low, typical, and high). Note that the length of my.levels should be one more than the
-   length of my.cuts. To add your growth levels to the \code{stateData} data sest, please contact the package administrator.
+   length of my.cuts. To add your growth levels to the \code{stateData} data set, please contact the package administrator.
   }
   \item{use.my.knots.boundaries}{A list of the form  \code{list(my.year= , my.subject= )} specifying a set of pre-calculated
    knots and boundaries for B-spline calculations. Most often used to utilize knots and boundaries calculated from a previous analysis. Knots and boundaries are stored
@@ -115,7 +115,7 @@ studentGrowthPercentiles(panel.data,
 
 
 \details{Typical use of the function is to submit a data frame to the function containing records of all students across all grades, allowing the function to subset 
-out specific grade progressions using \code{grade.progression}. Additional uses include using precalculated results to recalculate SGPs for baseline referencing.
+out specific grade progressions using \code{grade.progression}. Additional uses include using pre-calculated results to recalculate SGPs for baseline referencing.
 \code{\link{studentGrowthPercentiles}} examples provide code for use in analyzing assessment data across multiple grades. 
 }
 
@@ -144,7 +144,7 @@ Koenker, R. (2005). \emph{Quantile regression}. Cambridge: Cambridge University 
 ## Calculate 4th grade student growth percentiles using included sgpData
 
 sgp_g4 <- studentGrowthPercentiles(panel.data=sgpData,
-                sgp.labels=list(my.year=2010, my.subject="Reading"),
+                sgp.labels=list(my.year=2011, my.subject="Reading"),
                 percentile.cuts=c(1,35,65,99),
                 subset.grade=4,
                 num.prior=1)
@@ -152,7 +152,7 @@ sgp_g4 <- studentGrowthPercentiles(panel.data=sgpData,
 ## NOTE: "grade.progression" can be used in place of "subset.grade" and "num.prior" 
  
 sgp_g4_v2 <- studentGrowthPercentiles(panel.data=sgpData,
-                   sgp.labels=list(my.year=2010, my.subject="Reading"),
+                   sgp.labels=list(my.year=2011, my.subject="Reading"),
                    percentile.cuts=c(1,35,65,99),
                    grade.progression=c(3,4))
 
@@ -162,39 +162,39 @@ identical(sgp_g4$SGPercentiles, sgp_g4_v2$SGPercentiles)
 ## file and used by supplying the appropriate two letter state acronym.
  
 sgp_g4_DEMO <- studentGrowthPercentiles(panel.data=sgpData,
-                   sgp.labels=list(my.year=2010, my.subject="Reading"),
+                   sgp.labels=list(my.year=2011, my.subject="Reading"),
                    use.my.knots.boundaries="DEMO",
                    grade.progression=c(3,4))
 
 \dontrun{
 ## NOTE: Goodness of Fit results are stored as a graphical object in the
-## Goodness_of_Fit slot. To view or save (using any R ouput device) try:
+## Goodness_of_Fit slot. To view or save (using any R output device) try:
 
-grid.draw(sgp_g4$Goodness_of_Fit$READING.2010$GRADE_4)
+grid.draw(sgp_g4$Goodness_of_Fit$READING.2011$GRADE_4)
 
-pdf(file="Grade_4_Reading_2010_GOF.pdf", width=8.5, height=4.5)
-   grid.draw(sgp_g4$Goodness_of_Fit$READING.2010$GRADE_4)
+pdf(file="Grade_4_Reading_2011_GOF.pdf", width=8.5, height=4.5)
+   grid.draw(sgp_g4$Goodness_of_Fit$READING.2011$GRADE_4)
 dev.off()
 
 # Other grades
 
 sgp_g5 <- studentGrowthPercentiles(panel.data=sgpData,
-                sgp.labels=list(my.year=2010, my.subject="Reading"),
+                sgp.labels=list(my.year=2011, my.subject="Reading"),
                 percentile.cuts=c(1,35,65,99),
                 grade.progression=3:5)
 
 sgp_g6 <- studentGrowthPercentiles(panel.data=sgpData,
-                sgp.labels=list(my.year=2010, my.subject="Reading"),
+                sgp.labels=list(my.year=2011, my.subject="Reading"),
                 percentile.cuts=c(1,35,65,99),
                 grade.progression=3:6)
 
 sgp_g7 <- studentGrowthPercentiles(panel.data=sgpData,
-                sgp.labels=list(my.year=2010, my.subject="Reading"),
+                sgp.labels=list(my.year=2011, my.subject="Reading"),
                 percentile.cuts=c(1,35,65,99),
                 grade.progression=3:7)
 
 sgp_g8 <- studentGrowthPercentiles(panel.data=sgpData,
-                sgp.labels=list(my.year=2010, my.subject="Reading"),
+                sgp.labels=list(my.year=2011, my.subject="Reading"),
                 percentile.cuts=c(1,35,65,99),
                 grade.progression=4:8)
 
@@ -204,11 +204,11 @@ sgp_g8 <- studentGrowthPercentiles(panel.data=sgpData,
 
 # Combine all results
 
-sgp_all <- rbind(sgp_g4$SGPercentiles$READING.2010,
-                 sgp_g5$SGPercentiles$READING.2010,
-                 sgp_g6$SGPercentiles$READING.2010,
-                 sgp_g7$SGPercentiles$READING.2010,
-                 sgp_g8$SGPercentiles$READING.2010)
+sgp_all <- rbind(sgp_g4$SGPercentiles$READING.2011,
+                 sgp_g5$SGPercentiles$READING.2011,
+                 sgp_g6$SGPercentiles$READING.2011,
+                 sgp_g7$SGPercentiles$READING.2011,
+                 sgp_g8$SGPercentiles$READING.2011)
 
 # Save SGP results to .csv file
 
@@ -226,21 +226,21 @@ my.sgpData <- list(Panel_Data=sgpData)   ### Put sgpData into Panel_Data slot
 
 for (i in seq_along(my.grade.sequences)) {
      my.sgpData <- studentGrowthPercentiles(panel.data=my.sgpData,
-                     sgp.labels=list(my.year=2010, my.subject="Reading"),
+                     sgp.labels=list(my.year=2011, my.subject="Reading"),
                      growth.levels="DEMO",
                      grade.progression=my.grade.sequences[[i]])
 }
 
 #  Save Student Growth Percentiles results to a .csv file:
 
-write.csv(my.sgpData$SGPercentiles$READING.2010, 
-file="2010_Reading_SGPercentiles.csv", row.names=FALSE, quote=FALSE, na="")
+write.csv(my.sgpData$SGPercentiles$READING.2011, 
+file="2011_Reading_SGPercentiles.csv", row.names=FALSE, quote=FALSE, na="")
 
 # Create pdfs of all Goodness of Fit results:
 
-for (i in names(my.sgpData$Goodness_of_Fit$READING.2010)) {
-    pdf(file=paste(i, "_Reading_2010_GOF.pdf", sep=""), width=8.5, height=4.5)
-       grid.draw(my.sgpData[["Goodness_of_Fit"]][["READING.2010"]][[i]])
+for (i in names(my.sgpData$Goodness_of_Fit$READING.2011)) {
+    pdf(file=paste(i, "_Reading_2011_GOF.pdf", sep=""), width=8.5, height=4.5)
+       grid.draw(my.sgpData[["Goodness_of_Fit"]][["READING.2011"]][[i]])
     dev.off()
 }
 
@@ -251,10 +251,10 @@ my.grade.sequences <- list(3:4, 3:5, 3:6, 3:7, 4:8)
 
 for (i in seq_along(my.grade.sequences)) {
 	my.sgpData_2009 <- studentGrowthPercentiles(panel.data=my.sgpData,
-		panel.data.vnames=c("ID", "GRADE_2006", 
-			"GRADE_2007", "GRADE_2008", "GRADE_2009",
-			"SS_2006", "SS_2007", "SS_2008", "SS_2009"),
-		sgp.labels=list(my.year=2009, my.subject="Reading"),
+		panel.data.vnames=c("ID", "GRADE_2007", 
+			"GRADE_2008", "GRADE_2009", "GRADE_2010",
+			"SS_2007", "SS_2008", "SS_2009", "SS_2010"),
+		sgp.labels=list(my.year=2010, my.subject="Reading"),
 		grade.progression=my.grade.sequences[[i]])
 }
 
@@ -265,7 +265,7 @@ my.grade.sequences <- list(3:4, 3:5, 3:6, 3:7, 4:8)
 
 for (i in seq_along(my.grade.sequences)) {
     my.sgpData <- studentGrowthPercentiles(panel.data=my.sgpData,
-      sgp.labels=list(my.year=2010, my.subject="Reading"),
+      sgp.labels=list(my.year=2011, my.subject="Reading"),
       calculate.confidence.intervals=list(state="DEMO", 
          confidence.quantiles=c(0.1, 0.9), simulation.iterations=100, 
          distribution="Normal", round=1),

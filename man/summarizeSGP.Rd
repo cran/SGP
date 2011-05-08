@@ -33,11 +33,11 @@ summarizeSGP(sgp_object,
   }
   \item{state}{Acronym indicating state associated with the summaries for access to assessment program information embedded in \code{\link{stateData}}.
   }
-  \item{years}{A vector indicating years in which to produce student growth percentiles and/or student growth projections/trajectories. If left missing the 
-function will use the data to infer the years based upon the assumption of having at least three years of panel data for analyses.
+  \item{years}{A vector indicating year(s) in which to produce student growth percentiles and/or student growth projections/trajectories. If missing the 
+function will use the data to infer the year(s) based upon the assumption of having at least three years of panel data for analyses.
   }
-  \item{content_areas}{A vector indicating content areas in which to produce student growth percentiles and/or student growth projections/trajectories. 
-If left missing the function will use the data to infer the content areas available for analyses.
+  \item{content_areas}{A vector indicating content area(s) in which to produce student growth percentiles and/or student growth projections/trajectories. 
+If missing the function will use the data to infer the content area(s) available for analyses.
   }
   \item{sgp.summaries}{A list giving the summaries requested for each group analyzed based upon the \code{summary.group} argument. The default summaries include the group level \code{MEDIAN_SGP}, \code{MEDIAN_SGP_COUNT} (the number of students used to compute the median), \code{PERCENT_AT_ABOVE_PROFICIENT} for the appropriate achievement levels and \code{PERCENT_AT_ABOVE_PROFICIENT_COUNT}. NOTE: The \code{percent_in_category()} summary function requires a variable that MUST be a factor with proficiency categories as levels. The function looks for the percent of students from the variable that are IN one or more categories that identify students that are at or above proficiency (the first list argument) OUT of all possible categories (the second list argument). For example, in the \code{\link{sgpData_LONG}} dataset \code{ACHIEVEMENT_LEVEL} has 5 levels.  Levels 3 and 4 are "Proficient" and "Advanced" respectively. The default summary looks for the percent of students in categories 3 and 4 out of the five possible categories (1:5).
   }
@@ -48,7 +48,7 @@ If left missing the function will use the data to infer the content areas availa
   }
 }
 
-\details{Function makes use of the \code{foreach} package to parallel process summary tables of student data. It is the user's responsibility to register a parallel backend of their choice before running the \code{summarizeSGP} function. The proper choice may be dependent upon the user's operating system, software and system memory capacity. Please see the \code{foreach} documentation for details. If no parallel backend is specified, the function will process the summary tables sequentially.
+\details{Function makes use of the \code{foreach} package to parallel process summary tables of student data. Currently, it is the user's responsibility to register a parallel back end of their choice before running the \code{summarizeSGP} function. The proper choice may be dependent upon the user's operating system, software and system memory capacity. Please see the \code{foreach} documentation for details. If no parallel back end is specified, the function will process the summary tables sequentially.
 }
 
 \value{Function returns lists containing the summary tables as data.table objects in the \code{Summary} slot of the SGP data object. Each \code{institution} has a slot in the \code{Summary} list. 

@@ -63,7 +63,7 @@ bubblePlot(
 	}
 	\item{bubble_plot_data.SUBSET}{
 	A boolean vector indicating a subset of the bubbles to be highlighted and plotted. When BUBBLE_TIPS are indicated, only subsetted bubbles will show bubble tips.
-	To further accentuate higlight bubbles, their radius can be altered using the bubble_plot_configs.BUBBLE_SUBSET_INCREASE argument. 
+	To further accentuate highlight bubbles, their radius can be altered using the bubble_plot_configs.BUBBLE_SUBSET_INCREASE argument. 
 	Default value is \code{bubble_plot_data.SUBSET=NULL}.
 	}
 	\item{bubble_plot_data.INDICATE}{

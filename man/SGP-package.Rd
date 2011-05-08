@@ -19,17 +19,17 @@ are summarized in a variety of ways to describe student growth. As of the 0.0-7.
 \tabular{ll}{
 Package: \tab SGP\cr
 Type: \tab Package\cr
-Version: \tab 0.0-7.0\cr
-Date: \tab 2011-4-2\cr
+Version: \tab 0.0-8.0\cr
+Date: \tab 2011-5-5\cr
 License: \tab CC BY-SA 3.0 US | CC BY-NC-SA 3.0 + file LICENSE\cr
 LazyLoad: \tab yes\cr
 }
-Calculation of student growth percentiles and percentile growth porjections/trajectories is typically performed by grade and subject. Data for growth percentile 
+Calculation of student growth percentiles and percentile growth projections/trajectories is typically performed by grade and subject. Data for growth percentile 
 calculation must be specifically formatted.  See \code{\link{sgpData}} for an example data set. Batch R syntax for performing analyses across all grades and years is 
 provided in the examples of the \code{\link{studentGrowthPercentiles}} and \code{\link{studentGrowthProjections}} using the higher level functions 
 \code{\link{prepareSGP}}, \code{\link{analyzeSGP}}, \code{\link{combineSGP}}, \code{\link{summarizeSGP}}, and \code{reportSGP}.} 
 
-\author{Damian W. Betebenner \email{DBetebenner@nciea.org}} 
+\author{Damian W. Betebenner \email{dbetebenner@nciea.org} and Adam Van Iwaarden \email{Vaniwaarden@colorado.edu}} 
 
 \references{ 
 Betebenner, D. W. (2009). Norm- and criterion-referenced student growth. 
