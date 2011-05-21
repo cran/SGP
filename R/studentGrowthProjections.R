@@ -16,7 +16,7 @@ function(panel.data,	## REQUIRED
 	projcuts.digits=0) {
 
 	started.at=proc.time()
-        message(paste("\tStarted studentGrowthProjections", date()))
+	started.date <- date()
 
 	##########################################################
 	###
@@ -398,6 +398,7 @@ function(panel.data,	## REQUIRED
 
 	### Announce Completion & Return SGP Object
 
+        message(paste("\tStarted studentGrowthProjections", started.date))
 	message(paste("\tSubject: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(grade.progression, collapse=", "), " ", sgp.labels$my.extra.label, sep="")) 
 	message(paste("\tFinished studentGrowthProjections", date(), "in", timetaken(started.at), "\n")) 
 

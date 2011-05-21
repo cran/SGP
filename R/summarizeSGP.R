@@ -13,12 +13,15 @@ function(sgp_object,
 		institution_level="GRADE",
 		demographic=c("GENDER", "ETHNICITY", "FREE_REDUCED_LUNCH_STATUS", "ELL_STATUS", "IEP_STATUS", "GIFTED_AND_TALENTED_PROGRAM_STATUS", "CATCH_UP_KEEP_UP_STATUS"),
 		institution_inclusion=list(STATE="STATE_ENROLLMENT_STATUS", DISTRICT_NUMBER="DISTRICT_ENROLLMENT_STATUS", SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS")),
-	confidence.interval.groups=list(institution="SCHOOL_NUMBER",
+	confidence.interval.groups=list(TYPE="Bootstrap",
+		VARIABLES=c("SGP"),
+		QUANTILES=c(0.025, 0.975),
+		GROUPS=list(institution="SCHOOL_NUMBER",
 		content="CONTENT_AREA",
 		time="YEAR",
 		institution_level= NULL,
 		demographic=NULL,
-		institution_inclusion=list(STATE=NULL, DISTRICT_NUMBER=NULL, SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS"))) {
+		institution_inclusion=list(STATE=NULL, DISTRICT_NUMBER=NULL, SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS")))) {
 
         started.at <- proc.time()
         message(paste("Started summarizeSGP", date()))
@@ -54,6 +57,7 @@ function(sgp_object,
 	}
 
 	median_na <- function(x) median(as.numeric(x), na.rm=TRUE)
+	boot.median <- function(x,i) median(x[i], na.rm=TRUE)
 	mean_na <- function(x, result.digits=1) round(mean(as.numeric(x), na.rm=TRUE), digits=result.digits)
 	num_non_missing <- function(x) sum(!is.na(as.numeric(x)))
 
@@ -65,7 +69,7 @@ function(sgp_object,
 		for (i in seq(length(in.categories))) {
 			tmp.result[[i]] <-  round(100*sum(tmp[in.categories[[i]]])/sum(tmp[of.categories[[i]]]), digits=result.digits)
 		}
-	return(unlist(tmp.result))
+		return(unlist(tmp.result))
 	}
 
 	percent_at_above_target <- function(sgp, target, result.digits=1) {
@@ -74,23 +78,26 @@ function(sgp_object,
 		return(tmp.pct)
 	}
 
+	boot.sgp <- function(data, conf.quantiles=c(0.025, 0.975)) {
+		as.list(quantile(boot(data, boot.median, 100)$t, probs=conf.quantiles, na.rm=TRUE))
+	}
+
 	sgpSummary <- function(sgp.groups.to.summarize, confidence.interval.groups.to.summarize) {
   		SGP_SIM <- V1 <- .SD <- NULL  ## To prevent R CMD check warning
-		ListExpr <- parse(text=paste("quote(as.list(c(", paste(unlist(sgp.summaries), collapse=", "),")))",sep=""))
+		ListExpr <- parse(text=paste("quote(c(", paste(unlist(sgp.summaries), collapse=", "),"))",sep=""))
 		ByExpr <- parse(text=paste("quote(list(", paste(sgp.groups.to.summarize, collapse=", "), "))", sep=""))
 		tmp <- tmp.dt[, eval(eval(ListExpr)), by=eval(eval(ByExpr))]
-		names(tmp)[-seq(length(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))))] <- unlist(strsplit(names(sgp.summaries), "[.]"))
-		if (confidence.interval.groups.to.summarize) {
+		if (confidence.interval.groups.to.summarize & confidence.interval.groups$TYPE=="CSEM") {
 			SIM_ByExpr1 <- parse(text=paste("quote(list(", paste(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))
   				[!(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))) %in% key(tmp.dt)], collapse=", "), 
-			  	", ", paste(names(tmp.simulation.dt)[grep("SGP_SIM_", names(tmp.simulation.dt))], collapse=", "), "))", sep=""))
+		  		", ", paste(names(tmp.simulation.dt)[grep("SGP_SIM_", names(tmp.simulation.dt))], collapse=", "), "))", sep=""))
 			SIM_ByExpr2 <- parse(text=paste("quote(list(", paste(sgp.groups.to.summarize, collapse=", "), "))", sep=""))
-			tmp.sim <- tmp.dt[tmp.simulation.dt, eval(eval(SIM_ByExpr1))][, -(1:2), with=FALSE][,
-				lapply(.SD, median_na), by=eval(eval(SIM_ByExpr2))][, 
-				as.list(round(apply(.SD, 1, quantile, probs=c(0.025, 0.975)))), by=eval(eval(SIM_ByExpr2))]
-			names(tmp.sim)[(dim(tmp.sim)[2]-1):dim(tmp.sim)[2]] <- c("LOWER_MEDIAN_SGP_95_CONF_BOUND", "UPPER_MEDIAN_SGP_95_CONF_BOUND")
+				tmp.sim <- tmp.dt[tmp.simulation.dt, eval(eval(SIM_ByExpr1))][, -(1:2), with=FALSE][,
+					lapply(.SD, median_na), by=eval(eval(SIM_ByExpr2))][, 
+				as.list(round(apply(.SD, 1, quantile, probs=confidence.interval.groups$QUANTILES))), by=eval(eval(SIM_ByExpr2))]
 			tmp <- data.table(merge.data.frame(tmp, tmp.sim, by = unlist(strsplit(as.character(sgp.groups.to.summarize), ", ")),all=TRUE))
 		}
+		names(tmp)[-seq(length(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))))] <- sgp.summaries.names
 		message(paste("Finished with", sgp.groups.to.summarize))
 		return(tmp)
 	}
@@ -108,12 +115,25 @@ function(sgp_object,
 			key=paste(key(tmp.dt), collapse=","))
 	}
 	 
-	## Take subset of data
+	## Prepare data
 
 	tmp.dt <- data.table(STATE=state, sgp_object[["Student"]][CJ("VALID_CASE", content_areas, years), mult="all"], key="VALID_CASE, ID, CONTENT_AREA, YEAR")
 
 	if (!is.null(confidence.interval.groups)) {
-		tmp.simulation.dt <- combineSims(sgp_object); gc()
+		if (confidence.interval.groups$TYPE == "Bootstrap") {
+			tmp.list <- list()
+			tmp.quantiles <- paste("c(", paste(confidence.interval.groups$QUANTILES, collapse=", "), ")", sep="")
+			for (i in confidence.interval.groups$VARIABLES) {
+					tmp.list[[paste("MEDIAN_", i, "_QUANTILES", sep="")]] <- paste("boot.sgp(", i, ", ", tmp.quantiles, ")", sep="")
+			}
+			sgp.summaries <- c(sgp.summaries, tmp.list)
+		}
+		if (confidence.interval.groups$TYPE == "CSEM") {
+			tmp.simulation.dt <- combineSims(sgp_object); gc()
+		}
+		sgp.summaries.names <- c(head(names(sgp.summaries), -1), paste("MEDIAN_SGP_", confidence.interval.groups$QUANTILES, "_CONFIDENCE_BOUND", sep=""))
+	} else {
+		sgp.summaries.names <- names(sgp.summaries)
 	}
 
 	## Create summary tables
@@ -126,23 +146,23 @@ function(sgp_object,
 			group.format(summary.groups[["institution_inclusion"]][[i]]),
 			group.format(summary.groups[["demographic"]])), sep=""))
 
-  	if (!is.null(confidence.interval.groups) & i %in% confidence.interval.groups$institution) {
+  	if (!is.null(confidence.interval.groups[["GROUPS"]]) & i %in% confidence.interval.groups[["GROUPS"]][["institution"]]) {
 			ci.groups <- do.call(paste, c(expand.grid(i,
-				group.format(confidence.interval.groups[["content"]]),
-				group.format(confidence.interval.groups[["time"]]),
-				group.format(confidence.interval.groups[["institution_level"]]),
-				group.format(confidence.interval.groups[["institution_inclusion"]][[i]]),
-				group.format(confidence.interval.groups[["demographic"]])), sep=""))
+				group.format(confidence.interval.groups[["GROUPS"]][["content"]]),
+				group.format(confidence.interval.groups[["GROUPS"]][["time"]]),
+				group.format(confidence.interval.groups[["GROUPS"]][["institution_level"]]),
+				group.format(confidence.interval.groups[["GROUPS"]][["institution_inclusion"]][[i]]),
+				group.format(confidence.interval.groups[["GROUPS"]][["demographic"]])), sep=""))
 		}
 
-		if (!is.null(confidence.interval.groups) & i %in% confidence.interval.groups$institution) {
+		if (!is.null(confidence.interval.groups[["GROUPS"]]) & i %in% confidence.interval.groups[["GROUPS"]][["institution"]]) {
 			j <- k <- NULL ## To prevent R CMD check warnings
-  		sgp_object[["Summary"]][[i]] <- foreach(j=iter(sgp.groups), k=iter(sgp.groups %in% ci.groups), 
+  			sgp_object[["Summary"]][[i]] <- foreach(j=iter(sgp.groups), k=iter(sgp.groups %in% ci.groups), 
 				.options.multicore=list(preschedule = FALSE, set.seed = FALSE), .packages="data.table", .inorder=FALSE) %dopar% {return(sgpSummary(j, k))}
 			names(sgp_object[["Summary"]][[i]]) <- gsub(", ", "__", sgp.groups)
 		} else {
 			j <- k <- NULL ## To prevent R CMD check warnings
-    	sgp_object[["Summary"]][[i]] <- foreach(j=iter(sgp.groups), k=iter(rep(FALSE, length(sgp.groups))), 
+    			sgp_object[["Summary"]][[i]] <- foreach(j=iter(sgp.groups), k=iter(rep(FALSE, length(sgp.groups))), 
 				.options.multicore=list(preschedule = FALSE, set.seed = FALSE), .packages="data.table", .inorder=FALSE) %dopar% {return(sgpSummary(j, k))}
 			names(sgp_object[["Summary"]][[i]]) <- gsub(", ", "__", sgp.groups)
 		}

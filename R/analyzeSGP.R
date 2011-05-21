@@ -52,9 +52,9 @@ function(sgp_object,
 							panel.data.vnames=sgp.vnames,
 							grade.progression=k,
 							calculate.confidence.intervals=list(state=state,  
-								confidence.quantiles=NULL,
+								confidence.quantiles=c(0.16,0.84),
 								simulation.iterations=100, 
-								distribution="Skew-Normal", round=1))
+								distribution="Normal", round=1))
 					} ## END k loop
 				} else {
 					for (k in sgp.iter[["sgp.grade.sequences"]]) {

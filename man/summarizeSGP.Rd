@@ -20,12 +20,15 @@ summarizeSGP(sgp_object,
 		institution_level="GRADE",
 		demographic=c("GENDER", "ETHNICITY", "FREE_REDUCED_LUNCH_STATUS", "ELL_STATUS", "IEP_STATUS", "GIFTED_AND_TALENTED_PROGRAM_STATUS", "CATCH_UP_KEEP_UP_STATUS"),
 		institution_inclusion=list(STATE="STATE_ENROLLMENT_STATUS", DISTRICT_NUMBER="DISTRICT_ENROLLMENT_STATUS", SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS")),
-	confidence.interval.groups=list(institution="SCHOOL_NUMBER", 
+	confidence.interval.groups=list(TYPE="Bootstrap",
+		VARIABLES=c("SGP"),
+		QUANTILES=c(0.025, 0.975),
+		GROUPS=list(institution="SCHOOL_NUMBER", 
 		content="CONTENT_AREA",
 		time="YEAR",
 		institution_level= NULL,
 		demographic=NULL,
-		institution_inclusion=list(STATE=NULL, DISTRICT_NUMBER=NULL, SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS")))
+		institution_inclusion=list(STATE=NULL, DISTRICT_NUMBER=NULL, SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS"))))
 }
 
 \arguments{
@@ -41,10 +44,15 @@ If missing the function will use the data to infer the content area(s) available
   }
   \item{sgp.summaries}{A list giving the summaries requested for each group analyzed based upon the \code{summary.group} argument. The default summaries include the group level \code{MEDIAN_SGP}, \code{MEDIAN_SGP_COUNT} (the number of students used to compute the median), \code{PERCENT_AT_ABOVE_PROFICIENT} for the appropriate achievement levels and \code{PERCENT_AT_ABOVE_PROFICIENT_COUNT}. NOTE: The \code{percent_in_category()} summary function requires a variable that MUST be a factor with proficiency categories as levels. The function looks for the percent of students from the variable that are IN one or more categories that identify students that are at or above proficiency (the first list argument) OUT of all possible categories (the second list argument). For example, in the \code{\link{sgpData_LONG}} dataset \code{ACHIEVEMENT_LEVEL} has 5 levels.  Levels 3 and 4 are "Proficient" and "Advanced" respectively. The default summary looks for the percent of students in categories 3 and 4 out of the five possible categories (1:5).
   }
-  \item{summary.groups}{A list consisting of 5 types of groups across which all summaries are taken, including the \code{institution} (e.g. state, districts and schools), \code{content area}, \code{time}, \code{institution_level} (usually grade), \code{demographic} group variables, and \code{institution_inclusion} indicator variables. All group slots MUST be included in the list, although \code{NULL} can be provided if a grouping subset is not desired. All possible combinations of the group variables are produced. Specification of \code{summary.groups} can be tested prior to use of \code{summarizeSGP} with the \code{\link{viewSummaryGroups}} function.  See that function's documentation for details.
+  \item{summary.groups}{A list consisting of 5 types of groups across which all summaries are taken, including the \code{institution} (e.g. state, districts and schools), \code{content area}, \code{time}, \code{institution_level} (usually grade), \code{demographic} group variables, and \code{institution_inclusion} indicator variables. All group slots MUST be included in the list, although \code{NULL} can be provided if a grouping subset is not desired. All possible combinations of the group variables are produced. Specification of \code{summary.groups} can be tested prior to use of \code{summarizeSGP} with the \code{\link{viewSummaryGroups}} function.  See that \code{\link{viewSummaryGroups}} documentation for details.
   }
-  \item{confidence.interval.groups}{A list consisting of the group summaries for which confidence intervals should be constructed. This argument requires that simulated SGPs have been produced (see \code{\link{analyzeSGP}} for more information). List slots set to \code{NULL} will not produce confidence intervals. NOTE: This is currently an experimental functionality and is very memory intensive. Groups to be included should be identified selectively! The default 95\% confidence intervals are provided in the selected summary tables as two additional columns named \code{LOWER_MEDIAN_SGP_95_CONF_BOUND} and \code{UPPER_MEDIAN_SGP_95_CONF_BOUND}. Specification of \cr
-   \code{confidence.interval.groups} can be tested prior to use of \code{summarizeSGP} with the \code{\link{viewSummaryGroups}} function.  See that documentation for details.
+  \item{confidence.interval.groups}{A list consisting of information used to calculate group confidence intervals: \code{TYPE} is either \code{Bootstrap} (default) or \code{CSEM} 
+(experimental). \code{VARIALBES} indicates the variables on which to calculate confidence intervals for. \code{QUANTILES} indicates the levels as which to produce the interval. \code{GROUP} 
+indicate the group summaries for which confidence intervals should be constructed. For \code{CSEM} analysis this argument requires that simulated SGPs have been produced (see 
+\code{\link{analyzeSGP}} for more information). List slots set to \code{NULL} will not produce confidence intervals. NOTE: This is currently an experimental functionality and is very 
+memory intensive. Groups to be included should be identified selectively! The default 95\% confidence intervals are provided in the selected summary tables as two additional columns 
+named \code{LOWER_MEDIAN_SGP_95_CONF_BOUND} and \code{UPPER_MEDIAN_SGP_95_CONF_BOUND}. Specification of \code{confidence.interval.groups} can be tested prior to use of \code{summarizeSGP} 
+with the \code{\link{viewSummaryGroups}} function.  See that documentation for details.
   }
 }
 

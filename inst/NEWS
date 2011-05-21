@@ -1,3 +1,12 @@
+Changes in version: SGP_0.0-8.5
+
+  o Changed analyzeSGP so that it calculates plus/minus 1 standard error confidence bands on individual SGPs by default. 
+  o Added bootstrap confidence intervals to summarizeSGP. 
+  o Added West Virginia to stateData. 
+  o Added Nevada knots and boundaries to stateData. 
+  o studentGrowthPercentiles can now access CSEM by year from stateData if available. 
+  o Consolidated timing messages in studentGrowthPercentiles and studentGrowthProjections at end of function. 
+
 Changes in version: SGP_0.0-8.0
 
   o Implemented more intelligent error handling for missing arguments in studentGrowthPercentiles and studentGrowthProjections passed from analyzeSGP. 

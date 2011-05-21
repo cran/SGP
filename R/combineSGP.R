@@ -15,7 +15,7 @@ function(sgp_object,
 	}
 
 
-	## Merge SGP with student data
+	## Merge SGPs with student data
   
 	if (sgp.percentiles) { 
 		tmp.list <- list() 
@@ -28,7 +28,6 @@ function(sgp_object,
 		sgp_object[["Student"]] <- data.table(rbind.all(tmp.list), VALID_CASE=factor(1, levels=1:2, labels=c("VALID_CASE", "INVALID_CASE")), 
 			key=paste(key(sgp_object[["Student"]]), collapse=","))[sgp_object[["Student"]]]
 	}
-
 
 	## Create SGP targets and merge with student data
 

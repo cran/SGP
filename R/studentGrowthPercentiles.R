@@ -23,8 +23,8 @@ function(panel.data,           ## REQUIRED
 	convert.using.loss.hoss=TRUE,
 	goodness.of.fit=TRUE) {
 
-	started.at=proc.time()
-        message(paste("\tStarted studentGrowthPercentiles", date()))
+	started.at <- proc.time()
+	started.date <- date()
 
 	##########################################################
 	###
@@ -249,8 +249,14 @@ function(panel.data,           ## REQUIRED
 					textGrob(x=-17, y=50, "Empirical SGP Distribution", default.units="native", gp=gpar(cex=0.7), rot=90, vp="qq")))))
 	} 
 
-	.csem.score.simulator <- function(scale_scores, grade, content_area, state, distribution="Normal", round=1) {
+	.csem.score.simulator <- function(scale_scores, grade, content_area, year, state, distribution="Normal", round=1) {
+		GRADE <- CONTENT_AREA <- YEAR <- NULL ## To avoid R CMD check warnings
 		min.max <- stateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area]][[paste("loss.hoss_", grade, sep="")]]
+		if ("YEAR" %in% names(stateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
+			CSEM_Data <- subset(stateData[[state]][["Assessment_Program_Information"]][["CSEM"]], GRADE==grade & CONTENT_AREA==content_area & YEAR==year)
+		} else {
+			CSEM_Data <- subset(stateData[[state]][["Assessment_Program_Information"]][["CSEM"]], GRADE==grade & CONTENT_AREA==content_area)
+		}
 		CSEM_Data <- stateData[[state]][["Assessment_Program_Information"]][["CSEM"]][
 			stateData[[state]][["Assessment_Program_Information"]][["CSEM"]][["GRADE"]]==grade & 
 			stateData[[state]][["Assessment_Program_Information"]][["CSEM"]][["CONTENT_AREA"]]==content_area,]
@@ -412,7 +418,7 @@ function(panel.data,           ## REQUIRED
 	### Create Panel_Data based upon class of input data
 
 	if (is.matrix(panel.data)) {
-		Panel_Data <- as.data.frame(panel.data, stringsAsFactors=FALSE)
+		Panel_Data <- panel.data <- as.data.frame(panel.data, stringsAsFactors=FALSE)
 	}
 	if (identical(class(panel.data), "list")) {
         	if (!identical(class(panel.data[["Panel_Data"]]), "data.frame")) {
@@ -530,17 +536,21 @@ function(panel.data,           ## REQUIRED
 					set.seed(k)
 					if (k==1) {
 						tmp.csem.quantiles[[j]] <- data.frame(ID=tmp.data[["ID"]],
-						SGP_SIM_1=.get.quantiles(tmp.predictions, .csem.score.simulator(tmp.data[[tail(SS,1)]],
+						SGP_SIM_1=.get.quantiles(tmp.predictions, .csem.score.simulator(
+							tmp.data[[tail(SS,1)]],
 							tmp.last,
 							sgp.labels$my.subject,
+							sgp.labels$my.year,
 							calculate.confidence.intervals$state,
 							calculate.confidence.intervals$distribution,
 							calculate.confidence.intervals$round)))
 					} else {
 						tmp.csem.quantiles[[j]] <- cbind(tmp.csem.quantiles[[j]], 
-							.get.quantiles(tmp.predictions, .csem.score.simulator(tmp.data[[tail(SS,1)]],
+							.get.quantiles(tmp.predictions, .csem.score.simulator(
+								tmp.data[[tail(SS,1)]],
 								tmp.last,
 								sgp.labels$my.subject,
+								sgp.labels$my.year,
 								calculate.confidence.intervals$state,
 								calculate.confidence.intervals$distribution,
 								calculate.confidence.intervals$round)))
@@ -579,7 +589,7 @@ function(panel.data,           ## REQUIRED
 
 			if (!is.null(calculate.confidence.intervals$confidence.quantiles)) {
 				tmp.cq <- round(t(apply(simulation.data[, -1, with=FALSE], 1, quantile, probs = calculate.confidence.intervals$confidence.quantiles)))
-					colnames(tmp.cq) <- paste("CONFIDENCE_QUANTILE_", calculate.confidence.intervals$confidence.quantiles, sep="")
+					colnames(tmp.cq) <- paste("SGP_", calculate.confidence.intervals$confidence.quantiles, "_CONFIDENCE_BOUND", sep="")
 					quantile.data <- cbind(quantile.data, tmp.cq)
 			}
 			Simulated_SGPs[[tmp.path]] <- rbind.fill(Simulated_SGPs[[tmp.path]], .unget.data.table(simulation.data, ss.data)) 
@@ -598,8 +608,9 @@ function(panel.data,           ## REQUIRED
 		}
 	} ## End if calculate.sgps
 
-	### Announce Completion & Return SGP Object
+	### Start/Finish Message & Return SGP Object
 
+        message(paste("\tStarted studentGrowthPercentiles", started.date))
 	message(paste("\tSubject: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(tmp.gp, collapse=", "), " ", sgp.labels$my.extra.label, sep=""))
 	message(paste("\tFinished SGP Student Growth Percentile Analysis", date(), "in", timetaken(started.at), "\n")) 
 
