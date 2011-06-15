@@ -20,7 +20,7 @@ analyzeSGP(sgp_object,
 }
 
 \arguments{
-  \item{sgp_object}{A list containing long formatted data in the \code{Student} (from \code{\link{prepareSGP}}) slot. 
+  \item{sgp_object}{An object of class \code{SGP} containing long formatted data in the \code{code} (from \code{\link{prepareSGP}}) slot. 
   }
   \item{state}{Acronym indicating state associated with the data for access to embedded knot and boundaries, cutscores, CSEMs, and other state related assessment data.
   }

@@ -6,13 +6,14 @@ analyses. Function is integrated with \code{\link{stateData}} to accommodate sta
 level names.}
 \usage{
 studentGrowthPlot(Scale_Scores,
-                  Plotting_Scale_Scores, 
-                  Achievement_Levels, 
-                  SGP, 
-                  Grades, 
-                  Cuts_NY1,
-                  Connect_Points="Arrows",
-                  Report_Parameters) 
+	Plotting_Scale_Scores, 
+	Achievement_Levels, 
+	SGP, 
+	Grades, 
+	Cuts_NY1,
+	Connect_Points="Arrows",
+	Cutscores,
+	Report_Parameters) 
 }
 \arguments{
 	\item{Scale_Scores}{
@@ -37,6 +38,9 @@ studentGrowthPlot(Scale_Scores,
 	\item{Connect_Points}{
 		Argument specifying how historical achievement scores are connected in the studentGrowthPlot. Currently accepts either \code{Arrows}, the default, or 
 		\code{None}.
+	}
+	\item{Cutscores}{
+		A data.frame of long formatted achievement level cutscores.
 	}
 	\item{Report_Parameters}{
 		A list containing arguments: \code{Current_Year}, \code{Content_Area}, \code{State}.

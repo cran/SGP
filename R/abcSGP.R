@@ -1,7 +1,7 @@
 `abcSGP` <- 
 function(sgp_object,
 	state,
-	steps=c("prepareSGP", "analyzeSGP", "combineSGP", "summarizeSGP", "reportSGP"),
+	steps=c("prepareSGP", "analyzeSGP", "combineSGP", "summarizeSGP", "visualizeSGP"),
 	years,
 	content_areas,
 	grades,
@@ -54,11 +54,11 @@ function(sgp_object,
         ### Calculate Relevant Quantities ###
 
         if (missing(content_areas)) {
-                content_areas <- unique(abcSGP_TMP_Data[["Student"]]["VALID_CASE"]$CONTENT_AREA)
+                content_areas <- unique(abcSGP_TMP_Data@Data["VALID_CASE"]$CONTENT_AREA)
         }
         if (missing(years)) {
                 for (i in content_areas) {
-                        years <- sort(tail(unique(abcSGP_TMP_Data[["Student"]][J("VALID_CASE", content_areas)]$YEAR), -2), decreasing=TRUE)
+                        years <- sort(tail(unique(abcSGP_TMP_Data@Data[J("VALID_CASE", content_areas)]$YEAR), -2), decreasing=TRUE)
                 }
         }
 
@@ -109,9 +109,9 @@ function(sgp_object,
 	}
 
 
-	### reportSGP (To be done) ###
+	### visualizeSGP (To be done) ###
 
-#	if ("reportSGP" %in% steps) {
+#	if ("visualizeSGP" %in% steps) {
 #
 #	}
 

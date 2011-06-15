@@ -1,3 +1,11 @@
+Changes in version: SGP_0.1-0.0
+
+  o Iplementation of SGP class. 
+  o Specified state specific percentile trajectories for student growth projections and stipulated max.forward.progression of 3 years for these trajectories. 
+  o Fixed bugs related to bootstrap calculating confidence intervals for all groups instead of those specified. 
+  o Completed reportSGP. 
+  o Added New Jersey to stateData. 
+
 Changes in version: SGP_0.0-8.5
 
   o Changed analyzeSGP so that it calculates plus/minus 1 standard error confidence bands on individual SGPs by default. 

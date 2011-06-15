@@ -6,19 +6,25 @@
 }
 
 \usage{
-prepareSGP(long_data) 
+prepareSGP(data, 
+	var.names=NULL, 
+	fix.duplicates="keep.all")
 }
 
 \arguments{
-  \item{long_data}{A panel data set in long form. See embedded \code{\link{sgpData_LONG}} data set for an exemplar. 
+  \item{data}{A panel data set in long form. See embedded \code{\link{sgpData_LONG}} data set for an exemplar. 
+  }
+  \item{var.names}{To be written.
+  }
+  \item{fix.duplicates}{Argument for future functionality intended to deal with duplicate cases in supplied long data.
   }
 }
 
-\value{Function returns a list containing the input long data set in the \code{Student} slot as a data.table keyed using \code{VALID_CASE}, \code{CONTENT_AREA}, 
-\code{YEAR}, \code{ID}. 
+\value{Function returns an object of class \code{SGP}. The long data is
+  in the \code{data} slot.
 }
 
-\author{Damian W. Betebenner \email{dbetebenner@nciea.org}}
+\author{Ben Domgingue \email{ben.domingue@gmail.com} and Damian W. Betebenner \email{dbetebenner@nciea.org}}
 
 \seealso{\code{\link{sgpData_LONG}}}
 

@@ -4,11 +4,11 @@ citEntry(entry = "Manual",
          title        = "{SGP}: An R Package for the Calculation and Visualization of Student Growth Percentiles",
          author       = "Damian W. Betebenner and Adam Van Iwaarden",
          year         = "2011",
-         note         = "R package version 0.0-8.5",
+         note         = "R package version 0.1-0.0",
          url          = "http://cran.r-project.org/web/packages/SGP/index.html",
          
          textVersion  = paste("Damian W. Betebenner & Adam Van Iwaarden (2011).",
                         "SGP: An R Package for the Calculation and Visualization of Student Growth Percentiles.",
-                        "(R package version 0.0-8.5.",
+                        "(R package version 0.1-0.0.",
                         "URL http://cran.r-project.org/web/packages/SGP/index.html")
 )

@@ -186,6 +186,39 @@ function(panel.data,           ## REQUIRED
 			return(tmp.cell.color)
 		}
 
+		.quantcut <- function (x, q = seq(0, 1, by = 0.25), na.rm = TRUE, ...) { ### From the quantcut package (thanks!!)
+			quant <- quantile(x, q, na.rm = na.rm)
+			dups <- duplicated(quant)
+			if (any(dups)) {
+				flag <- x %in% unique(quant[dups])
+				retval <- ifelse(flag, paste("[", as.character(x), "]", sep = ""), NA)
+				uniqs <- unique(quant)
+				reposition <- function(cut) {
+					flag <- x >= cut
+					if (sum(flag) == 0) return(cut) else return(min(x[flag], na.rm = na.rm))
+				}
+				newquant <- sapply(uniqs, reposition)
+				retval[!flag] <- as.character(cut(x[!flag], breaks = newquant, 
+				include.lowest = TRUE, ...))
+				levs <- unique(retval[order(x)])
+				retval <- factor(retval, levels = levs)
+				mkpairs <- function(x) sapply(x, function(y) if (length(y) == 2) y[c(2, 2)] else y[2:3])
+				pairs <- mkpairs(strsplit(levs, "[^0-9+\\.\\-]+"))
+				rownames(pairs) <- c("lower.bound", "upper.bound")
+				colnames(pairs) <- levs
+				closed.lower <- rep(FALSE, ncol(pairs))
+				closed.upper <- rep(TRUE, ncol(pairs))
+				closed.lower[1] <- TRUE
+				for (i in 2:ncol(pairs)) if (pairs[1, i] == pairs[1, i - 1] && pairs[1, i] == pairs[2, i - 1]) closed.lower[i] <- FALSE
+				for (i in 1:(ncol(pairs) - 1)) if (pairs[2, i] == pairs[1, i + 1] && pairs[2, i] == pairs[2, i + 1]) closed.upper[i] <- FALSE
+				levs <- ifelse(pairs[1, ] == pairs[2, ], pairs[1, ], paste(ifelse(closed.lower, "[", "("), pairs[1, ], ",", pairs[2, ], ifelse(closed.upper, "]", ")"), sep = ""))
+				levels(retval) <- levs
+			}
+			else retval <- cut(x, quant, include.lowest = TRUE, ...)
+			return(retval)
+		} ## END .quantcut function
+
+
 		if (convert.0and100) {
 			my.percentile.labels <- paste(c(1,1:9*10), "to", seq(9,99,10))
 		} else {
@@ -193,7 +226,7 @@ function(panel.data,           ## REQUIRED
 		}
 
 		.sgp.fit <- function (score, sgp) {
-			gfittable <- prop.table(table(quantcut(score, q=0:10/10, right=FALSE, dig.lab=3),
+			gfittable <- prop.table(table(.quantcut(score, q=0:10/10, right=FALSE, dig.lab=3),
 			cut(sgp, c(-1, 9.5, 19.5, 29.5, 39.5, 49.5, 59.5, 69.5, 79.5, 89.5, 100.5),
 			labels=my.percentile.labels)), 1)*100
 			return(gfittable)
@@ -201,7 +234,7 @@ function(panel.data,           ## REQUIRED
 
 		names(data1) <- c("PRIOR_SS", "SGP"); PRIOR_SS <- SGP <- NULL
 		tmp.table <- .sgp.fit(data1[,PRIOR_SS], data1[,SGP])
-		tmp.cuts <- quantcut(data1[,PRIOR_SS], 0:10/10)
+		tmp.cuts <- .quantcut(data1[,PRIOR_SS], 0:10/10)
 		tmp.colors <- .cell.color(as.vector(tmp.table))
 		tmp.list <- list()
 
@@ -263,8 +296,13 @@ function(panel.data,           ## REQUIRED
 		CSEM_Function <- splinefun(CSEM_Data[["SCALE_SCORE"]], CSEM_Data[["SCALE_SCORE_CSEM"]])
 		tmp.scale <- CSEM_Function(scale_scores)
 		tmp.shape <- tan((pi/2)*((min.max[1]+min.max[2]) - 2*scale_scores)/(min.max[2]-min.max[1]))
-		if(distribution=="Skew-Normal") tmp.score <- round_any(as.numeric(rsn(length(scale_scores), location=scale_scores, scale=tmp.scale, shape=tmp.shape)), round)
-		if(distribution=="Normal") tmp.score <- round_any(as.numeric(rnorm(length(scale_scores), mean=scale_scores, sd=tmp.scale)), round)
+		if(distribution=="Skew-Normal") {
+			require(sn) 
+			tmp.score <- round_any(as.numeric(rsn(length(scale_scores), location=scale_scores, scale=tmp.scale, shape=tmp.shape)), round)
+		}
+		if(distribution=="Normal") {
+			tmp.score <- round_any(as.numeric(rnorm(length(scale_scores), mean=scale_scores, sd=tmp.scale)), round)
+		}
 		tmp.score[tmp.score < min.max[1]] <- min.max[1]
 		tmp.score[tmp.score > min.max[2]] <- min.max[2]
 		return(tmp.score)
