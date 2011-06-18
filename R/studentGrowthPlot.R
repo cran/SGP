@@ -5,12 +5,20 @@ function(Scale_Scores,               ## List of Scale Scores
 	Achievement_Levels,          ## NOTE: Achievement_Levels must/should be supplied as factors with appropriate level codings 
 	SGP,                         ## List of SGPs
 	Grades,                      ## List of Grade levels for student
-	Cuts_NY1,                    ## Vector of cutscores
+	Cuts_NY1,                    ## Vector of NY1 cutscores
 	Connect_Points="Arrows",     ## Current "Arrows" or "None"
-	Report_Parameters){          ## list containing Current_Year, Content_Area, State
+	Cutscores,                   ## data.frame of long formatted achievement level cutscores
+	Report_Parameters) {         ## list containing Current_Year, Content_Area, State
+
+### Load packages
+
+require(colorspace)
+
 
 ### Create relevant variables
 
+content.area.label <- stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Content_Areas_Labels"]][[Report_Parameters$Content_Area]]
+CUTLEVEL <- level_1_curve <- NULL ## To prevent R CMD check warnings
 number.achievement.level.regions <- length(stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Achievement_Level_Labels"]])
 achievement.level.labels <- stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Achievement_Level_Labels"]]
 number.growth.levels <- length(stateData[[Report_Parameters$State]][["Growth"]][["Levels"]])
@@ -19,39 +27,14 @@ growth.level.cutscores <- stateData[[Report_Parameters$State]][["Growth"]][["Cut
 growth.level.cutscores.text <- stateData[[Report_Parameters$State]][["Growth"]][["Cutscores"]][["Labels"]]
 grades.reported.in.state <- stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Grades_Reported"]]
 test.abbreviation <- stateData[[Report_Parameters$State]][["Assessment_Program_Information"]][["Assessment_Abbreviation"]]
-content.area.label <- stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Content_Areas_Labels"]][[Report_Parameters$Content_Area]]
 
 achievement.level.region.colors <- paste("grey", round(seq(62, 91, length=number.achievement.level.regions)), sep="")
 border.color <- "grey25"
-arrow.legend.color <- rainbow_hcl(number.growth.levels)
+arrow.legend.color <- rev(diverge_hcl(number.growth.levels, h = c(180, 40), c = 255, l = c(20, 100)))
 missing.data.symbol <- "--"
-CUTLEVEL <- level_1_curve <- NULL ## To prevent R CMD check warnings
 
 
 ### Utility functions
-
-create.long.cutscores <- function(state=Report_Parameters$State, content_area=toupper(Report_Parameters$Content_Area)) {
-    if (is.null(stateData[[state]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]])) {
-       tmp.grades <- as.numeric(matrix(unlist(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]][[content_area]]), "_")), ncol=2, byrow=TRUE)[,2])
-       tmp.cutscores <- matrix(unlist(stateData[[state]][["Achievement"]][["Cutscores"]][[content_area]]), ncol=number.achievement.level.regions+1, byrow=TRUE)
-       tmp.list <- vector("list", number.achievement.level.regions-1)
-       for (i in seq(number.achievement.level.regions-1)) {
-          tmp.list[[i]] <- data.frame(GRADE=c(min(tmp.grades,na.rm=TRUE)-1, tmp.grades, max(tmp.grades,na.rm=TRUE)+1),
-                                      CUTLEVEL=rep(i, length(tmp.grades)+2),
-                                      CUTSCORES=c(extendrange(tmp.cutscores[,i+1], f=0.15)[1], tmp.cutscores[,i+1], extendrange(tmp.cutscores[,i+1], f=0.15)[2]))
-       }
-       subset(do.call(rbind, tmp.list), CUTLEVEL %in% 1:(number.achievement.level.regions-1))
-   } else {
-       tmp.grades <- as.numeric(matrix(unlist(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]][[content_area]]), "_")), ncol=2, byrow=TRUE)[,2])
-       tmp.list <- list()
-       for (i in seq(number.achievement.level.regions-1)) {
-          tmp.list[[i]] <- data.frame(GRADE=c(min(tmp.grades,na.rm=TRUE)-1, tmp.grades, max(tmp.grades,na.rm=TRUE)+1),
-                                      CUTLEVEL=rep(i, length(tmp.grades)+2),
-                                      CUTSCORES=rep(stateData[[state]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]][i+1], length(tmp.grades)+2))
-       }
-       do.call(rbind, tmp.list)
-   }                
-}
 
 ach.level.labels <- function(perlevel){
            tmp <- names(achievement.level.labels)[match(perlevel, achievement.level.labels)]
@@ -164,12 +147,26 @@ interpolate.grades <- function(grades, data.year.span) {
        }
 } 
 
+year.function <- function(year, add.sub, vec.length, output.type="numeric") {
+        if (is.numeric(year)) {
+		return(seq(from=year+add.sub, length=vec.length))
+	} else { 
+                tmp <- as.numeric(unlist(strsplit(as.character(year), "_")))+add.sub
+		if (output.type=="numeric") {
+			return(seq(from=tmp[2], length=vec.length))
+		} else {
+			return(paste(seq(from=tmp[1], length=vec.length), "-", seq(from=tmp[2], length=vec.length), sep=""))
+		}
+        }
+}
+
+
 grade.values <- interpolate.grades(Grades, 5)
 
 if (grade.values$year_span == 5) {
-                    low.year <- Report_Parameters$Current_Year-4
-                    high.year <- Report_Parameters$Current_Year
-                    year.text <- (Report_Parameters$Current_Year-4):Report_Parameters$Current_Year
+                    low.year <- year.function(Report_Parameters$Current_Year, -4, 1)
+                    high.year <- year.function(Report_Parameters$Current_Year, 0, 1)
+                    year.text <- year.function(Report_Parameters$Current_Year, -4, 5, "character")
 
                     grades.text <- paste("Grade", Grades[5:1])
                     grades.text[which(is.na(Grades[5:1]))] <- missing.data.symbol 
@@ -186,13 +183,13 @@ if (grade.values$year_span == 5) {
 
                     gp.levels.text <- sgp.level.labels(SGP[4:1])
 
-                    cuts.ny1.text <- rep(NA, 4)
+                    cuts.ny1.text <- rep(NA, number.growth.levels)
 }
 
 if (grade.values$year_span == 4) {
-                    low.year <- Report_Parameters$Current_Year-3
-                    high.year <- Report_Parameters$Current_Year+1 
-                    year.text <- c((Report_Parameters$Current_Year-3):Report_Parameters$Current_Year, " ")
+                    low.year <- year.function(Report_Parameters$Current_Year, -3, 1)
+                    high.year <- year.function(Report_Parameters$Current_Year, 1, 1) 
+                    year.text <- c(year.function(Report_Parameters$Current_Year, -3, 4, "character"), " ")
 
                     grades.text <- c(paste("Grade", Grades[4:1]), "Next Year")
                     grades.text[which(is.na(Grades[4:1]))] <- missing.data.symbol
@@ -209,13 +206,13 @@ if (grade.values$year_span == 4) {
 
                     gp.levels.text <- c(sgp.level.labels(SGP[3:1]), " ")
 
-                    cuts.ny1.text <- Cuts_NY1[1:4]
+                    cuts.ny1.text <- Cuts_NY1
 }
 
 if (grade.values$year_span == 3) {
-                    low.year <- Report_Parameters$Current_Year-2
-                    high.year <- Report_Parameters$Current_Year+2 
-                    year.text <- c((Report_Parameters$Current_Year-2):Report_Parameters$Current_Year, rep(" ", 2))
+                    low.year <- year.function(Report_Parameters$Current_Year, -2, 1)
+                    high.year <- year.function(Report_Parameters$Current_Year, 2, 1) 
+                    year.text <- c(year.function(Report_Parameters$Current_Year, -2, 3, "character"), rep(" ", 2))
 
                     grades.text <- c(paste("Grade", Grades[3:1]), "Next Year", " ")
                     grades.text[which(is.na(Grades[3:1]))] <- missing.data.symbol
@@ -232,13 +229,13 @@ if (grade.values$year_span == 3) {
 
                     gp.levels.text <- c(sgp.level.labels(SGP[2:1]), rep(" ", 2))
 
-                    cuts.ny1.text <- Cuts_NY1[1:4]
+                    cuts.ny1.text <- Cuts_NY1
 }
 
 if (grade.values$year_span == 2) {
-                    low.year <- Report_Parameters$Current_Year-1
-                    high.year <- Report_Parameters$Current_Year+3 
-                    year.text <- c((Report_Parameters$Current_Year-1):Report_Parameters$Current_Year, rep(" ", 3))
+                    low.year <- year.function(Report_Parameters$Current_Year, -1, 1)
+                    high.year <- year.function(Report_Parameters$Current_Year, 3, 1) 
+                    year.text <- c(year.function(Report_Parameters$Current_Year, -1, 2, "character"), rep(" ", 3))
 
                     grades.text <- c(paste("Grade", Grades[2:1]), "Next Year", rep(" ", 2))
                     grades.text[which(is.na(Grades[2:1]))] <- missing.data.symbol                     
@@ -255,13 +252,13 @@ if (grade.values$year_span == 2) {
 
                     gp.levels.text <- c(sgp.level.labels(SGP[1]), rep(" ", 3))
 
-                    cuts.ny1.text <- Cuts_NY1[1:4]
+                    cuts.ny1.text <- Cuts_NY1
 }
 
 if (grade.values$year_span == 1) {
-                    low.year <- Report_Parameters$Current_Year
-                    high.year <- Report_Parameters$Current_Year+4 
-                    year.text <- c(Report_Parameters$Current_Year, rep(" ", 4))
+                    low.year <- year.function(Report_Parameters$Current_Year, 0, 1)
+                    high.year <- year.function(Report_Parameters$Current_Year, 4, 1) 
+                    year.text <- c(year.function(Report_Parameters$Current_Year, 0, 1, "character"), rep(" ", 4))
 
                     grades.text <- c(paste("Grade", Grades[1]), "Next Year", rep(" ", 3))
 
@@ -276,12 +273,12 @@ if (grade.values$year_span == 1) {
 
                     gp.levels.text <- rep(" ", 4)
 
-                    cuts.ny1.text <- Cuts_NY1[1:4]
+                    cuts.ny1.text <- Cuts_NY1
 }
 
 if (grade.values$year_span == 0) {
-                    low.year <- Report_Parameters$Current_Year
-                    high.year <- Report_Parameters$Current_Year+4 
+                    low.year <- year.function(Report_Parameters$Current_Year, 0, 1)
+                    high.year <- year.function(Report_Parameters$Current_Year, 4, 1) 
                     year.text <- rep(" ", 5)
 
                     grades.text <- rep(" ", 5)
@@ -296,10 +293,10 @@ if (grade.values$year_span == 0) {
 
                     gp.levels.text <- rep(" ", 4)
 
-                    cuts.ny1.text <- rep(NA, 4)
+                    cuts.ny1.text <- rep(NA, number.growth.levels)
 }
 
-Cutscores <- create.long.cutscores() 
+current.year <- year.function(Report_Parameters$Current_Year, 0, 1)
 xscale.range <- extendrange(c(low.year,high.year), f=0.075)
 if (stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Vertical_Scale"]]=="No") {
    tmp.range <- range(stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]], na.rm=TRUE)
@@ -323,7 +320,7 @@ if (stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Verti
                      Cutscores$CUTSCORE[Cutscores$GRADE==min(tail(grade.values$interp.df$GRADE, 2)[1], 10) & Cutscores$CUTLEVEL==number.achievement.level.regions-1], 
                      na.rm=TRUE)
 
-   yscale.range <- extendrange(c(low.score,high.score), f=0.1)
+   yscale.range <- extendrange(c(low.score,high.score), f=0.15)
 }
 
 subject.report.vp <- viewport(layout = grid.layout(2, 3, widths = unit(c(1.15, 5.4, 1.5), rep("inches", 3)), 
@@ -451,16 +448,16 @@ if (Connect_Points=="Arrows") {
 
 if (Grades[1] != 10 & !is.na(cuts.ny1.text[1])){
 
-for (i in 1:3){
-   grid.polygon(x=c(Report_Parameters$Current_Year, rep(Report_Parameters$Current_Year+1, 2), Report_Parameters$Current_Year), 
-                y=(c(scale.scores.values[which(Report_Parameters$Current_Year==low.year:high.year)], max(yscale.range[1], cuts.ny1.text[i]), min(yscale.range[2], cuts.ny1.text[i+1]), scale.scores.values[which(Report_Parameters$Current_Year==low.year:high.year)])),
-                default.units="native", gp=gpar(col=NA, lwd=0, fill=arrow.legend.color[i], alpha=0.45)) 
-
-   grid.roundrect(x=unit(Report_Parameters$Current_Year+1, "native"), y=unit((max(yscale.range[1], cuts.ny1.text[i])+min(yscale.range[2], cuts.ny1.text[i+1]))/2, "native"), 
+for (i in seq(number.growth.levels)) {
+   grid.polygon(x=c(current.year, rep(current.year+1, 2), current.year), 
+                y=c(scale.scores.values[which(current.year==low.year:high.year)], max(yscale.range[1], cuts.ny1.text[i]), 
+			min(yscale.range[2], cuts.ny1.text[i+1]), scale.scores.values[which(current.year==low.year:high.year)]),
+			default.units="native", gp=gpar(col=NA, lwd=0, fill=arrow.legend.color[i], alpha=0.45))
+   grid.roundrect(x=unit(current.year+1, "native"), y=unit((max(yscale.range[1], cuts.ny1.text[i])+min(yscale.range[2], cuts.ny1.text[i+1]))/2, "native"), 
                height=unit(min(yscale.range[2], as.numeric(cuts.ny1.text[i+1])) - max(yscale.range[1], as.numeric(cuts.ny1.text[i])), "native"), width=unit(0.04, "native"), 
                r=unit(0.45, "snpc"), gp=gpar(lwd=0.3, col=border.color, fill=arrow.legend.color[i]))
 
-   grid.text(x=Report_Parameters$Current_Year+1+.05, y=(max(yscale.range[1], cuts.ny1.text[i])+min(yscale.range[2], cuts.ny1.text[i+1]))/2, c("Low", "Typical", "High")[i],
+   grid.text(x=current.year+1+.05, y=(max(yscale.range[1], cuts.ny1.text[i])+min(yscale.range[2], cuts.ny1.text[i+1]))/2, growth.level.labels[i],
              default.units="native", just="left", gp=gpar(cex=.4, col=border.color))
    }
 }
@@ -528,7 +525,6 @@ grid.text(x=low.year:high.year, y=2.3, year.text, gp=gpar(col=border.color, cex=
 
 grid.text(x=low.year:high.year, y=1.7, scale.scores.text, gp=gpar(col=border.color, cex=.65), default.units="native")
 
-
 grid.text(x=low.year:high.year, y=1.3, ach.levels.text, gp=gpar(col=border.color, cex=.6), default.units="native")
 
 
@@ -587,7 +583,7 @@ y.center <- seq(0.05, 0.4, length=number.growth.levels+1)
 arrow.legend.coors.x <- c(.25, .75, .75, 1, .5, 0, .25)
 arrow.legend.coors.y <- c(0, 0, 1.3, 1.1, 2, 1.1, 1.3)
 
-for(i in seq(number.growth.levels)) {
+for (i in seq(number.growth.levels)) {
    pushViewport(viewport(x=unit(0.3, "native"), y=unit(y.center[i], "native"), 
                 width=unit(0.07, "native"), height=unit(y.center[2]-y.center[1], "npc"), just=c("center", "bottom"),
                 xscale=c(0, 1), yscale=c(0, 2)))
@@ -608,8 +604,8 @@ for(i in seq(number.growth.levels)) {
 
    grid.text(x=0.375, y=((y.center[1]+y.center[2])/2)+(i-1)*(y.center[2]-y.center[1]), growth.level.labels[i], default.units="native", 
              gp=gpar(col=border.color, cex=.5), just="left")
-   grid.text(x=0.6, y=((y.center[1]+y.center[2])/2)+(i-1)*(y.center[2]-y.center[1]), growth.level.cutscores.text[i], default.units="native", 
-             gp=gpar(col=border.color, cex=.5), just="left")
+   grid.text(x=0.925, y=((y.center[1]+y.center[2])/2)+(i-1)*(y.center[2]-y.center[1]), growth.level.cutscores.text[i], default.units="native", 
+             gp=gpar(col=border.color, cex=.5), just="right")
 }
 
 popViewport(2)

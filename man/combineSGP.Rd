@@ -10,7 +10,8 @@
 combineSGP(sgp_object,
 	state,
 	sgp.percentiles=TRUE,
-	sgp.projections.lagged=TRUE)
+	sgp.projections.lagged=TRUE,
+	max.lagged.sgp.target.years.forward=4)
 }
 
 \arguments{
@@ -21,6 +22,8 @@ combineSGP(sgp_object,
   \item{sgp.percentiles}{A boolean variable indicating whether to combine student growth percentiles.
   }
   \item{sgp.projections.lagged}{A boolean variable indicating whether to combine lagged projections and calculate catch-up/keep-up values.
+  }
+  \item{max.lagged.sgp.target.years.forward}{A integer indicating the number of years forward from the lagged (last year's) score to project forward for growth to standard calculations. Default is 4 years from last year or 3 years from present, which is the standard in most growth to standard calculations used by state departments of education.
   }
 }
 

@@ -1,5 +1,4 @@
-`bubblePlot` <- 
-function(
+`bubblePlot` <- function(
 	bubble_plot_data.X, 
 	bubble_plot_data.Y,
 	bubble_plot_data.SUBSET=NULL,
@@ -39,6 +38,10 @@ function(
 	bubble_plot_configs.BUBBLE_PLOT_NAME="bubblePlot.pdf",
 	bubble_plot_configs.BUBBLE_PLOT_PATH=paste("Figures", sep=""),
 	bubble_plot_pdftk.CREATE_CATALOG=FALSE) {
+
+# Load required packages
+
+require(gridBase)
 
 
 # Test for installation of pdf2 package and deal with pdf2 crashing with more than 1150 bubbles

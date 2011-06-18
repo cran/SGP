@@ -10,7 +10,7 @@
 \usage{
 abcSGP(sgp_object,
 	state,
-	steps=c("prepareSGP", "analyzeSGP", "combineSGP", "summarizeSGP", "reportSGP"),
+	steps=c("prepareSGP", "analyzeSGP", "combineSGP", "summarizeSGP", "visualizeSGP"),
 	years,
 	content_areas,
 	grades,
@@ -48,7 +48,7 @@ abcSGP(sgp_object,
   }
   \item{state}{Acronym indicating state associated with the data for access to embedded knot and boundaries,  cutscores, CSEMs, and other relevant state level data.
   }
-  \item{steps}{Vector containing all or some subset of \code{\link{prepareSGP}}, \code{\link{analyzeSGP}}, \code{\link{combineSGP}}, \code{\link{summarizeSGP}}, \code{reportSGP} 
+  \item{steps}{Vector containing all or some subset of \code{\link{prepareSGP}}, \code{\link{analyzeSGP}}, \code{\link{combineSGP}}, \code{\link{summarizeSGP}}, \code{\link{visualizeSGP}} 
 indicating what steps the user wants accomplished. Default is to perform all steps.
   }
   \item{years}{A vector indicating year(s) in which to produce student growth percentiles and/or student growth projections/trajectories. If missing the 

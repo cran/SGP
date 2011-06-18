@@ -187,7 +187,7 @@ bubblePlot(
 	}
 }
 
-\details{Typical use of the function is as part of \code{reportSGP} function. However, function can be used more generically for diverse two dimensional plots. 
+\details{Typical use of the function is as part of \code{visualizeSGP} function. However, function can be used more generically for diverse two dimensional plots. 
 }
 
 \value{Function creates a bubble chart and writes the result as a PDF to \code{bubble_plot_configs.BUBBLE_PATH}.} 
