@@ -36,11 +36,16 @@ bubblePlot(
 	bubble_plot_configs.BUBBLE_MIN_MAX=c(0.03, 0.03),
 	bubble_plot_configs.BUBBLE_X_TICKS=seq(0,100,10),
 	bubble_plot_configs.BUBBLE_X_TICKS_SIZE=c(rep(0.6, 5), 1, rep(0.6, 5)),
+        bubble_plot_configs.BUBBLE_X_BANDS=NULL,
+        bubble_plot_configs.BUBBLE_X_BAND_LABELS=NULL,
 	bubble_plot_configs.BUBBLE_Y_TICKS=seq(0,100,10),
 	bubble_plot_configs.BUBBLE_Y_TICKS_SIZE=rep(0.6, 11),
+        bubble_plot_configs.BUBBLE_Y_BANDS=NULL,
+        bubble_plot_configs.BUBBLE_Y_BAND_LABELS=NULL,
 	bubble_plot_configs.BUBBLE_SUBSET_INCREASE=0,
 	bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.95),
 	bubble_plot_configs.BUBBLE_COLOR="deeppink2",
+        bubble_plot_configs.BUBBLE_COLOR_GRADIENT_REVERSE=FALSE,
 	bubble_plot_configs.BUBBLE_TIPS=TRUE,
 	bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
 	bubble_plot_configs.BUBBLE_PLOT_FORMAT="print",
@@ -136,12 +141,24 @@ bubblePlot(
 	A vector, the same length as \code{bubble_plot_configs.BUBBLE_X_TICKS} indicating the character expansion (i.e., cex) associated with the characters.
 	Default value is \code{bubble_plot_configs.BUBBLE_X_TICKS_SIZE=c(rep(0.6, 5), 1, rep(0.6, 5))}.
 	}
+	\item{bubble_plot_configs.BUBBLE_X_BANDS}{
+	A vector of cutpoints used to separate the plot background into horizontal rectangular regions.
+	}
+	\item{bubble_plot_configs.BUBBLE_X_BAND_LABELS}{
+	A character vector of labels used to labels the rectangles produced with \code{bubble_plot_configs.BUBBLE_X_BANDS}.
+	}
 	\item{bubble_plot_configs.BUBBLE_Y_TICKS}{
 	A vector indicating what x coordinates to display for the x axis of the bubble plot. Default value is \code{bubble_plot_configs.BUBBLE_Y_TICKS=seq(0,100,10)}.
 	}
 	\item{bubble_plot_configs.BUBBLE_Y_TICKS_SIZE}{
 	A vector, the same length as \code{bubble_plot_configs.BUBBLE_Y_TICKS} indicating the character expansion (i.e., cex) associated with the characters.
 	Default value is \code{bubble_plot_configs.BUBBLE_Y_TICKS_SIZE=rep(0.6, 11)}.
+	}
+	\item{bubble_plot_configs.BUBBLE_Y_BANDS}{
+	A vector of cutpoints used to separate the plot background into horizontal rectangular regions.
+	}
+	\item{bubble_plot_configs.BUBBLE_Y_BAND_LABELS}{
+	A character vector of labels used to labels the rectangles produced with \code{bubble_plot_configs.BUBBLE_X_BANDS}.
 	}
 	\item{bubble_plot_configs.BUBBLE_SUBSET_INCREASE}{
 	Default value is \code{bubble_plot_configs.BUBBLE_SUBSET_INCREASE=0}.
@@ -151,6 +168,9 @@ bubblePlot(
 	}
 	\item{bubble_plot_configs.BUBBLE_COLOR}{
 	Default value is \code{bubble_plot_configs.BUBBLE_COLOR="deeppink2"}.
+	}
+	\item{bubble_plot_configs.BUBBLE_COLOR_GRADIENT_REVERSE}{
+	Boolean arugment (defaults to FALSE) indicating whether to reverse color gradient associated with bubbles.
 	}
 	\item{bubble_plot_configs.BUBBLE_TIPS}{
 	Default value is \code{bubble_plot_configs.BUBBLE_TIPS=TRUE}.
@@ -187,7 +207,7 @@ bubblePlot(
 	}
 }
 
-\details{Typical use of the function is as part of \code{visualizeSGP} function. However, function can be used more generically for diverse two dimensional plots. 
+\details{Typical use of the function is as part of \code{visualizeSGP} function. However, function can be used more generically for diverse plots showing many dimensions of data simultaneously. 
 }
 
 \value{Function creates a bubble chart and writes the result as a PDF to \code{bubble_plot_configs.BUBBLE_PATH}.} 

@@ -6,21 +6,22 @@
 \description{
 SGP contains functions to calculate student growth percentiles and percentile growth projections/trajectories following methodology found in Betebenner (2008, 2009).
 The package contains two primary functions, \code{\link{studentGrowthPercentiles}} and \code{\link{studentGrowthProjections}}, and numerous higher level functions
-that make use of them including: \code{prepareSGP}, \code{\link{analyzeSGP}}, \code{\link{combineSGP}}, \code{\link{summarizeSGP}}, and \code{\link{visualizeSGP}} 
-used to calculate and visualize student growth percentiles and percentile growth projections/trajectories for students using large scale, longitudinal assessment data. 
+that make use of them including: \code{prepareSGP}, \code{\link{analyzeSGP}}, \code{\link{combineSGP}}, \code{\link{summarizeSGP}}, and \code{\link{visualizeSGP}}. These 
+functions are used to calculate and visualize student growth percentiles and percentile growth projections/trajectories for students using large scale, longitudinal assessment data. 
 These norm referenced growth values are currently used in a number of state testing and accountability systems. The functions employ quantile 
 regression (using the \code{quantreg} package) to estimate the conditional density for current achievement using each student's achievement history. 
 Percentile growth projections/trajectories are calculated using the coefficient matrices derived from the student growth percentile analyses. These quantities
-are summarized in a variety of ways to describe student growth. As of the 0.0-7.0 release, the package also includes functions (e.g., 
-\code{\link{bubblePlot}} and \code{\link{studentGrowthPlot}}) to produce graphical representations associated with the student growth percentile analyses. 
+are summarized in a variety of ways to describe student growth. As of the 0.2-0.0 release, the package also includes functions the graphics functions 
+\code{\link{bubblePlot}}, \code{\link{studentGrowthPlot}}, nd \code{\link{growthAchievementPlot}} to produce high quality graphical representations associated with the student 
+growth percentile analyses. 
 }
 
 \details{
 \tabular{ll}{
 Package: \tab SGP\cr
 Type: \tab Package\cr
-Version: \tab 0.1-0.0\cr
-Date: \tab 2011-6-15\cr
+Version: \tab 0.3-5.0\cr
+Date: \tab 2011-7-23\cr
 License: \tab CC BY-SA 3.0 US | CC BY-NC-SA 3.0 + file LICENSE\cr
 LazyLoad: \tab yes\cr
 }

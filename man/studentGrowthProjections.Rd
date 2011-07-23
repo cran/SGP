@@ -20,7 +20,8 @@ studentGrowthProjections(panel.data,
                          projection.unit="YEAR",       
                          percentile.trajectory.values=NULL, 
                          isotonize=TRUE,     
-                         projcuts.digits=0)
+                         projcuts.digits=0,
+                         print.time.taken=TRUE)
 }
 
 \arguments{
@@ -88,6 +89,8 @@ studentGrowthProjections(panel.data,
   the methods derived by Dette & Volgushev (2008).
   }
   \item{projcuts.digits}{The number of digits (defaults to 0) percentile trajectories (if requested) are formatted.
+  }
+  \item{print.time.taken}{Boolean argument (defaults to TRUE) indicating whether to print message indicating information on studentGrowthPercentile analysis and time taken.
   }
 }
 

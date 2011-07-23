@@ -15,7 +15,9 @@ function(sgp_object,
 		PERCENT_CATCHING_UP_KEEPING_UP="percent_in_category(CATCH_UP_KEEP_UP_STATUS, list(c('Catch Up: Yes', 'Keep Up: Yes')), list(c('Catch Up: Yes', 'Catch Up: No', 'Keep Up: Yes', 'Keep Up: No')))",
 		MEDIAN_SGP_COUNT="num_non_missing(SGP)",
 		PERCENT_AT_ABOVE_PROFICIENT="percent_in_category(ACHIEVEMENT_LEVEL, list(c('Proficient', 'Advanced')), list(c('Unsatisfactory', 'Partially Proficient', 'Proficient', 'Advanced')))",
-		PERCENT_AT_ABOVE_PROFICIENT_COUNT="num_non_missing(ACHIEVEMENT_LEVEL)"),
+		PERCENT_AT_ABOVE_PROFICIENT_COUNT="num_non_missing(ACHIEVEMENT_LEVEL)",
+                PERCENT_AT_ABOVE_PROFICIENT_PRIOR="percent_in_category(ACHIEVEMENT_LEVEL_PRIOR, list(c('Proficient', 'Advanced')), list(c('Unsatisfactory', 'Partially Proficient', 'Proficient', 'Advanced')))",
+                PERCENT_AT_ABOVE_PROFICIENT_PRIOR_COUNT="num_non_missing(ACHIEVEMENT_LEVEL_PRIOR)"),
 	summary.groups=list(institution=c("STATE", "DISTRICT_NUMBER", "SCHOOL_NUMBER"),
 		content="CONTENT_AREA",
 		time="YEAR",
@@ -30,10 +32,20 @@ function(sgp_object,
                 time="YEAR",
                 institution_level= NULL,
                 demographic=NULL,
-                institution_inclusion=list(STATE=NULL, DISTRICT_NUMBER=NULL, SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS")))) {
+                institution_inclusion=list(STATE=NULL, DISTRICT_NUMBER=NULL, SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS"))),
+	plot.types=c("bubblePlot", "studentGrowthPlot", "growthAchievementPlot")) {
 
         started.at <- proc.time()
 	message(paste("Started abcSGP", date()), "\n")
+
+	### Create state (if missing) from sgp_object (if possible)
+
+	if (missing(state)) {
+		tmp.name <- gsub("_", " ", deparse(substitute(sgp_object)))
+		if (any(sapply(c(state.name, "Demonstration"), function(x) regexpr(x, tmp.name)))==1) {
+			state <- c(state.abb, "DEMO")[which(sapply(c(state.name, "Demonstration"), function(x) regexpr(x, tmp.name))==1)]
+		}
+	}
 
         ### Check for consistency between simulate.sgps and confidence.interval.groups ###
 
@@ -46,19 +58,19 @@ function(sgp_object,
 	### prepareSGP ###
 
 	if ("prepareSGP" %in% steps) {
-		abcSGP_TMP_Data <- prepareSGP(sgp_object)
-	        if (save.intermediate.results) save(abcSGP_TMP_Data, file="abcSGP_TMP_Data.Rdata")
+		sgp_object <- prepareSGP(sgp_object)
+	        if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}
 
 
         ### Calculate Relevant Quantities ###
 
         if (missing(content_areas)) {
-                content_areas <- unique(abcSGP_TMP_Data@Data["VALID_CASE"]$CONTENT_AREA)
+                content_areas <- unique(sgp_object@Data["VALID_CASE"]$CONTENT_AREA)
         }
         if (missing(years)) {
                 for (i in content_areas) {
-                        years <- sort(tail(unique(abcSGP_TMP_Data@Data[J("VALID_CASE", content_areas)]$YEAR), -2), decreasing=TRUE)
+                        years <- sort(tail(unique(sgp_object@Data[J("VALID_CASE", content_areas)]$YEAR), -2), decreasing=TRUE)
                 }
         }
 
@@ -66,8 +78,8 @@ function(sgp_object,
 	### analyzeSGP ###
 
 	if ("analyzeSGP" %in% steps) {
-		abcSGP_TMP_Data <- analyzeSGP(
-			sgp_object=abcSGP_TMP_Data,
+		sgp_object <- analyzeSGP(
+			sgp_object=sgp_object,
 			state=state,
 			content_areas=content_areas,
 			years=years,
@@ -76,28 +88,30 @@ function(sgp_object,
 			sgp.projections.lagged=sgp.projections.lagged,
 			simulate.sgps=simulate.sgps)
 
-                if (save.intermediate.results) save(abcSGP_TMP_Data, file="abcSGP_TMP_Data.Rdata")
+                if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}
 
 
 	### combineSGP ###
 
 	if ("combineSGP" %in% steps) {
-		abcSGP_TMP_Data <- combineSGP(
-			sgp_object=abcSGP_TMP_Data,
+		sgp_object <- combineSGP(
+			sgp_object=sgp_object,
 			state=state,
+			years=years,
+			content_areas=content_areas,
 			sgp.percentiles=sgp.percentiles,
 			sgp.projections.lagged=sgp.projections.lagged)
 
-                if (save.intermediate.results) save(abcSGP_TMP_Data, file="abcSGP_TMP_Data.Rdata")
+                if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}
 
 
 	### summarizeSGP ###
 
 	if ("summarizeSGP" %in% steps) {
-		abcSGP_TMP_Data <- summarizeSGP(
-			sgp_object=abcSGP_TMP_Data,
+		sgp_object <- summarizeSGP(
+			sgp_object=sgp_object,
 			state=state,
 			years=years, 
 			content_areas=content_areas, 
@@ -105,17 +119,26 @@ function(sgp_object,
 			summary.groups=summary.groups, 
 			confidence.interval.groups=confidence.interval.groups)
 
-                if (save.intermediate.results) save(abcSGP_TMP_Data, file="abcSGP_TMP_Data.Rdata")
+                if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}
 
 
-	### visualizeSGP (To be done) ###
+	### visualizeSGP ###
 
-#	if ("visualizeSGP" %in% steps) {
-#
-#	}
+	if ("visualizeSGP" %in% steps) {
+
+		visualizeSGP(
+			sgp_object=sgp_object,
+			plot.types=plot.types,
+			state=state,
+			bPlot.years=years,
+			sgPlot.years=years,
+			gaPlot.years=years,
+			bPlot.content_areas=content_areas,
+			gaPlot.content_areas=content_areas)
+	}
 
         message(paste("Finished abcSGP", date(), "in", timetaken(started.at), "\n"))
-	return(abcSGP_TMP_Data)
+	return(sgp_object)
 } ## END abcSGP Function
 

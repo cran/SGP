@@ -25,13 +25,15 @@ studentGrowthPercentiles(panel.data,
                          calculate.sgps=TRUE,                                       
                          rq.method="br",                                           
                          knot.cut.percentiles=c(0.2,0.4,0.6,0.8),
-                         exact.grade.progression.sequence=FALSE,                 
+                         exact.grade.progression.sequence=FALSE,
+                         drop.nonsequential.grade.progression.variables=TRUE, 
                          convert.0and100=TRUE,                                   
                          sgp.quantiles="Percentiles",                          
                          percuts.digits=0,                                  
                          isotonize=TRUE,                                 
                          convert.using.loss.hoss=TRUE,                
-                         goodness.of.fit=TRUE)                 
+                         goodness.of.fit=TRUE,
+                         print.time.taken=TRUE)
 }
 
 \arguments{
@@ -48,8 +50,10 @@ studentGrowthPercentiles(panel.data,
   \item{panel.data.vnames}{Vector of variables to use in student growth percentile calculations. If not specified, function attempts to use all available variables.
   }
   \item{grade.progression}{Preferred argument to specify a student grade/time progression in the data. For example, \code{3:4} would indicate to subset the
-  data where the two most recent years of data available are 3 and 4, respectively. Also allows for non-sequential grade progressions to be analyzed. For example,
-  \code{c(7,8,10)} combined with an appropriate \code{panel.data.vnames} argument to remove a year of data would analyze students progressing from 7 to 8 to 10. 
+  data where the two most recent years of data available are 3 and 4, respectively. Also allows for non-sequential grade progressions to be analyzed with automatic 
+  removal of columns where "holes" occur is supplied grade.progression. For example, for the grade.progression \code{c(7,8,10)}, the penultimate GRADE and SCALE_SCORE column 
+  in the supplied panel.data would be removed.  Also can be combined with an appropriate \code{panel.data.vnames} argument to remove a year of data would analyze students 
+  progressing from 7 to 8 to 10. 
   }
   \item{num.prior}{Number of prior scores one wishes to use in the analysis. Defaults to \code{num.panels-1}. 
   If \code{num.prior=1}, then only 1st order growth percentiles are computed, if \code{num.prior=2}, then 1st and 2nd order are computed, 
@@ -94,6 +98,8 @@ studentGrowthPercentiles(panel.data,
   }
   \item{exact.grade.progression.sequence}{Boolean argument indicating whether the grade.progression supplied is used exactly (TRUE) as supplied or whether lower order analyses are run as part of the whole analysis (FALSE--the default). 
   }
+  \item{drop.nonsequential.grade.progression.variables}{Boolean argument indicating whether to drop variables that do not occur with a non-sequential grade progress. For example, if the grade progression 7, 8, 10 is provided, the penultimate variable in \code{panel.data} is dropped. Default is TRUE.
+  }
   \item{convert.0and100}{Boolean argument (defaults to TRUE) indicating whether conversion of growth percentiles of 0 and 100 to growth percentiles of 1 and 99, respectively, occurs. The default produces growth percentiles ranging from 1 to 99. 
   }
   \item{sgp.quantiles}{Argument to specify quantiles for quantile regression estimation. Default is Percentiles. User can additionally submit a vector of quantiles (between 0 and 1). Goodness of fit output only available currently for PERCENTILES. 
@@ -110,6 +116,8 @@ studentGrowthPercentiles(panel.data,
   \item{goodness.of.fit}{Boolean argument (defaults to TRUE) indicating whether to produce goodness of fit results associated with produced student growth percentiles.
    Goodness of fit results are grid.grobs stored in \code{panel.data$Goodness_of_Fit} \cr   
    \code{$my.year.my.subject} where \code{my.year} and \code{my.subject} are provided by \code{sgp.labels}.
+  }
+  \item{print.time.taken}{Boolean argument (defaults to TRUE) indicating whether to print message indicating information on studentGrowthPercentile analysis and time taken.
   }
 } 
 
@@ -165,6 +173,14 @@ sgp_g4_DEMO <- studentGrowthPercentiles(panel.data=sgpData,
                    sgp.labels=list(my.year=2011, my.subject="Reading"),
                    use.my.knots.boundaries="DEMO",
                    grade.progression=c(3,4))
+
+
+## Sample code for running non-sequential grade progression analysis.
+
+sgp_g8_DEMO <- studentGrowthPercentiles(panel.data=sgpData,
+                   sgp.labels=list(my.year=2011, my.subject="Reading"),
+                   use.my.knots.boundaries="DEMO",
+                   grade.progression=c(5,6,8))
 
 \dontrun{
 ## NOTE: Goodness of Fit results are stored as a graphical object in the
@@ -271,6 +287,44 @@ for (i in seq_along(my.grade.sequences)) {
          distribution="Normal", round=1),
       grade.progression=my.grade.sequences[[i]])
 }
+
+### Example showing how to use pre-calcualted coefficient
+### matrices to calculate student growth percentiles
+
+my.grade.sequences <- list(3:4, 3:5, 3:6, 3:7, 4:8)
+my.sgpData <- list(Panel_Data=sgpData)   ### Put sgpData into Panel_Data slot
+
+for (i in seq_along(my.grade.sequences)) {
+     my.sgpData <- studentGrowthPercentiles(panel.data=my.sgpData,
+                     sgp.labels=list(my.year=2011, my.subject="Reading"),
+                     growth.levels="DEMO",
+                     grade.progression=my.grade.sequences[[i]])
+}
+
+percentiles.1st.run <- my.sgpData$SGPercentiles$READING.2011 
+
+### my.sgpData has as full set of coefficient matrices for Reading, 2011. To view these
+
+names(my.sgpData$Coefficient_Matrices$READING.2011)
+
+## Let's NULL out the SGPercentiles slot and recreate the percentiles 
+## using the embedded coefficient matrices
+
+my.sgpData$SGPercentiles$READING.2011 <- NULL
+
+for (i in seq_along(my.grade.sequences)) {
+     my.sgpData <- studentGrowthPercentiles(panel.data=my.sgpData,
+                     sgp.labels=list(my.year=2011, my.subject="Reading"),
+			   use.my.knots.boundaries=list(my.year=2011, my.subject="Reading"),
+                     use.my.coefficient.matrices=list(my.year=2011, my.subject="Reading"),
+                     growth.levels="DEMO",
+                     grade.progression=my.grade.sequences[[i]])
+}
+
+percentiles.2nd.run <- my.sgpData$SGPercentiles$READING.2011 
+
+identical(percentiles.1st.run, percentiles.2nd.run)
+
 }
 }
 

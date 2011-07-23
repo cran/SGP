@@ -1,16 +1,16 @@
 Package: SGP
-Version: 0.1-0.0
-Date: 2011-6-15
+Version: 0.3-5.0
+Date: 2011-7-23
 Title: An R Package for the Calculation and Visualization of Student
         Growth Percentiles.
 Author@R: c(person("Damian", "Betebenner",
         email="dbetebenner@nciea.org"), person("Adam", "Van Iwaarden",
         email="Vaniwaarden@colorado.edu"))
 Author: Damian W. Betebenner <dbetebenner@nciea.org> and Adam Van
-        Iwaarden <Vaniwaarden@colorado.edu> with contributions from
-        Jonathan Weeks, Ben Domingue, John Stewart, Jinnie Choi, Xin
-        Wei, and Hi Shin Shim. With special thanks to State Department
-        of Education analysts: Rebecca Gau (Arizona), Marie Huchton
+        Iwaarden <Vaniwaarden@colorado.edu> with contributions from Ben
+        Domingue, Jonathan Weeks, John Stewart, Jinnie Choi, Xin Wei,
+        and Hi Shin Shim. With special thanks to State Department of
+        Education analysts: Rebecca Gau (Arizona), Marie Huchton
         (Colorado), Dr. Carissa Miller (Idaho), Dr. Wes Bruce
         (Indiana), Robert Hochsegang (Indiana), Xuewen Sheng (Kansas),
         Robert Lee (Massachusetts), Ken Thompson (Mississippi), Soo
@@ -20,9 +20,10 @@ Author: Damian W. Betebenner <dbetebenner@nciea.org> and Adam Van
         (Wisconsin), Dr. Philip Olsen (Wisconsin), Nick Stroud
         (Wisconsin).
 Maintainer: Damian W. Betebenner <dbetebenner@nciea.org>
-Depends: R (>= 2.10), data.table (>= 1.5.3), foreach, grid, methods,
+Depends: R (>= 2.10), data.table (>= 1.6.2), foreach, grid, methods,
         plyr, quantreg, splines
-Suggests: boot, colorspace, gridBase, pdf2, randomNames, sn
+Suggests: boot, colorspace, doMC, gridBase, pdf2, randomNames (>=
+        0.0-3), sn, snow
 Description: Functions to calculate student growth percentiles and
         percentile growth projections/trajectories for students using
         large scale, longitudinal assessment data.  Functions use
@@ -32,13 +33,14 @@ Description: Functions to calculate student growth percentiles and
         coefficient matrices derived from the quantile regression
         analyses and specify what percentile growth is required for
         students to reach future achievement targets.
+SystemRequirements: (PDF)LaTeX (http://www.latex-project.org/) with
+        pdfpages package for studentGrowthPlot option in visualizeSGP
+        to bind together student growth plots into school catalogs.
 URL: http://cran.r-project.org/web/packages/SGP/,
         https://r-forge.r-project.org/projects/sgp/
 LazyLoad: Yes
 LazyData: Yes
 License: CC BY-SA 3.0 US | CC BY-NC-SA 3.0 + file LICENSE
+Packaged: 2011-07-24 01:53:11 UTC; damian
 Repository: CRAN
-Repository/R-Forge/Project: sgp
-Repository/R-Forge/Revision: 127
-Date/Publication: 2011-06-18 17:04:28
-Packaged: 2011-06-17 21:02:12 UTC; rforge
+Date/Publication: 2011-07-24 05:15:28

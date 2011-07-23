@@ -1,8 +1,8 @@
-setClassUnion("list.null",c("list","NULL"))
+setClassUnion("list.null", c("list","NULL"))
 
 setOldClass(c('data.frame')) 
 setOldClass(c('data.table', 'data.frame')) 
-setClass("SGP",representation(Data="data.table", Variable_Name_Lookup="data.frame", SGP="list.null", Summary="list.null"))
+setClass("SGP", representation(Data="data.table", Variable_Name_Lookup="list.null", SGP="list.null", Summary="list.null"))
 
 .Valid.SGP <- function(object) {
 	out <- NULL

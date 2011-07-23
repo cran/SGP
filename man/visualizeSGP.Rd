@@ -2,115 +2,174 @@
 \alias{visualizeSGP}
 \title{Visualize data from SGP analyses}
 \description{
-Utility function to produce a variety of graphical displays associated with student growth percentile/percentile growth trajectory results. Function currently includes facility to produce
-individual student growth and achievement reports as well and interactive bubble charts showing growth and achievement data.
+Utility function to produce a variety of graphical displays associated with student growth percentile/percentile growth trajectory results. 
+Function currently includes facility to produce individual student growth and achievement plots, interactive bubble plots depicting summary growth 
+and achievement data, and growth and achievement charts showing system level growth and achievement data as shown on the cover of \emph{Educational Measurement:
+Issues and Practice} as part of Betebenner (2009).
 }
 
 \usage{
-visualizeSGP(sgp_object,
-        state,
-        years,
-        content_areas,
-        districts,
-        schools,
-        grades,
-        plot.types=c("bubblePlot", "studentGrowthPlot", "growthAchievementPlot"),
-        bubblePlot.config=list(summary.data=sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__CONTENT_AREA__YEAR__SCHOOL_ENROLLMENT_STATUS"]][
-		SCHOOL_ENROLLMENT_STATUS=="Enrolled Full Academic Year in School"],
-                use.school.names=TRUE,
-                x.variable="MEDIAN_SGP", 
-                y.variable=list(CURRENT="PERCENT_AT_ABOVE_PROFICIENT", PRIOR="PERCENT_AT_ABOVE_PROFICIENT_PRIOR"), 
-                size.variable="MEDIAN_SGP_COUNT",
-                subset.factor=NULL,
-                main.title=list(CURRENT="Growth and Current Achievement", PRIOR="Growth and Prior Achievement"),
-                sub1.title="Demonstration State School Performance",
-                plot.extras=c("grid.text(x=unit(50, 'native'), y=unit(50, 'native'), 
-			'DRAFT - DO NOT DISTRIBUTE', rot=-30, gp=gpar(col='grey80', cex=2.9, alpha=0.8, fontface=2))", 
-			"grid.lines(x=unit(50, 'native'), y=c(0,1), gp=gpar(col='grey40', lwd=1.5, lty=2, alpha=0.5))"),
-                pdf.folder="Visualizations/Summary"),
-        studentGrowthPlot.config=list(
-		header.footer.color="goldenrod3",
-                front.page=NULL,
-                pdf.folder="Visualizations/Individual",
-                folder.names="number",
-                student.growth.projection.fan=TRUE,
-                anonymize=FALSE,
-                remove.auxillary.files=TRUE)) 
+visualizeSGP(
+           sgp_object,
+           plot.types=c("bubblePlot", "studentGrowthPlot", "growthAchievementPlot"),
+           state,
+           bPlot.years=NULL,
+           bPlot.content_areas=NULL,
+           bPlot.districts=NULL,
+           bPlot.schools=NULL,
+           bPlot.styles=c(1),
+           bPlot.full.academic.year=TRUE,
+           bPlot.minimum.n=10,
+           bPlot.anonymize=FALSE,
+           bPlot.prior.achievement=TRUE, 
+           bPlot.draft=FALSE,
+           bPlot.format="print",
+           bPlot.folder="Visualizations/bubblePlots",
+           sgPlot.years=NULL,
+           sgPlot.districts=NULL,
+           sgPlot.schools=NULL,
+           sgPlot.students=NULL,
+           sgPlot.header.footer.color="#4CB9CC",
+           sgPlot.front.page=NULL,
+           sgPlot.folder="Visualizations/studentGrowthPlots",
+           sgPlot.folder.names="number",
+           sgPlot.fan=TRUE,  
+           sgPlot.anonymize=FALSE,
+           sgPlot.cleanup=TRUE,
+           sgPlot.demo.report=TRUE,
+           gaPlot.years=NULL,
+           gaPlot.content_areas=NULL,
+           gaPlot.students=NULL,
+           gaPlot.format="print",
+           gaPlot.folder="Visualizations/growthAchievementPlots") 
 }
 
 \arguments{
-  \item{sgp_object}{A list containing long formatted data in the \code{Student} slot that will be used for the production of student growth and achievement plots, summary data from \code{\link{summarizeSGP}} in the \code{Summary} for bubble plots.  
+  \item{sgp_object}{An object of class SGP containing long formatted data in the \code{Data} slot that will be used for the production of student growth 
+and achievement plots and system growth and achievement plots, summary data from \code{\link{summarizeSGP}} in the \code{Summary} slot for bubble plots.  
+  }
+  \item{plot.types}{A character vector indicating what types of plots to construct. Currently available plots include \code{\link{bubblePlot}}, 
+\code{\link{studentGrowthPlot}}, and \code{\link{growthAchievementPlot}}.
   }
   \item{state}{Acronym indicating state associated with the summaries for access to assessment program information embedded in \code{\link{stateData}}.
   }
-  \item{years}{A vector indicating year(s) in which to produce charts associated data available in sgp_object. If missing the function will use the last year available in the data to produce plots.
+  \item{bPlot.years}{A vector indicating year(s) in which to produce \code{\link{bubblePlot}}s using data available in \code{sgp_object}. If missing the 
+function will use the last year available in the data to produce \code{\link{bubblePlot}}s.
   }
-  \item{content_areas}{NOTE: This argument does not apply to student growth plot production. A vector indicating content area(s) to produce summary plots (e.g., bubble plots).  If missing the function will produce plots for all available content areas provided in the data.
+  \item{bPlot.content_areas}{A vector indicating content area(s) to produce \code{\link{bubblePlot}}s using data available in \code{sgp_object}. If missing the 
+function will produce plots for all available content areas provided in the data. 
   }
-  \item{districts}{A vector indicating districts for which to produce student growth plots or bubble plots. If missing the function will produce plots for all available districts in the data.
+  \item{bPlot.districts}{A vector indicating districts to produce \code{\link{bubblePlot}}s using data available in \code{sgp_object}. Consult \code{\link{bubblePlot}} 
+styles to determine which \code{\link{bubblePlot}}s styles accept specification for districts. Default is to produce plots for all available districts in the data. 
   }
-  \item{schools}{NOTE: This argument does not apply to bubble plot production. A vector indicating schools for which to produce student growth plots. If missing the function will produce student growth plots for all available schools in the data.
+  \item{bPlot.schools}{A vector indicating schools to produce \code{\link{bubblePlot}}s using data available in \code{sgp_object}. Consult \code{\link{bubblePlot}} 
+styles to determine which \code{\link{bubblePlot}} styles accept specification for schools. Default is to produce plots for all available schools in the data. 
   }
-  \item{grades}{NOTE: This argument does not apply to bubble plot production. A vector indicating grades for which to produce student growth plots. If missing the function will produce student growth plots for all available grades in the data.
+  \item{bPlot.styles}{A vector of positive integers indicating the types of \code{\link{bubblePlot}}s to produce using data available in \code{sgp_object}. See 
+associated documentation for example plots.  
   }
-  \item{plot.types}{A vector indicating which plot types to plot. Currently implemented plots include studentGrowthPlot and bubblePlot. Default is to produce all plot types.
+  \item{bPlot.full.academic.year}{A boolean argument (defaults to TRUE) indicating whether \code{\link{bubblePlot}}s should use full academic year results if available. 
   }
-  \item{bubblePlot.config}{A list giving configuration arguments to be supplied to the bubblePlot function. Current arguments include:
-\tabular{ll}{
-\code{summary.data} \tab zzz.\cr
-\code{use.school.names} \tab zzz.\cr
-\code{y.variable} \tab zzz.\cr
-\code{x.variable} \tab zzz.\cr
-\code{size.variable} \tab zzz.\cr
-\code{subset.factor} \tab zzz.\cr
-\code{main.title} \tab zzz.\cr 
-\code{sub1.title} \tab zzz.\cr 
-\code{plot.extras} \tab zzz.\cr 
-\code{pdf.folder} \tab zzz.\cr
-}
+  \item{bPlot.minimum.n}{A positive integer (defaults to 10) indicating the minimum size for summary values to be displayed in the \code{\link{bubblePlot}}s. 
   }
-  \item{studentGrowthPlot.config}{A list giving configuration arguments to be supplied to the studentGrowthPlot function. Current arguments include:
-\tabular{ll}{
-\code{header.footer.color}: \tab A color indicating the color of the header and footer in the student growth and achievement report.\cr
-\code{front.page}: \tab A character vector giving the file name associated with the front page.\cr
-\code{pdf.folder}: \tab A character vector giving the path to the folder to contain the student growth charts.\cr 
-\code{folder.names}: \tab Either "number" or "names" indicating how the directory path folders are named.\cr
-\code{student.growth.projection.fan}: \tab A boolean argument defaulting to true indicating whether to produce the 1 year projection fans.\cr
-\code{anonymize}: \tab A boolean argument defaulting to FALSE indicating whether to produce dummy names for students growth and achievement charts.\cr 
-\code{remove.auxillary.files}: \tab A boolean argument defaulting to TRUE indicating whether to remove files created by LaTeX in the construction of student growth and achievement reports.\cr
-}
+  \item{bPlot.anonymize}{A boolean argument (defaults to FALSE) indicating whether to anonymize \code{\link{bubblePlot}}s school and district names that appear in the
+plots and data tips of the plots.  For student level anonymization, the function utilizes the randomNames package to produce gender and ethnic correct names based 
+upon gender and ethnicity codes available in \code{sgp_object@Data}.
+  }
+  \item{bPlot.prior.achievement}{A boolean argument (defaults to TRUE) indicating whether to produce \code{\link{bubblePlot}}s using prior achievement as well as current
+achievement as the vertical dimension of the \code{\link{bubblePlot}}. 
+  }
+  \item{bPlot.draft}{A boolean argument (defaults to FALSE) indicating whether to put an indicator on the chart noting that the results are draft and to not distribute. 
+  }
+  \item{bPlot.format}{Either "print" or "presentation" indicating whether to optimize the plot for print form (light background) or presentation form (dark background).
+  }
+  \item{bPlot.folder}{Character vector indicating where \code{\link{bubblePlot}}s should be placed. Default folder is "Visualizations/bubblePlots".
+  }
+  \item{sgPlot.years}{A vector indicating year for which to produce \code{\link{studentGrowthPlot}}s. The supplied year indicates the \emph{final} year associated with each
+student's \code{\link{studentGrowthPlot}}. If missing the function will use the last year available in the data to produce \code{\link{studentGrowthPlot}}s.
+  }
+  \item{sgPlot.districts}{A vector indicating which districts to produce \code{\link{studentGrowthPlot}}s for. If missing the function will use \emph{all} available 
+districts in the data to produce \code{\link{studentGrowthPlot}}s.
+  }
+  \item{sgPlot.schools}{A vector indicating which schools to produce \code{\link{studentGrowthPlot}}s for. If missing the function will use \emph{all} available 
+schools in the data to produce \code{\link{studentGrowthPlot}}s. If both \code{sgPlot.districts} and \code{sgPlot.schools} are provided the function produces 
+\code{\link{studentGrowthPlot}}s for ALL students in the districts and schools provided. 
+  }
+  \item{sgPlot.students}{A vector of student \code{ID}s indicating which students to produce \code{\link{studentGrowthPlot}}s for. If missing the function will 
+use \emph{all} available students in the data to produce \code{\link{studentGrowthPlot}}s. 
+  }
+  \item{sgPlot.header.footer.color}{Character vector (defaults to a blue) indicating the color of the header/footer associated with the 
+\code{\link{studentGrowthPlot}}. Another good color is \code{goldenrod2}.
+  }
+  \item{sgPlot.front.page}{A path to a PDF to be used as the front page to the \code{\link{studentGrowthPlot}}. The default is missing so that no front page is
+attached to the \code{\link{studentGrowthPlot}}. 
+  }
+  \item{sgPlot.folder}{Character vector indicating where \code{\link{studentGrowthPlot}}s should be placed. Note that \code{\link{studentGrowthPlot}}s are placed 
+within nested folders within this folder. Default folder is "Visualizations/studentGrowthPlots". 
+  }
+  \item{sgPlot.folder.names}{Either "name" or "number" (the default) indicating how the nested folder structure will be labeled that holds the 
+\code{\link{studentGrowthPlot}}s.   
+  }
+  \item{sgPlot.fan}{A boolean argument (defaults to TRUE) indicating whether to produce projection fan on \code{\link{studentGrowthPlot}}s.  
+  }
+  \item{sgPlot.anonymize}{A boolean argument (defaults to FALSE) indicating whether to anonymize \code{\link{studentGrowthPlot}}s student, school and district names. 
+For student level anonymization, the function utilizes the \code{randomNames} package to produce gender and ethnicity based names based upon gender and ethnicity 
+codes available in \code{sgp_object@Data}.
+  }
+  \item{sgPlot.cleanup}{A boolean argument (defaults to TRUE) indicating whether to remove files produced by pdfLaTeX to produce \code{\link{studentGrowthPlot}} catalogs.  
+  }
+  \item{sgPlot.demo.report}{A boolean argument (defaults to TRUE) indicating whether to just produce a sample \code{\link{studentGrowthPlot}} catalogs. Note: When producing
+\code{\link{studentGrowthPlot}}s for an entire state, considerable resources are required to produce this many reports. We are actively working on parallelizing this functionality
+to reduce report production time by two orders of magnitude.  
+  }
+  \item{gaPlot.years}{A vector indicating year for which to produce \code{\link{growthAchievementPlot}}s. If missing the function will use the last year available 
+in the data to produce \code{\link{growthAchievementPlot}}s.
+  }
+  \item{gaPlot.content_areas}{A vector indicating content area(s) to produce \code{\link{growthAchievementPlot}}s using data available in \code{sgp_object}. If missing the 
+function will produce plots for all available content areas provided in the data. 
+  }
+  \item{gaPlot.students}{A vector of student \code{ID}s indicating which students to produce \code{\link{growthAchievementPlot}}s for. If missing the function will 
+use \emph{all} available students in the data to produce \code{\link{growthAchievementPlot}}s. 
+  }
+  \item{gaPlot.format}{Either "print" or "presentation" indicating whether to optimize the plot for print form (light background) or presentation form (dark background). 
+  }
+  \item{gaPlot.folder}{Character vector indicating where \code{\link{growthAchievementPlot}}s should be placed. Default folder is "Visualizations/growthAchievementPlots".  
   }
 }
 
-\value{Function produces numerous pdf files in a folder structure specified by the user and supplied through arguments to the function.
+\value{Function produces \emph{numerous} (potentially hundreds of thousands) of pdf files in a folder structure specified by the user and supplied through arguments 
+to the function.
+}
+
+
+\references{
+Betebenner, D. W. (2009). Norm- and criterion-referenced student growth. 
+Educational Measurement: Issues and Practice, 28(4):42-51.
 }
 
 \author{Damian W. Betebenner \email{dbetebenner@nciea.org} and Adam Van Iwaarden \email{Vaniwaarden@colorado.edu}}
 
-\seealso{\code{\link{sgpData_LONG}}}
+\seealso{\code{\link{bubblePlot}}, \code{\link{bubblePlot_Styles}}, \code{\link{studentGrowthPlot}}, \code{\link{growthAchievementPlot}}}
 
 \examples{
 \dontrun{
 ## visualizeSGP is Step 5 of 5 of abcSGP
-visualizeSGP(DEMO_Data)
-
+Demonstration_Data <- sgpData_LONG
+Demonstration_Data <- prepareSGP(Demonstration_Data)
+Demonstration_Data <- analyzeSGP(Demonstration_Data)
+Demonstration_Data <- combineSGP(Demonstration_Data)
+Demonstration_Data <- summarizeSGP(Demonstration_Data)
+visualizeSGP(Demonstration_Data)
 
 ## Production of sample student growth and achievement plots
 
-visualizeSGP(sgp_object=Demo_Data, 
-	state="DEMO",
-	districts=470,
-	schools=c(6418, 8008),
+visualizeSGP(
+	sgp_object=Demonstration_Data, 
 	plot.types="studentGrowthPlot",
-        studentGrowthPlot.config=list(
-		header.footer.color="#4CB9CC",   ### Other good colors goldenrod3
-                front.page=NULL,
-                pdf.folder="Visualizations/Individual_Visualizations",
-                folder.names="number",
-                student.growth.projection.fan=TRUE,
-                anonymize=FALSE,
-                remove.auxillary.files=TRUE))
-
+	state="DEMO",
+	sgPlot.districts=470,
+	sgPlot.schools=c(6418, 8008),
+	sgPlot.header.footer.color="#4CB9CC")
 }  
 }
 

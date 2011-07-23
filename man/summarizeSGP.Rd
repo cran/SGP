@@ -7,28 +7,30 @@
 
 \usage{
 summarizeSGP(sgp_object,
-	state,
-	years,
-	content_areas,
-	sgp.summaries=list(MEDIAN_SGP="median_na(SGP)",
-		MEDIAN_SGP_COUNT="num_non_missing(SGP)",
-		PERCENT_AT_ABOVE_PROFICIENT="percent_in_category(ACHIEVEMENT_LEVEL, list(c('Proficient', 'Advanced')), list(c('Unsatisfactory', 'Partially Proficient', 'Proficient', 'Advanced')))",
-		PERCENT_AT_ABOVE_PROFICIENT_COUNT="num_non_missing(ACHIEVEMENT_LEVEL)"),
-	summary.groups=list(institution=c("STATE", "DISTRICT_NUMBER", "SCHOOL_NUMBER"),
-		content="CONTENT_AREA",
-		time="YEAR",
-		institution_level="GRADE",
-		demographic=c("GENDER", "ETHNICITY", "FREE_REDUCED_LUNCH_STATUS", "ELL_STATUS", "IEP_STATUS", "GIFTED_AND_TALENTED_PROGRAM_STATUS", "CATCH_UP_KEEP_UP_STATUS"),
-		institution_inclusion=list(STATE="STATE_ENROLLMENT_STATUS", DISTRICT_NUMBER="DISTRICT_ENROLLMENT_STATUS", SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS")),
-	confidence.interval.groups=list(TYPE="Bootstrap",
-		VARIABLES=c("SGP"),
-		QUANTILES=c(0.025, 0.975),
-		GROUPS=list(institution="SCHOOL_NUMBER", 
-		content="CONTENT_AREA",
-		time="YEAR",
-		institution_level= NULL,
-		demographic=NULL,
-		institution_inclusion=list(STATE=NULL, DISTRICT_NUMBER=NULL, SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS"))))
+           state,
+           years,
+           content_areas,
+           sgp.summaries=list(MEDIAN_SGP="median_na(SGP)",
+             MEDIAN_SGP_COUNT="num_non_missing(SGP)",
+             PERCENT_AT_ABOVE_PROFICIENT="percent_in_category(ACHIEVEMENT_LEVEL, list(c('Proficient', 'Advanced')), list(c('Unsatisfactory', 'Partially Proficient', 'Proficient', 'Advanced')))",
+             PERCENT_AT_ABOVE_PROFICIENT_COUNT="num_non_missing(ACHIEVEMENT_LEVEL)",
+             PERCENT_AT_ABOVE_PROFICIENT_PRIOR="percent_in_category(ACHIEVEMENT_LEVEL_PRIOR, list(c('Proficient', 'Advanced')), list(c('Unsatisfactory', 'Partially Proficient', 'Proficient', 'Advanced')))",
+             PERCENT_AT_ABOVE_PROFICIENT_PRIOR_COUNT="num_non_missing(ACHIEVEMENT_LEVEL_PRIOR)"),
+           summary.groups=list(institution=c("STATE", "DISTRICT_NUMBER", "SCHOOL_NUMBER"),
+             content="CONTENT_AREA",
+             time="YEAR",
+             institution_level="GRADE",
+             demographic=c("GENDER", "ETHNICITY", "FREE_REDUCED_LUNCH_STATUS", "ELL_STATUS", "IEP_STATUS", "GIFTED_AND_TALENTED_PROGRAM_STATUS", "CATCH_UP_KEEP_UP_STATUS"),
+             institution_inclusion=list(STATE="STATE_ENROLLMENT_STATUS", DISTRICT_NUMBER="DISTRICT_ENROLLMENT_STATUS", SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS")),
+           confidence.interval.groups=list(TYPE="Bootstrap",
+             VARIABLES=c("SGP"),
+             QUANTILES=c(0.025, 0.975),
+             GROUPS=list(institution="SCHOOL_NUMBER",
+               content="CONTENT_AREA",
+               time="YEAR",
+               institution_level= NULL,
+               demographic=NULL,
+               institution_inclusion=list(STATE=NULL, DISTRICT_NUMBER=NULL, SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS"))))
 }
 
 \arguments{
@@ -48,6 +50,8 @@ If missing the function will use the data to infer the content area(s) available
 \code{MEDIAN_SGP_COUNT} \tab The number of students used to compute the median.\cr 
 \code{PERCENT_AT_ABOVE_PROFICIENT} \tab The percentage of students at or above proficient.\cr 
 \code{PERCENT_AT_ABOVE_PROFICIENT_COUNT} \tab The number of students used to compute the percentage at/above proficient.\cr 
+\code{PERCENT_AT_ABOVE_PROFICIENT_PRIOR} \tab The percentage of students at or above proficient in the prior year.\cr 
+\code{PERCENT_AT_ABOVE_PROFICIENT_PRIOR_COUNT} \tab The number of students used to compute the percentage at/above proficient in the prior year.\cr 
 }
 NOTE: The \code{percent_in_category()} summary function requires a variable that MUST be a factor with proficiency categories as levels. The function looks for the percent of students from the variable that are IN one or more categories that identify students that are at or above proficiency (the first list argument) OUT of all possible categories (the second list argument). For example, in the \code{\link{sgpData_LONG}} dataset \code{ACHIEVEMENT_LEVEL} has 5 levels.  Levels 3 and 4 are "Proficient" and "Advanced" respectively.
   }
@@ -92,7 +96,11 @@ For \code{CSEM} analysis this argument requires that simulated SGPs have been pr
 \examples{
 \dontrun{
 ## summarizeSGP is Step 4 of 5 of abcSGP
-DEMO_Data <- summarizeSGP(DEMO_Data, state="DEMO")
+Demonstration_Data <- sgpData_LONG
+Demonstration_Data <- prepareSGP(Demonstration_Data)
+Demonstration_Data <- analyzeSGP(Demonstration_Data)
+Demonstration_Data <- combineSGP(Demonstration_Data)
+Demonstration_Data <- summarizeSGP(Demonstration_Data)
 }  
 }
 

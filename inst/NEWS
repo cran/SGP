@@ -1,6 +1,41 @@
+Changes in version: SGP_0.3-5.0
+
+  o Corrected an offset of 1 in studentGrowthProjections (Thanks for Marie Huchton for finding discrepancies).
+  o Improved header in growthAchievementChart.
+
+Changes in version: SGP_0.3-0.0
+
+  o Added an example to studentGrowthPercentiles showing how embedded coefficient matrices can be used to calculate student growth percentiles. 
+  o Lots of little bug fixes in visualizeSGP, studentGrowthPlt, bubblePlot, and growthAchievmentPlot, particularly when scale is transformed. 
+  o In analyzeSGP, the automatic configuration has been improved to better select grade progressions associated with the provided data. 
+  o Began adding functionality to use parallel backends from using different parallelization implementations (SNOW, FOREACH, MULTICORE). 
+  o studentGrowthProjections now accomodates year dependent cutscores (in situations where states change cutscores). 
+  o piecewise.transform function accomodates year dependent cutscores. This impact both studentGrowthPlots and growthAchievementPlots when scale score transformations are employed to view SGP results.
+
+Changes in version: SGP_0.2-1.0
+
+  o Added functionality to auto-detect state names based upon SGP object name convention: State_Data (e.g. ,Colorado_Data) 
+  o Fixed bug allowing users to specify multiple sgp.summaries in summarizeSGP. 
+  o Corrected error in achievement level labels in Nevada state data. 
+
+Changes in version: SGP_0.2-0.0
+
+  o prepareSGP returns object of class SGP unaltered and prepares data.frames as before. 
+  o abcSGP now passes supplied years and content_areas arguments to combineSGP to allow for year/content area specific merges. This functionality will assist in updating results from year to year. 
+  o combineSGP now accepts arguments for years and content_areas allowing for year/content area specific merges. This functionality will assist in updating results from year to year. 
+  o Improvement of bubblePlot to better represent situations with hundreds/thousands of bubbles. 
+  o Inclusion of growthAchievementPlot that provides plots like that on Betebenner (2009) Educational Measurement: Issues and Practice Article.
+  o Modification of visualizeSGP to allow for automatic use of growthAchievementPlot.
+  o Added arguments to studentGrowthPercentiles and studentGrowthProjections (print.time.taken) to allow user to turn off time.taken message. Defaults to TRUE.
+  o Changed splinefun method for CSEM based confidence interval construction to "natural" due to highly non-monotonic behavior with Wisconsin CSEMs. 
+  o Added argument to bubblePlot "bubble_plot_configs.BUBBLE_COLOR_GRADIENT_REVERSE" allowing user to reverse color gradient. Defaults to FALSE.
+  o Changed default summaries in abcSGP to include summary calculations involving ACHIEVEMENT_LEVEL_PRIOR (such as prior percent at/above proficient).
+  o Implemented bug fix associated with data.table in combineSGP function that simplifies data.table implementation of catch-up/keep-up targets.
+  o Supplying a non-traditional/sequential grade.progression argument to studentGrowthPercentiles now removes (unless setting argument drop.nonsequential.grade.progression.variables=FALSE) supplied panel.data columns from "holes" in the supplied grade.progression.
+
 Changes in version: SGP_0.1-0.0
 
-  o Iplementation of SGP class. 
+  o Implementation of SGP class. 
   o Specified state specific percentile trajectories for student growth projections and stipulated max.forward.progression of 3 years for these trajectories. 
   o Fixed bugs related to bootstrap calculating confidence intervals for all groups instead of those specified. 
   o Completed reportSGP. 

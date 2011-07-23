@@ -9,10 +9,21 @@ function(sgp_object,
          sgp.projections=TRUE,
          sgp.projections.lagged=TRUE,
          simulate.sgps=TRUE,
-         goodness.of.fit.print=TRUE) {
+         goodness.of.fit.print=TRUE,
+         parallel.config,
+         ...) {
 
 	started.at <- proc.time()
 	message(paste("Started analyzeSGP", date()))
+
+        ### Create state (if missing) from sgp_object (if possible)
+
+        if (missing(state)) {
+                tmp.name <- gsub("_", " ", deparse(substitute(sgp_object)))
+                if (any(sapply(c(state.name, "Demonstration"), function(x) regexpr(x, tmp.name)))==1) {
+                        state <- c(state.abb, "DEMO")[which(sapply(c(state.name, "Demonstration"), function(x) regexpr(x, tmp.name))==1)]
+                }
+        }
 
 	## Function to return sgp.config based upon a supplied year and content_area
 
@@ -20,7 +31,10 @@ function(sgp_object,
 		tmp.data <- sgp_object@Data[J("VALID_CASE", content_area), c("YEAR", "GRADE"), with=FALSE]
 		.sgp.panel.years <- sort(unique(tmp.data$YEAR))[1:which(sort(unique(tmp.data$YEAR)) == year)]
 		.sgp.content.areas <- rep(content_area, length(.sgp.panel.years))
-		.sgp.grade.sequences <- lapply(grades, function(x) tail(seq(min(tmp.data$GRADE, na.rm=TRUE), x), length(.sgp.panel.years)))
+		.tmp.sgp.grade.sequences <- lapply(grades, function(x) tail(seq(min(tmp.data$GRADE, na.rm=TRUE), x), length(.sgp.panel.years)))
+		.tmp.table <- table(tmp.data$GRADE, tmp.data$YEAR)
+		.sgp.grade.sequences <- sapply(.tmp.sgp.grade.sequences, 
+			function(x) tail(x, sum(diag(.tmp.table[as.character(x), as.character(tail(.sgp.panel.years, length(x)))])!=0))) 
 		list(sgp.content.areas=.sgp.content.areas, sgp.panel.years=.sgp.panel.years, sgp.grade.sequences=.sgp.grade.sequences) 
 	}
 
@@ -38,7 +52,7 @@ function(sgp_object,
 		}
 
 		tmp_sgp_object[["Panel_Data"]] <- 
-		as.data.frame(reshape(sgp_object@Data[J("VALID_CASE", sgp.iter[["sgp.content.areas"]][1], sgp.iter[["sgp.panel.years"]]), mult="all"],
+		as.data.frame(reshape(sgp_object@Data[J("VALID_CASE", sgp.iter[["sgp.content.areas"]], sgp.iter[["sgp.panel.years"]]), mult="all"], #VA-diff subjects, MA + AlgI no [1] in sgp.iter[["sgp.content.areas"]][1]
 			idvar="ID",
 			timevar="YEAR",
 			drop=names(sgp_object@Data)[!names(sgp_object@Data) %in% c("ID", "GRADE", "SCALE_SCORE", "YEAR")],
@@ -60,9 +74,10 @@ function(sgp_object,
 						panel.data.vnames=sgp.vnames,
 						grade.progression=k,
 						calculate.confidence.intervals=list(state=state,  
-						confidence.quantiles=c(0.16,0.84),
-						simulation.iterations=100, 
-						distribution="Normal", round=1))
+							confidence.quantiles=c(0.16,0.84),
+							simulation.iterations=100, 
+							distribution="Normal", round=1),
+						...)
 				} ## END k loop
 			} else {
 				for (k in sgp.iter[["sgp.grade.sequences"]]) {
@@ -72,11 +87,11 @@ function(sgp_object,
 						use.my.knots.boundaries=state,
 						growth.levels=state,
 						panel.data.vnames=sgp.vnames,
-						grade.progression=k)
+						grade.progression=k,
+						...)
 				} ## END k loop
 			} 
 		} ## END if sgp.percentiles_Internal
-
 
 		## sgp.projections_Internal
 
@@ -94,10 +109,10 @@ function(sgp_object,
 					max.forward.progression=3,
 					percentile.trajectory.values=c(1, stateData[[state]][["Growth"]][["Cutscores"]][["Cuts"]], 99),
 					panel.data.vnames=sgp.vnames,
-					grade.progression=k)
+					grade.progression=k,
+					...)
 			}
 		} ## END if sgp.projections_Internal
-
 
 		## sgp.projections.lagged_Internval
 
@@ -109,12 +124,13 @@ function(sgp_object,
 				tmp_sgp_object <- studentGrowthProjections(
 					panel.data=tmp_sgp_object,
 					sgp.labels=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1), 
-					my.extra.label="LAGGED"),
+						my.extra.label="LAGGED"),
 					use.my.coefficient.matrices=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)), 
 					use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)), 
 					performance.level.cutscores=state,
 					panel.data.vnames=sgp.vnames,
-					grade.progression=k)
+					grade.progression=k,
+					...)
 			}
 		} ## END sgp.projections.lagged_Internal
     	return(tmp_sgp_object)
@@ -122,19 +138,27 @@ function(sgp_object,
 
 	.mergeSGP <- function(list_1, list_2) {
 		for (j in c("Coefficient_Matrices", "Cutscores", "Goodness_of_Fit", "Knots_Boundaries", "SGPercentiles", "SGProjections", "Simulated_SGPs")) {
-
-		i <- match(names(list_2[[j]]), names(list_1[[j]]))
-		i <- is.na(i)
-		if (any(i))
-			list_1[[j]][names(list_2[[j]])[which(i)]] <- list_2[[j]][which(i)]
+			list_1[[j]] <- c(list_1[[j]], list_2[[j]])[!duplicated(names(c(list_1[[j]], list_2[[j]])))]
 		}
-		list_1
+		for (j in c("SGPercentiles", "SGProjections", "Simulated_SGPs")) {
+			if (all(names(list_2[[j]]) %in% names(list_1[[j]])) & !identical(list_1[[j]], list_2[[j]])) { #all(), not identical
+				for (k in names(list_1[[j]])) {
+					list_1[[j]][[k]] <- rbind.fill(list_1[[j]][[k]], list_2[[j]][[k]][!list_2[[j]][[k]][["ID"]] %in% list_1[[j]][[k]][["ID"]],]);gc()
+				}
+			}
+		}
+		for (j in c("Coefficient_Matrices", "Goodness_of_Fit", "Knots_Boundaries")) {
+			for (k in names(list_1[[j]])) {
+				list_1[[j]][[k]] <- c(list_1[[j]][[k]], list_2[[j]][[k]])[!duplicated(names(c(list_1[[j]][[k]], list_2[[j]][[k]])))]
+			}
+		}
+	list_1
 	}
 
 	gof.print <- function(sgp_object) {
 		if (length(sgp_object@SGP[["Goodness_of_Fit"]]) > 0) {
 			for (i in names(sgp_object@SGP[["Goodness_of_Fit"]])) {
-				dir.create(paste("Goodness_of_Fit/", i, sep=""), recursive=TRUE)
+				dir.create(paste("Goodness_of_Fit/", i, sep=""), recursive=TRUE, showWarnings=FALSE)
 					for (j in names(sgp_object@SGP[["Goodness_of_Fit"]][[i]])) {
 						pdf(file=paste("Goodness_of_Fit/", i, "/", j, ".pdf", sep=""), width=8.5, height=4.5)
 						grid.draw(sgp_object@SGP[["Goodness_of_Fit"]][[i]][[j]])
@@ -185,21 +209,43 @@ function(sgp_object,
 	## studentGrowthPercentiles & studentGrowthProjections
 
 	if (sgp.percentiles | sgp.projections | sgp.projections.lagged) {
-#sgp.iter <- NULL
-#if (length(sgp.config)==0) message("\n\nbadness; nothing to iterate over\n\n") #this needs to be done better, but i want to make sure that there is actually something to iterate over. otherwise an error needs to be returned.
-#       sgp_object@SGP <- foreach(sgp.iter=iter(sgp.config), .packages="SGP", .combine=".mergeSGP", .inorder=FALSE) %dopar% {
-#       return(.analyzeSGP_Internal(sgp.iter))
-#       } #for the moment, this is a mess and i just want to do everything in sequence for debugging
+		sgp.iter <- NULL ## To prevent R CMD check warning
 
-		tmp <- list()
-		for (i in 1:length(sgp.config)) {
-      #.analyzeSGP_Internal(sgp.config[[i]],reduced_data=sgp_object@Data["VALID_CASE", c("ID", "CONTENT_AREA", "YEAR", "GRADE", "SCALE_SCORE"), with=FALSE])->tmp[[i]]
-			tmp[[i]] <- .analyzeSGP_Internal(sgp.config[[i]])
+		if (missing(parallel.config)) {
+			tmp <- list()
+			for (i in 1:length(sgp.config)) {
+				tmp[[i]] <- .analyzeSGP_Internal(sgp.config[[i]])
+			}
+			for (s in 1:length(tmp)) {
+				sgp_object@SGP <- .mergeSGP(sgp_object@SGP,tmp[[s]])
+			}
+		} else {
+		
+		if (toupper(parallel.config[["TYPE"]]) == "FOREACH") {
+			require(foreach)
+			foreach.options <-parallel.config[["OPTIONS"]] # works fine if NULL
+			sgp_object@SGP <- foreach(sgp.iter=iter(sgp.config), .packages="SGP", .combine=".mergeSGP", .inorder=FALSE,
+				.options.multicore=foreach.options, .options.mpi= foreach.options, .options.redis= foreach.options, .options.smp= foreach.options) %dopar% {
+					return(.analyzeSGP_Internal(sgp.iter))
+			}
 		}
-	#do.call(".mergeSGP",tmp)->sgp_object@SGP
-		for (s in 1:length(tmp)) {
-			sgp_object@SGP <- .mergeSGP(sgp_object@SGP,tmp[[s]])
+
+		if (toupper(parallel.config[["TYPE"]]) == "MULTICORE") {
+			require(doMC)
+			tmp <- mclapply(sgp.config, .analyzeSGP_Internal, mc.preschedule = FALSE)
+			for (s in 1:length(tmp))	sgp_object@SGP <- .mergeSGP(sgp_object@SGP, tmp[[s]])
 		}
+
+		if (toupper(parallel.config[["TYPE"]]) == "SNOW") {
+			require(snow)
+			tmp <- parLapply(parallel.config[["CLUSTER"]], sgp.config, .analyzeSGP_Internal)
+			for (s in 1:length(tmp))	sgp_object@SGP <- .mergeSGP(sgp_object@SGP, tmp[[s]])
+		}
+
+		if (!toupper(parallel.config[["TYPE"]]) %in% c("FOREACH", "MULTICORE", "SNOW")) {
+			stop("'TYPE' provided in parallel.config not recognized.  Currently 'FOREACH', 'MULTICORE' and 'SNOW' are supported.  See help pages for additional information.")
+		}}
+
 	} ## END if (sgp.percentiles | sgp.projections | sgp.projections.lagged)
 
 	if (goodness.of.fit.print) gof.print(sgp_object)
