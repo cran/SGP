@@ -7,16 +7,18 @@
 
 \usage{
 analyzeSGP(sgp_object,
-           state,
-           years,
-           content_areas,
-           grades,
-           sgp.config,
-           sgp.percentiles=TRUE,
-           sgp.projections=TRUE,
-           sgp.projections.lagged=TRUE,
-           simulate.sgps=TRUE,
-           goodness.of.fit.print=TRUE)
+         state,
+         years,
+         content_areas,
+         grades,
+         sgp.config,
+         sgp.percentiles=TRUE,
+         sgp.projections=TRUE,
+         sgp.projections.lagged=TRUE,
+         simulate.sgps=TRUE,
+         goodness.of.fit.print=TRUE,
+         parallel.config,
+         ...)
 }
 
 \arguments{
@@ -47,20 +49,31 @@ See examples for use cases.
   }
   \item{goodness.of.fit.print}{Boolean variable indicating whether to print out Goodness of Fit figures as pdf into a directory labeled Goodness of Fit. Defaults to TRUE.
   }
+  \item{parallel.config}{One of \code{FOREACH}, \code{SNOW}, \code{MULTICORE} allowing the user to specify the back end for parallel computation. 
+  }
+  \item{...}{Arguments to be passed to \code{\link{studentGrowthPercentiles}} or \code{\link{studentGrowthProjections}} for finer control over SGP calculations. 
+  }
 }
 
 \value{Function returns a list containing the long data set in the \code{Student} slot as a \code{data.table} keyed using \code{VALID_CASE}, \code{CONTENT_AREA}, 
 \code{YEAR}, \code{ID} and the student growth percentile and/or student growth projection/trajectory results in the \code{SGP} slot. 
 }
 
-\author{Damian W. Betebenner \email{dbetebenner@nciea.org}}
+\author{Damian W. Betebenner \email{dbetebenner@nciea.org} and Adam Van Iwaarden \email{Vaniwaarden@colorado.edu}}
 
 \seealso{\code{\link{prepareSGP}}, \code{\link{combineSGP}}}
 
 \examples{
 \dontrun{
 ## analyzeSGP is Step 2 of 5 of abcSGP
-DEMO_Data <- analyzeSGP(DEMO_Data, state="DEMO")
+Demonstration_Data <- sgpData_LONG
+Demonstration_Data <- prepareSGP(Demonstration_Data)
+Demonstration_Data <- analyzeSGP(Demonstration_Data)
+
+## Or (explictely pass state argument)
+
+Demo_Data <- prepareSGP(sgpData_LONG)
+Demo_Data <- analyzeSGP(Deo_Data, state="DEMO")
 }  
 }
 

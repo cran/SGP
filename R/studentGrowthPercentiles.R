@@ -16,12 +16,14 @@ function(panel.data,           ## REQUIRED
 	rq.method="br",
 	knot.cut.percentiles=c(0.2,0.4,0.6,0.8),
 	exact.grade.progression.sequence=FALSE,
+        drop.nonsequential.grade.progression.variables=TRUE,
 	convert.0and100=TRUE,
 	sgp.quantiles="Percentiles",
 	percuts.digits=0,
 	isotonize=TRUE,
 	convert.using.loss.hoss=TRUE,
-	goodness.of.fit=TRUE) {
+	goodness.of.fit=TRUE,
+	print.time.taken=TRUE) {
 
 	started.at <- proc.time()
 	started.date <- date()
@@ -49,6 +51,7 @@ function(panel.data,           ## REQUIRED
 
 	.create.knots.boundaries <- function(data, by.grade) {
 		tmp.list <- list()
+		num.panels <- (dim(data)[2]-2)/2
 		if (by.grade) {
 			tmp.stack <- data.frame(GRADE=as.vector(sapply(data[,3:(3+num.panels-1), with=FALSE], as.character)), 
 				SCORE=as.vector(sapply(data[,(3+num.panels):(3+2*num.panels-1), with=FALSE], as.numeric))) 
@@ -67,6 +70,7 @@ function(panel.data,           ## REQUIRED
 	}
 
 	.get.data.table <- function(ss.data) {
+		num.panels <- (dim(ss.data)[2]-1)/2
 		num.predictors <- seq_along(tmp.gp)
 		names(ss.data) <- NA
 		names(ss.data)[c(1, (1+num.panels-max(num.predictors)+1):(1+num.panels), (1+2*num.panels-max(num.predictors)+1):(1+2*num.panels))] <- 
@@ -293,7 +297,7 @@ function(panel.data,           ## REQUIRED
 		CSEM_Data <- stateData[[state]][["Assessment_Program_Information"]][["CSEM"]][
 			stateData[[state]][["Assessment_Program_Information"]][["CSEM"]][["GRADE"]]==grade & 
 			stateData[[state]][["Assessment_Program_Information"]][["CSEM"]][["CONTENT_AREA"]]==content_area,]
-		CSEM_Function <- splinefun(CSEM_Data[["SCALE_SCORE"]], CSEM_Data[["SCALE_SCORE_CSEM"]])
+		CSEM_Function <- splinefun(CSEM_Data[["SCALE_SCORE"]], CSEM_Data[["SCALE_SCORE_CSEM"]], method="natural")
 		tmp.scale <- CSEM_Function(scale_scores)
 		tmp.shape <- tan((pi/2)*((min.max[1]+min.max[2]) - 2*scale_scores)/(min.max[2]-min.max[1]))
 		if(distribution=="Skew-Normal") {
@@ -514,7 +518,13 @@ function(panel.data,           ## REQUIRED
 	GD <- paste("GD", tmp.gp, sep="")
 	SS <- paste("SS", tmp.gp, sep="")
 	names(ss.data) <- NA
+	if (any(diff(tmp.gp)!=1) & drop.nonsequential.grade.progression.variables) {
+		ss.data <- ss.data[,c(1, (num.panels+1)-rev(c(1, cumsum(rev(diff(tmp.gp)))+1)-1), (2*num.panels+1)-rev(c(1, cumsum(rev(diff(tmp.gp)))+1)-1))]
+                num.panels <- (dim(ss.data)[2]-1)/2
+	}
 	names(ss.data)[c(1, (1+num.panels-num.prior):(1+num.panels), (1+2*num.panels-num.prior):(1+2*num.panels))] <- c("ID", GD, SS)
+	ss.data <- ss.data[,which(!is.na(names(ss.data)))]
+        num.panels <- (dim(ss.data)[2]-1)/2
         ss.data[,(2+num.panels):(1+2*num.panels)] <- sapply(ss.data[,(2+num.panels):(1+2*num.panels)], as.numeric)
 	ss.data <- .get.data.table(ss.data)
 
@@ -648,9 +658,11 @@ function(panel.data,           ## REQUIRED
 
 	### Start/Finish Message & Return SGP Object
 
-        message(paste("\tStarted studentGrowthPercentiles", started.date))
-	message(paste("\tSubject: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(tmp.gp, collapse=", "), " ", sgp.labels$my.extra.label, sep=""))
-	message(paste("\tFinished SGP Student Growth Percentile Analysis", date(), "in", timetaken(started.at), "\n")) 
+	if (print.time.taken) {
+	        message(paste("\tStarted studentGrowthPercentiles", started.date))
+		message(paste("\tSubject: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(tmp.gp, collapse=", "), " ", sgp.labels$my.extra.label, sep=""))
+		message(paste("\tFinished SGP Student Growth Percentile Analysis", date(), "in", timetaken(started.at), "\n")) 
+	}
 
 	list(Coefficient_Matrices=Coefficient_Matrices,
 		Cutscores=panel.data[["Cutscores"]], 

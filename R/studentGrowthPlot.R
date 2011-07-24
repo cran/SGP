@@ -298,7 +298,7 @@ if (grade.values$year_span == 0) {
 
 current.year <- year.function(Report_Parameters$Current_Year, 0, 1)
 xscale.range <- extendrange(c(low.year,high.year), f=0.075)
-if (stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Vertical_Scale"]]=="No") {
+if (!is.null(stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]])) {
    tmp.range <- range(stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]], na.rm=TRUE)
    low.score <- min(cuts.ny1.text,
                     Plotting_Scale_Scores,
@@ -319,7 +319,6 @@ if (stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Verti
                      Plotting_Scale_Scores, 
                      Cutscores$CUTSCORE[Cutscores$GRADE==min(tail(grade.values$interp.df$GRADE, 2)[1], 10) & Cutscores$CUTLEVEL==number.achievement.level.regions-1], 
                      na.rm=TRUE)
-
    yscale.range <- extendrange(c(low.score,high.score), f=0.15)
 }
 

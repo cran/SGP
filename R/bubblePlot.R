@@ -22,11 +22,16 @@
 	bubble_plot_configs.BUBBLE_MIN_MAX=c(0.03, 0.03),
 	bubble_plot_configs.BUBBLE_X_TICKS=seq(0,100,10),
 	bubble_plot_configs.BUBBLE_X_TICKS_SIZE=c(rep(0.6, 5), 1, rep(0.6, 5)),
+	bubble_plot_configs.BUBBLE_X_BANDS=NULL,
+	bubble_plot_configs.BUBBLE_X_BAND_LABELS=NULL,
 	bubble_plot_configs.BUBBLE_Y_TICKS=seq(0,100,10),
 	bubble_plot_configs.BUBBLE_Y_TICKS_SIZE=rep(0.6, 11),
+	bubble_plot_configs.BUBBLE_Y_BANDS=NULL,
+	bubble_plot_configs.BUBBLE_Y_BAND_LABELS=NULL,
 	bubble_plot_configs.BUBBLE_SUBSET_INCREASE=0,
 	bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.95),
 	bubble_plot_configs.BUBBLE_COLOR="deeppink2",
+        bubble_plot_configs.BUBBLE_COLOR_GRADIENT_REVERSE=FALSE,
 	bubble_plot_configs.BUBBLE_TIPS=TRUE,
 	bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
 	bubble_plot_configs.BUBBLE_PLOT_FORMAT="print",
@@ -44,7 +49,7 @@
 require(gridBase)
 
 
-# Test for installation of pdf2 package and deal with pdf2 crashing with more than 1150 bubbles
+# Test for installation of pdf2 package 
 
 if (bubble_plot_configs.BUBBLE_TIPS) {
 	if (!"pdf2" %in% installed.packages()) {
@@ -52,10 +57,6 @@ if (bubble_plot_configs.BUBBLE_TIPS) {
 		message("Implentation of BUBBLE_TIPS requires the installation of the package pdf2 from R-Forge: install.packages('pdf2',repos='http://R-Forge.R-project.org')")
 	} else { 
 		require(pdf2)
-		if ((!is.null(bubble_plot_data.SUBSET) & length(bubble_plot_data.X[bubble_plot_data.SUBSET]) > 1150) |
-			 (is.null(bubble_plot_data.SUBSET) & length(bubble_plot_data.X) > 1150)) {
-				bubble_plot_configs.BUBBLE_TIPS <- FALSE
-		}
 	}
 }
 
@@ -64,7 +65,7 @@ if (bubble_plot_configs.BUBBLE_TIPS) {
 
 if (!is.null(bubble_plot_configs.BUBBLE_PLOT_PATH)) {
         if (is.na(file.info(bubble_plot_configs.BUBBLE_PLOT_PATH)$isdir)){
-                dir.create(bubble_plot_configs.BUBBLE_PLOT_PATH, recursive=TRUE)
+                dir.create(bubble_plot_configs.BUBBLE_PLOT_PATH, recursive=TRUE, showWarnings=FALSE)
         }
 	file.path.and.name <- file.path(bubble_plot_configs.BUBBLE_PLOT_PATH, bubble_plot_configs.BUBBLE_PLOT_NAME)
 } else {
@@ -84,8 +85,10 @@ if (is.null(bubble_plot_data.LEVELS)) {
 if (!is.null(bubble_plot_configs.BUBBLE_COLOR)) {
     temp.colors <- rgb2hsv(col2rgb(bubble_plot_configs.BUBBLE_COLOR))
     my.colors <- hsv(h=temp.colors[1], s=1:num.levels/(num.levels+1), v=temp.colors[3])
+    if (bubble_plot_configs.BUBBLE_COLOR_GRADIENT_REVERSE) my.colors <- rev(my.colors)
 } else {
-     my.colors <- rainbow_hcl(num.levels)
+     require(colorspace)
+     my.colors <- rev(rainbow_hcl(num.levels))
 }
 
 if (bubble_plot_configs.BUBBLE_PLOT_FORMAT=="print") {
@@ -125,12 +128,11 @@ bubblesize <- function(schoolsize, numstud.range){
 # Custom Bubble Alpha Function
 
 bubblealpha <- function(numbubbles) {
-      if (numbubbles > 0 & numbubbles <= 50) return(0.8)
-      if (numbubbles > 50 & numbubbles <= 100) return(0.7)
-      if (numbubbles > 100 & numbubbles <= 250) return(0.6)
-      if (numbubbles > 250 & numbubbles <= 500) return(0.5)
-      if (numbubbles > 500 & numbubbles <= 1000) return(0.4)
-      if (numbubbles > 1000) return(0.3)
+      if (numbubbles > 0 & numbubbles <= 100) return(0.8)
+      if (numbubbles > 100 & numbubbles <= 250) return(0.75)
+      if (numbubbles > 250 & numbubbles <= 500) return(0.7)
+      if (numbubbles > 500 & numbubbles <= 1000) return(0.65)
+      if (numbubbles > 1000) return(0.6)
 }
 
 
@@ -279,8 +281,35 @@ pushViewport(figure.vp)
 
 pushViewport(chart.vp)
 
+if (!is.null(bubble_plot_configs.BUBBLE_X_BANDS) | !is.null(bubble_plot_configs.BUBBLE_Y_BANDS)) {
+	if (is.null(bubble_plot_configs.BUBBLE_X_BANDS) & !is.null(bubble_plot_configs.BUBBLE_Y_BANDS)) {
+		for (i in seq_along(head(bubble_plot_configs.BUBBLE_Y_BANDS, -1))) {
+			grid.roundrect(x=unit(0, "npc"), y=unit(bubble_plot_configs.BUBBLE_Y_BANDS[i], "native"), 
+				width=unit(1, "npc"), height=unit(diff(bubble_plot_configs.BUBBLE_Y_BANDS)[i], "native"), 
+				r=unit(0.1, "mm"), just=c("left", "bottom"), gp=gpar(fill=format.colors.quadrant[1], col=format.colors.background, lwd=0.4))
+			grid.text(x=unit(0.05, "npc"), y=unit((bubble_plot_configs.BUBBLE_Y_BANDS[i] + diff(bubble_plot_configs.BUBBLE_Y_BANDS)[i]/2), "native"),
+				bubble_plot_configs.BUBBLE_Y_BAND_LABELS[i], just="left",
+				gp=gpar(cex=2, fontface=2, col=format.colors.quadrant[2]))
+		}
+	}
+	if (!is.null(bubble_plot_configs.BUBBLE_X_BANDS) & is.null(bubble_plot_configs.BUBBLE_Y_BANDS)) {
+		for (i in seq_along(head(bubble_plot_configs.BUBBLE_X_BANDS, -1))) {
+			grid.roundrect(x=unit(bubble_plot_configs.BUBBLE_Y_BANDS[i], "native"), y=unit(0, "npc"),
+				width=unit(diff(bubble_plot_configs.BUBBLE_Y_BANDS)[i], "native"), height=unit(1, "npc"),
+				r=unit(0.1, "mm"), just=c("left", "bottom"), gp=gpar(fill=format.colors.quadrant[1], col=format.colors.background, lwd=0.4))
+			grid.text(x=unit((bubble_plot_configs.BUBBLE_X_BANDS[i] + diff(bubble_plot_configs.BUBBLE_X_BANDS)[i]/2), "native"), y=unit(0.05, "npc"), 
+				bubble_plot_configs.BUBBLE_X_BAND_LABELS[i], just="left",
+				gp=gpar(cex=2, fontface=2, col=format.colors.quadrant[2]))
+		}
+	}
+	if (!is.null(bubble_plot_configs.BUBBLE_X_BANDS) & !is.null(bubble_plot_configs.BUBBLE_Y_BANDS)) {
+
+	}
+} else {
 grid.rect(width=1, height=1, gp=gpar(fill=format.colors.quadrant[1], lwd=0.5, col=format.colors.border))
-if(is.null(bubble_plot_configs.BUBBLE_PLOT_BACKGROUND_LABELS)) bubble_plot_configs.BUBBLE_PLOT_BACKGROUND_LABELS <- c("Growth", "Achievement")
+}
+
+if(!is.null(bubble_plot_configs.BUBBLE_PLOT_BACKGROUND_LABELS)) {
 grid.text(x=0.05, y=0.15, paste("Lower", bubble_plot_configs.BUBBLE_PLOT_BACKGROUND_LABELS[1]), gp=gpar(cex=1.8, fontface=2, col=format.colors.quadrant[2]), just="left")
 grid.text(x=0.05, y=0.08, paste("Lower",  bubble_plot_configs.BUBBLE_PLOT_BACKGROUND_LABELS[2]), gp=gpar(cex=1.8, fontface=2, col=format.colors.quadrant[2]), just="left")
 grid.text(x=0.95, y=0.15, paste("Higher",  bubble_plot_configs.BUBBLE_PLOT_BACKGROUND_LABELS[1]), gp=gpar(cex=1.8, fontface=2, col=format.colors.quadrant[2]), just="right")
@@ -289,7 +318,7 @@ grid.text(x=0.05, y=0.85, paste("Lower",  bubble_plot_configs.BUBBLE_PLOT_BACKGR
 grid.text(x=0.05, y=0.92, paste("Higher",  bubble_plot_configs.BUBBLE_PLOT_BACKGROUND_LABELS[2]), gp=gpar(cex=1.8, fontface=2, col=format.colors.quadrant[2]), just="left")
 grid.text(x=0.95, y=0.85, paste("Higher",  bubble_plot_configs.BUBBLE_PLOT_BACKGROUND_LABELS[1]), gp=gpar(cex=1.8, fontface=2, col=format.colors.quadrant[2]), just="right")
 grid.text(x=0.95, y=0.92, paste("Higher",  bubble_plot_configs.BUBBLE_PLOT_BACKGROUND_LABELS[2]), gp=gpar(cex=1.8, fontface=2, col=format.colors.quadrant[2]), just="right")
-
+}
 
 # Add BUBBLE_PLOT_EXTRAS
 
@@ -298,7 +327,7 @@ if (!is.null(bubble_plot_configs.BUBBLE_PLOT_EXTRAS)) {
       eval(parse(text=i))
    }
 } else {
-    grid.lines(x=unit(50, "native"), y=c(0,1), gp=gpar(col="grey40", lwd=1.5, lty=2, alpha=0.5))
+    grid.lines(x=unit(50, "native"), y=c(0.03,0.97), gp=gpar(col="grey40", lwd=1.5, lty=2, alpha=0.5))
 }
 
 if (bubble_plot_configs.BUBBLE_TIPS) {
@@ -593,12 +622,14 @@ y.coors <- (0.85+c(0, -0.0375, -0.075, -0.12, -0.175))[1:num.sizes]
 grid.text(x=0.5, y=y.coors[1]+0.05, bubble_plot_titles.LEGEND1, gp=gpar(col=format.colors.font[1], fontface=2, cex=1.2))
 if(!is.null(bubble_plot_data.SUBSET)) {
   bubble.legend.alpha <- 0.9
+  bubble.legend.color <- rep(bubblecolor(unclass(tmp.LEVELS[bubble_plot_data.SUBSET]))[1], length=num.sizes)
 } else {
   bubble.legend.alpha <- bubblealpha(length(bubble_plot_data.X))
+  bubble.legend.color <- rep(sort(my.colors)[1], length=num.sizes)
 }
 for (i in 1:num.sizes){
 grid.circle(x=0.25, y=y.coors[i], r=unit(bubblesize(bubble_plot_labels.SIZE[i], c(10,1000)), "inches"), 
-            gp=gpar(col="grey14", lwd=0.7, fill=bubble_plot_configs.BUBBLE_COLOR, alpha=bubble.legend.alpha))
+            gp=gpar(col="grey14", lwd=0.7, fill=bubble.legend.color[i], alpha=bubble.legend.alpha))
 grid.text(x=0.35, y=y.coors[i], paste(bubble_plot_labels.SIZE[i], "Students"), gp=gpar(col=format.colors.font[1], cex=0.9), just="left")
 }
 
@@ -626,9 +657,9 @@ if (bubble_plot_configs.BUBBLE_PLOT_TITLE) {
 pushViewport(title.vp)
 
 grid.roundrect(width=unit(0.965, "npc"), height=unit(0.75, "npc"), r=unit(0.025, "snpc"), gp=gpar(col=format.colors.border, lwd=1.4))
-grid.text(x=0.05, y=0.5, bubble_plot_titles.MAIN, gp=gpar(col=format.colors.font[1], fontface=2, fontfamily="Helvetica-Narrow", cex=3.4), just="left", default.units="native")
-grid.text(x=0.95, y=0.65, bubble_plot_titles.SUB1, gp=gpar(col=format.colors.font[1], fontfamily="Helvetica-Narrow", cex=1.7), just="right", default.units="native")
-grid.text(x=0.95, y=0.35, bubble_plot_titles.SUB2, gp=gpar(col=format.colors.font[1], fontfamily="Helvetica-Narrow", cex=1.7), just="right", default.units="native")
+grid.text(x=0.04, y=0.5, bubble_plot_titles.MAIN, gp=gpar(col=format.colors.font[1], fontface=2, fontfamily="Helvetica-Narrow", cex=3.4), just="left", default.units="native")
+grid.text(x=0.96, y=0.65, bubble_plot_titles.SUB1, gp=gpar(col=format.colors.font[1], fontfamily="Helvetica-Narrow", cex=1.7), just="right", default.units="native")
+grid.text(x=0.96, y=0.35, bubble_plot_titles.SUB2, gp=gpar(col=format.colors.font[1], fontfamily="Helvetica-Narrow", cex=1.7), just="right", default.units="native")
 
 popViewport() ## pop title.vp
 }

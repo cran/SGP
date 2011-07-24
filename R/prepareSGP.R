@@ -8,6 +8,12 @@
 	started.at <- proc.time()
 	message(paste("Started prepareSGP", date()))
 
+	if (class(data)=="SGP") {
+
+		message(paste("Finished prepareSGP", date(), "in", timetaken(started.at), "\n"))
+
+		return(data)
+	} else {
 	
 	## Required variables
 
@@ -84,4 +90,5 @@
 	message(paste("Finished prepareSGP", date(), "in", timetaken(started.at), "\n"))
 
 	return(sgp_object)
-}
+	} ## END else
+} ## END prepareSGP function

@@ -6,7 +6,9 @@
            sgp.summaries=list(MEDIAN_SGP="median_na(SGP)",
              MEDIAN_SGP_COUNT="num_non_missing(SGP)",
              PERCENT_AT_ABOVE_PROFICIENT="percent_in_category(ACHIEVEMENT_LEVEL, list(c('Proficient', 'Advanced')), list(c('Unsatisfactory', 'Partially Proficient', 'Proficient', 'Advanced')))",
-             PERCENT_AT_ABOVE_PROFICIENT_COUNT="num_non_missing(ACHIEVEMENT_LEVEL)"),
+             PERCENT_AT_ABOVE_PROFICIENT_COUNT="num_non_missing(ACHIEVEMENT_LEVEL)",
+             PERCENT_AT_ABOVE_PROFICIENT_PRIOR="percent_in_category(ACHIEVEMENT_LEVEL_PRIOR, list(c('Proficient', 'Advanced')), list(c('Unsatisfactory', 'Partially Proficient', 'Proficient', 'Advanced')))",
+             PERCENT_AT_ABOVE_PROFICIENT_PRIOR_COUNT="num_non_missing(ACHIEVEMENT_LEVEL_PRIOR)"),
            summary.groups=list(institution=c("STATE", "DISTRICT_NUMBER", "SCHOOL_NUMBER"),
              content="CONTENT_AREA",
              time="YEAR",
@@ -29,6 +31,16 @@
     if (missing(sgp_object)) {
       stop("User must supply a list containing a Student slot with long data. See documentation for details.")
     }
+
+    ### Create state (if missing) from sgp_object (if possible)
+
+        if (missing(state)) {
+                tmp.name <- gsub("_", " ", deparse(substitute(sgp_object)))
+                if (any(sapply(c(state.name, "Demonstration"), function(x) regexpr(x, tmp.name)))==1) {
+                        state <- c(state.abb, "DEMO")[which(sapply(c(state.name, "Demonstration"), function(x) regexpr(x, tmp.name))==1)]
+                }
+        }
+
 
     ## If missing years and content_areas then determine year(s), and content_area(s) for summaries
 
@@ -107,15 +119,15 @@
             tmp.list[[paste("MEDIAN_", i, "_QUANTILES", sep="")]] <- paste("boot.sgp(", i, ", ", tmp.quantiles, ")", sep="")
           }
           tmp.sgp.summaries <- c(sgp.summaries, tmp.list)
-          sgp.summaries.names <- c(names(sgp.summaries), paste("MEDIAN_SGP_", confidence.interval.groups$QUANTILES, "_CONFIDENCE_BOUND", sep="")) 
+          sgp.summaries.names <- c(unlist(strsplit(names(sgp.summaries), "[.]")), paste("MEDIAN_SGP_", confidence.interval.groups$QUANTILES, "_CONFIDENCE_BOUND", sep="")) 
         } 
         if ("CSEM" %in% confidence.interval.groups$TYPE) {
           tmp.sgp.summaries <- sgp.summaries
-          sgp.summaries.names <- c(names(sgp.summaries), paste("MEDIAN_SGP_", confidence.interval.groups$QUANTILES, "_CONFIDENCE_BOUND", sep=""))
+          sgp.summaries.names <- c(unlist(strsplit(names(sgp.summaries), "[.]")), paste("MEDIAN_SGP_", confidence.interval.groups$QUANTILES, "_CONFIDENCE_BOUND", sep=""))
         }
       } else {
         tmp.sgp.summaries <- sgp.summaries
-        sgp.summaries.names <- names(sgp.summaries)
+        sgp.summaries.names <- unlist(strsplit(names(sgp.summaries), "[.]"))
       } 
       ListExpr <- parse(text=paste("quote(as.list(c(", paste(unlist(tmp.sgp.summaries), collapse=", "),")))",sep="")) 
       ByExpr <- parse(text=paste("quote(list(", paste(sgp.groups.to.summarize, collapse=", "), "))", sep=""))
