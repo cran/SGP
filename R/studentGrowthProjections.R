@@ -147,7 +147,11 @@ function(panel.data,	## REQUIRED
 						tmp.matrix <- na.mtx
 						missing.taus=TRUE
 					}
-					num.chunks <- floor(num.rows/chunk.size)
+					if (identical(floor(num.rows/chunk.size), num.rows/chunk.size)) {
+						num.chunks <- floor(num.rows/chunk.size) - 1
+					} else {
+						num.chunks <- floor(num.rows/chunk.size)
+					} 
 					chunk.list <- vector("list", num.chunks+1)
 					for (chunk in 0:num.chunks) {
 						lower.index <- chunk*chunk.size

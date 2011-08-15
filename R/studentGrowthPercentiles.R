@@ -388,7 +388,7 @@ function(panel.data,         ## REQUIRED
 			}
 		}
 		if (is.character(use.my.knots.boundaries)) {
-			if (!use.my.knots.boundaries %in% names(stateData)) {
+			if (is.null(stateData[[use.my.knots.boundaries]][["Achievement"]][["Knots_Boundaries"]])) { 
 				message(paste("Knots and Boundaries are currently not implemented for the state indicated (", use.my.knots.boundaries, "). Knots and boundaries will be calculated from the data. Please contact the SGP package administrator to have your Knots and Boundaries included in the package", sep=""))
 			}
      		tmp.path.knots.boundaries <- tmp.path    
@@ -441,7 +441,7 @@ function(panel.data,         ## REQUIRED
 			message("Please specify an appropriate list for calculate.confidence.intervals. See help page for details. SGPs will be calculated without confidence intervals.")
 			csem.tf <- FALSE
 		}
-		if (!(names(calculate.confidence.intervals)[1] %in% c("state", "variable") &
+		if (!((("state" %in% names(calculate.confidence.intervals)) | ("variable" %in% names(calculate.confidence.intervals))) &
 			c("confidence.quantiles", "simulation.iterations", "distribution", "round") %in% names(calculate.confidence.intervals))) {
 			message("Please specify an appropriate list for calculate.confidence.intervals including state/csem variable, confidence.quantiles, simulation.iterations, distribution and round. See help page for details. SGPs will be calculated without confidence intervals.")
 			csem.tf <- FALSE

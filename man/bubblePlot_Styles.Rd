@@ -1,6 +1,6 @@
 \name{bubblePlot_Styles}
 \alias{bubblePlot_Styles}
-\title{bubblePlot_Styles for visualizeSGP}
+\title{bubblePlot_Styles providing various uses of the core bubblePlot function}
 \description{
 Function includes a number of "styles" associated with \code{\link{bubblePlot}} to create bubble plots depicting a variety of relationships often of interest
 to stakeholders. The \code{\link{bubblePlot}} function itself is adaptable to many representations but is most often used in conjunction with results derived 

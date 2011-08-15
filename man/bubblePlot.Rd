@@ -1,6 +1,6 @@
 \name{bubblePlot}
 \alias{bubblePlot}
-\title{bubblePlot for SGP}
+\title{Core bubblePlot function for SGP}
 \description{
 Function to create bubble plots associated with student growth percentile results. The function is adaptable to many representation but 
 is used in conjunction with results derived from \code{\link{summarizeSGP}} to represent summary level results of growth against achievement 
