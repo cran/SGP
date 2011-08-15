@@ -14,7 +14,8 @@ prepareSGP(data,
 \arguments{
   \item{data}{A panel data set in long form. See embedded \code{\link{sgpData_LONG}} data set for an exemplar. 
   }
-  \item{var.names}{To be written.
+  \item{var.names}{A list that includes all required columns that do not match the SGP conventions, as well as all secondary columns needed 
+for summarization and reporting.
   }
   \item{fix.duplicates}{Argument for future functionality intended to deal with duplicate cases in supplied long data.
   }
@@ -31,7 +32,7 @@ prepareSGP(data,
 \examples{
 \dontrun{
 ## prepareSGP is Step 1 of 5 of abcSGP
-DEMO_Data <- prepareSGP(sgpData_LONG)
+Demonstration_Data <- prepareSGP(sgpData_LONG)
 }  
 }
 

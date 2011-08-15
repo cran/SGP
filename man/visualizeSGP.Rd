@@ -18,6 +18,7 @@ visualizeSGP(
            bPlot.districts=NULL,
            bPlot.schools=NULL,
            bPlot.styles=c(1),
+           bPlot.levels=NULL,
            bPlot.full.academic.year=TRUE,
            bPlot.minimum.n=10,
            bPlot.anonymize=FALSE,
@@ -67,6 +68,8 @@ styles to determine which \code{\link{bubblePlot}} styles accept specification f
   }
   \item{bPlot.styles}{A vector of positive integers indicating the types of \code{\link{bubblePlot}}s to produce using data available in \code{sgp_object}. See 
 associated documentation for example plots.  
+  }
+  \item{bPlot.levels}{A character vector of levels to be used to color bubbles in the \code{\link{bubblePlot}}. See  associated documentation for example plots.
   }
   \item{bPlot.full.academic.year}{A boolean argument (defaults to TRUE) indicating whether \code{\link{bubblePlot}}s should use full academic year results if available. 
   }

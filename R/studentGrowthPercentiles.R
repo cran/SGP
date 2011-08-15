@@ -1,29 +1,29 @@
 `studentGrowthPercentiles` <-
-function(panel.data,           ## REQUIRED
-	sgp.labels,            ## REQUIRED
-	panel.data.vnames,
-	grade.progression,
-	num.prior,
-	subset.grade,
-	percentile.cuts,
-	growth.levels, 
-	use.my.knots.boundaries,
-	use.my.coefficient.matrices,
-	calculate.confidence.intervals,
-	print.other.gp=FALSE,
-	print.sgp.order=FALSE, 
-	calculate.sgps=TRUE, 
-	rq.method="br",
-	knot.cut.percentiles=c(0.2,0.4,0.6,0.8),
-	exact.grade.progression.sequence=FALSE,
-        drop.nonsequential.grade.progression.variables=TRUE,
-	convert.0and100=TRUE,
-	sgp.quantiles="Percentiles",
-	percuts.digits=0,
-	isotonize=TRUE,
-	convert.using.loss.hoss=TRUE,
-	goodness.of.fit=TRUE,
-	print.time.taken=TRUE) {
+function(panel.data,         ## REQUIRED
+         sgp.labels,         ## REQUIRED
+         panel.data.vnames,
+         grade.progression,
+         num.prior,
+         subset.grade,
+         percentile.cuts,
+         growth.levels, 
+         use.my.knots.boundaries,
+         use.my.coefficient.matrices,
+         calculate.confidence.intervals,
+         print.other.gp=FALSE,
+         print.sgp.order=FALSE, 
+         calculate.sgps=TRUE, 
+         rq.method="br",
+         knot.cut.percentiles=c(0.2,0.4,0.6,0.8),
+         exact.grade.progression.sequence=FALSE,
+         drop.nonsequential.grade.progression.variables=TRUE,
+         convert.0and100=TRUE,
+         sgp.quantiles="Percentiles",
+         percuts.digits=0,
+         isotonize=TRUE,
+         convert.using.loss.hoss=TRUE,
+         goodness.of.fit=TRUE,
+         print.time.taken=TRUE) {
 
 	started.at <- proc.time()
 	started.date <- date()
@@ -100,17 +100,22 @@ function(panel.data,           ## REQUIRED
 		}
 	}
 
-	.create.coefficient.matrices <- function(data, k, by.grade) {
-		tmp.data <- .get.panel.data(data, k, by.grade)
-		mod <- character()
-		for (i in rev(tmp.gp)[2:(k+1)]) {
-			.check.knots.boundaries(knot.names, i)
-			knt <- paste("Knots_Boundaries[['", tmp.path.knots.boundaries, "']][['knots_", i, "']]", sep="")
-			bnd <- paste("Knots_Boundaries[['", tmp.path.knots.boundaries, "']][['boundaries_", i, "']]", sep="")
-			mod <- paste(mod, " + bs(SS", i, ", knots=", knt, ", Boundary.knots=", bnd, ")", sep="")
-		}
-		eval(parse(text=paste("rq(SS", tmp.last, " ~ ", substring(mod,4), ", tau=taus, data=tmp.data, method=rq.method)[['coefficients']]", sep="")))
-	}
+    .create.coefficient.matrices <- function(data, k, by.grade) {
+      tmp.data <- .get.panel.data(data, k, by.grade)
+      mod <- character()
+      s4Ks <- "Knots=list("
+      s4Bs <- "Boundaries=list("
+      for (i in rev(tmp.gp)[2:(k+1)]) {
+        .check.knots.boundaries(knot.names, i)
+        knt <- paste("Knots_Boundaries[['", tmp.path.knots.boundaries, "']][['knots_", i, "']]", sep="")
+        bnd <- paste("Knots_Boundaries[['", tmp.path.knots.boundaries, "']][['boundaries_", i, "']]", sep="")
+        mod <- paste(mod, " + bs(SS", i, ", knots=", knt, ", Boundary.knots=", bnd, ")", sep="")
+        s4Ks <- paste(s4Ks, "knots_", i, "=", knt, ",", sep="")
+        s4Bs <- paste(s4Bs, "boundaries_", i, "=", bnd, ",", sep="")
+      }
+      tmp.mtx <- eval(parse(text=paste("rq(SS", tmp.last, " ~ ", substring(mod,4), ", tau=taus, data=tmp.data, method=rq.method)[['coefficients']]", sep="")))
+      eval(parse(text=paste("new('splineMatrix', tmp.mtx, ", substring(s4Ks, 1, nchar(s4Ks)-1), "), ", substring(s4Bs, 1, nchar(s4Bs)-1), "), ", "Date=Sys.time())", sep="")))
+    }
 
 	.check.knots.boundaries <- function(names, grade) {
 		tmp <- do.call(rbind, strsplit(names, "_"))
@@ -121,7 +126,7 @@ function(panel.data,           ## REQUIRED
 	.check.my.coefficient.matrices <- function(names, grade, order) {
 		tmp <- do.call(rbind, strsplit(names, "_"))
 		if (!grade %in% tmp[,2]) stop(paste("Coefficient matrix associated with grade ", grade, " not found.", sep=""))
-		if (!order %in% tmp[tmp[,2]==grade,3]) stop(paste("Coefficient matrix associated with grade ", grade, "order ", order, " not found.", sep=""))
+		if (!order %in% tmp[tmp[,2]==grade,3]) stop(paste("Coefficient matrix associated with grade ", grade, " order ", order, " not found.", sep=""))
 	}
 
 	.get.max.matrix.order <- function(names, grade) {
@@ -141,17 +146,17 @@ function(panel.data,           ## REQUIRED
 		return(taus)
 	}
 
-	.get.percentile.predictions <- function(data) {
+	.get.percentile.predictions <- function(data, order) {
+		.check.my.coefficient.matrices(matrix.names, tmp.last, order)
 		mod <- character()
-		for (k in 1:j) {
+		tmp.mtx <- eval(parse(text=paste("Coefficient_Matrices[['", tmp.path.coefficient.matrices, "']][['qrmatrix_", tmp.last, "_", j, "']]", sep="")))
+		for (k in 1:order) {
 			int <- "cbind(rep(1, dim(data)[1]),"
-			knt <- paste("Knots_Boundaries[['", tmp.path.knots.boundaries, "']][['knots_", rev(tmp.gp)[k+1], "']]", sep="")
-			bnd <- paste("Knots_Boundaries[['", tmp.path.knots.boundaries, "']][['boundaries_", rev(tmp.gp)[k+1], "']]", sep="")
+			knt <- paste("tmp.mtx@Knots[['knots_", rev(tmp.gp)[k+1], "']]", sep="")
+			bnd <- paste("tmp.mtx@Boundaries[['boundaries_", rev(tmp.gp)[k+1], "']]", sep="")
 			mod <- paste(mod, ", bs(data$SS", rev(tmp.gp)[k+1], ", knots=", knt, ", Boundary.knots=", bnd, ")", sep="")
-			mat <- paste(") %*% Coefficient_Matrices[['", tmp.path.coefficient.matrices, "']][['qrmatrix_", tmp.last, "_", k, "']]", sep="")
-			.check.my.coefficient.matrices(matrix.names, tmp.last, k)
 		}	
-		tmp <- eval(parse(text=paste(int, substring(mod, 2), mat, sep="")))
+		tmp <- eval(parse(text=paste(int, substring(mod, 2), ") %*% tmp.mtx", sep="")))
 		return(round(t(apply(tmp, 1, function(x) .smooth.isotonize.row(x))), digits=5))
 	}
 
@@ -436,8 +441,9 @@ function(panel.data,           ## REQUIRED
 			message("Please specify an appropriate list for calculate.confidence.intervals. See help page for details. SGPs will be calculated without confidence intervals.")
 			csem.tf <- FALSE
 		}
-		if (!identical(names(calculate.confidence.intervals), c("state", "confidence.quantiles", "simulation.iterations", "distribution", "round"))) {
-			message("Please specify an appropriate list for calculate.confidence.intervals including state, confidence.quantiles, simulation.iterations, distribution and round. See help page for details. SGPs will be calculated without confidence intervals.")
+		if (!(names(calculate.confidence.intervals)[1] %in% c("state", "variable") &
+			c("confidence.quantiles", "simulation.iterations", "distribution", "round") %in% names(calculate.confidence.intervals))) {
+			message("Please specify an appropriate list for calculate.confidence.intervals including state/csem variable, confidence.quantiles, simulation.iterations, distribution and round. See help page for details. SGPs will be calculated without confidence intervals.")
 			csem.tf <- FALSE
 		}
 	} else {
@@ -550,10 +556,15 @@ function(panel.data,           ## REQUIRED
 
 	if (missing(use.my.coefficient.matrices)) {
 		taus <- .create_taus(sgp.quantiles)
-		for (k in seq(num.prior)) {
+		if (exact.grade.progression.sequence) {
+			coefficient.matrix.priors <- num.prior
+		} else {
+			coefficient.matrix.priors <- seq(num.prior)
+		}
+		for (k in coefficient.matrix.priors) {
 			Coefficient_Matrices[[tmp.path.coefficient.matrices]][[paste("qrmatrix_", tmp.last, "_", k, sep="")]] <- 
 			.create.coefficient.matrices(ss.data, k, by.grade) 
-	}
+		}
 	}
 	matrix.names <- names(Coefficient_Matrices[[tmp.path.coefficient.matrices]])
 
@@ -569,15 +580,19 @@ function(panel.data,           ## REQUIRED
 			message(paste("Maximum coefficient matrix order (max.order=", max.order, ") exceeds that of specified number of priors, 
 				(num.prior=", num.prior, "). Only matrices of order up to num.prior=", num.prior, " will be used."))
 		}
-		if (!exact.grade.progression.sequence) {
-			tmp.quantiles <- tmp.percentile.cuts <- tmp.csem.quantiles <- list(); orders <- 1:max.order
-		} else {
+		if (exact.grade.progression.sequence) {
 			tmp.quantiles <- tmp.percentile.cuts <- tmp.csem.quantiles <- list(); orders <- max.order
+			if (goodness.of.fit) { # either switch goodness.of.fit to false or change creation of prior.ss
+				message(paste("Goodness of Fit plots will not be produced when exact.grade.progression.sequence = TRUE."))
+				goodness.of.fit <- FALSE
+			}
+		} else {
+			tmp.quantiles <- tmp.percentile.cuts <- tmp.csem.quantiles <- list(); orders <- 1:max.order
 		}
 
-		for (j in seq_along(orders)) {
-			tmp.data <- .get.panel.data(ss.data, orders[j], by.grade)
-			tmp.predictions <- .get.percentile.predictions(tmp.data)
+		for (j in orders) {
+			tmp.data <- .get.panel.data(ss.data, j, by.grade)
+			tmp.predictions <- .get.percentile.predictions(tmp.data, j)
 			tmp.quantiles[[j]] <- data.table(ID=tmp.data[["ID"]], ORDER=j, SGP=.get.quantiles(tmp.predictions, tmp.data[[tail(SS,1)]]))
 			if (csem.tf) {
 				for (k in seq(calculate.confidence.intervals$simulation.iterations)) { 

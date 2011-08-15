@@ -1,3 +1,36 @@
+Changes in version: SGP_0.4-0.0
+
+  o Fixed a bug in visualizeSGP that didn't transform projection cuts for the studentGrowthPlot to the transformed scale when necessary.
+  o Improved look of two panel student growth plot.
+  o Improved header to bubblePlots. Thanks to Dr. Sharon Schattgen (MO) for the suggestion.
+  o Added NAMESPACE to package.
+  o Modified DESCRIPTION file to accomodate Authors@R requirements.
+  o Updated West Virginia stateData.
+  o Added Minnesota to stateData.
+  o Made slight tweaks to growthAchievementPlot title.
+  o Added ability for user to supply CSEMs as a separate variable for SGP confidence interval calculations.
+  o Removed eval(eval() calls used for data.table based upon refinements in data.table package.
+  o CATCH_UP_KEEP_UP_STATUS is now a factor instead of (wrongly) a character.
+  o CATCH_UP_KEEP_UP_STATUS_INITIAL variable is now a factor instead of (wrongly) an ordered factor.
+  o studentGrowthPlot and growthAchievementPlot now accommodate the existence of both non-vertical and vertical scales for different content areas in the same state assessment system (e.g., Connecticut).
+  o Fixed exact.grade.progression argument to studentGrowthPercentiles. When set to true, function will calculate coefficient matrix and SGPs (if requested) for just that progression.
+  o Changed name of Variable_Name_Lookup slot in SGP class to Names.
+  o Made minor modifications to growthAchievementPlot to improve the look of growth achievement plots.
+  o Made minor modifications to studentGrowthPlot and visualizeSGP to improve the look of student growth plots.
+  o Updated student growth projections function to allow for skipped percentiles.
+  o Added bubblePlot_Style 10 which shows district schools highlighted against the state.
+  o Made minor modifications to the bubblePlot function allowing better highlighting in the presence of hundreds of bubbles.
+  o Coefficient matrix objects returned from studentGrowthPercentiles are S4 class splineMatrix with Knots and Boundaries and Date slots.
+  o Added wrapper function baselineSGP to facilitate baseline SGP analyses (i.e. multiple cohort norm groups).
+  o Added production of baseline referenced coefficient matrices and student growth percentile functionality to analyzeSGP.
+
+Changes in version: SGP_0.3-6.0
+
+  o Updated state data to include New Haven School District specific fields including fixed knots and boundaries.
+  o Updated Wisconsin state data to produce growthAchievementPlots and studentGrowthPlots.
+  o growthAchievementPlot now filters out grades not in stateData Grades_Reported.
+  o Changed argument max.forward.progression to max.forward.progression.years and added argument max.forward.progression.grade.
+
 Changes in version: SGP_0.3-5.0
 
   o Corrected an offset of 1 in studentGrowthProjections (Thanks for Marie Huchton for finding discrepancies).
