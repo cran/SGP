@@ -9,7 +9,8 @@
 studentGrowthProjections(panel.data, 
                          sgp.labels,               
                          grade.progression,       
-                         max.forward.progression, 
+                         max.forward.progression.years,
+                         max.forward.progression.grade, 
                          max.order.for.progression,  
                          use.my.knots.boundaries,   
                          use.my.coefficient.matrices,  
@@ -37,7 +38,10 @@ studentGrowthProjections(panel.data,
   \item{grade.progression}{REQUIRED. Argument to specify a student grade/time progression in the data to be used for percentile growth projection/trajectory calculation. 
   This argument helps in replacing previous arguments \code{num.panels},  \code{max.num.scores}, and \code{num.prior.scores}.
   }
-  \item{max.forward.progression}{The MAXIMUM number of years/grades/time periods to project forward conditional upon available coefficient matrices. If missing, function
+  \item{max.forward.progression.years}{The MAXIMUM number of years/grades/time periods to project forward conditional upon available coefficient matrices. If missing, function
+  will project forward as far as allowed by available coefficient matrices. 
+  }
+  \item{max.forward.progression.grade}{The MAXIMUM grade to project forward based upon available coefficient matrices. If missing, function
   will project forward as far as allowed by available coefficient matrices. 
   }
   \item{max.order.for.progression}{Argument to specify the maximum coefficient matrix order to be used for percentile growth projection/trajectory calculation. 

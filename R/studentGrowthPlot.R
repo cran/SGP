@@ -297,9 +297,9 @@ if (grade.values$year_span == 0) {
 }
 
 current.year <- year.function(Report_Parameters$Current_Year, 0, 1)
-xscale.range <- extendrange(c(low.year,high.year), f=0.075)
-if (!is.null(stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]])) {
-   tmp.range <- range(stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]], na.rm=TRUE)
+xscale.range <- range(low.year,high.year) + c(-0.075, 0.1)*diff(range(low.year,high.year))
+if (Report_Parameters$Content_Area %in% names(stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]])) {
+   tmp.range <- range(stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]][[Report_Parameters$Content_Area]], na.rm=TRUE)
    low.score <- min(cuts.ny1.text,
                     Plotting_Scale_Scores,
                     tmp.range,
@@ -322,8 +322,8 @@ if (!is.null(stateData[[Report_Parameters$State]][["Student_Report_Information"]
    yscale.range <- extendrange(c(low.score,high.score), f=0.15)
 }
 
-subject.report.vp <- viewport(layout = grid.layout(2, 3, widths = unit(c(1.15, 5.4, 1.5), rep("inches", 3)), 
-                                              heights = unit(c(2.45, 0.9), rep("inches", 2))))
+subject.report.vp <- viewport(layout = grid.layout(2, 3, widths = unit(c(1.15, 5.4, 1.5)/8.05, rep("npc", 3)), 
+                                              heights = unit(c(2.45, 0.9)/3.35, rep("npc", 2))))
 
 growth.chart.vp <- viewport(name="growth.chart.vp",
                     layout.pos.row=1, layout.pos.col=2,

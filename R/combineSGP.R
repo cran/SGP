@@ -79,6 +79,8 @@
       sgp_object@Data$YEAR_INTEGER_TMP <- NULL
       levels(sgp_object@Data$CATCH_UP_KEEP_UP_STATUS_INITIAL) <- stateData[[state]][["Achievement"]][["Levels"]][["Proficient"]]
       levels(sgp_object@Data$CATCH_UP_KEEP_UP_STATUS_INITIAL) <- c("Catching Up", "Keeping Up")
+      sgp_object@Data$CATCH_UP_KEEP_UP_STATUS_INITIAL <- factor(sgp_object@Data$CATCH_UP_KEEP_UP_STATUS_INITIAL, order=FALSE) ## Drop ordered attribute of factor
+
 
       ## Merge Relevant Targets with CATCH_UP_KEEP_UP_STATUS_INITIAL
 
@@ -101,8 +103,10 @@
 
       VALID_CASE <- NULL
       catch_keep_functions <- c(min, max)
-      jExpression <- parse(text=paste("quote({catch_keep_functions[[unclass(CATCH_UP_KEEP_UP_STATUS_INITIAL)]](",paste(names(tmp_object_1)[grep("LEVEL", names(tmp_object_1))], collapse=", "),", na.rm=TRUE)})", sep=""))
-      tmp_object_2 <- tmp_object_1[, eval(eval(jExpression)), by=list(ID, CONTENT_AREA, YEAR, VALID_CASE)]
+###      jExpression <- parse(text=paste("quote({catch_keep_functions[[unclass(CATCH_UP_KEEP_UP_STATUS_INITIAL)]](",paste(names(tmp_object_1)[grep("LEVEL", names(tmp_object_1))], collapse=", "),", na.rm=TRUE)})", sep=""))
+      jExpression <- parse(text=paste("{catch_keep_functions[[unclass(CATCH_UP_KEEP_UP_STATUS_INITIAL)]](",paste(names(tmp_object_1)[grep("LEVEL", names(tmp_object_1))], collapse=", "),", na.rm=TRUE)}", sep=""))
+###      tmp_object_2 <- tmp_object_1[, eval(eval(jExpression)), by=list(ID, CONTENT_AREA, YEAR, VALID_CASE)]
+      tmp_object_2 <- tmp_object_1[, eval(jExpression), by=list(ID, CONTENT_AREA, YEAR, VALID_CASE)]
       names(tmp_object_2)[dim(tmp_object_2)[2]] <- "SGP_TARGET"
       key(tmp_object_2) <- key(sgp_object@Data)
 
@@ -115,7 +119,9 @@
 
       ## Create CATCH_UP_KEEP_UP_STATUS variable
 
-      sgp_object@Data$CATCH_UP_KEEP_UP_STATUS <- factor(NA, levels=c(1:4), labels=c("Catch Up: No", "Catch Up: Yes", "Keep Up: No", "Keep Up: Yes"))
+      sgp_object@Data$CATCH_UP_KEEP_UP_STATUS <- NA
+
+      ### CATCH_UP_KEEP_UP BASED UPON SGP versus SGP_TARGET
 
       sgp_object@Data$CATCH_UP_KEEP_UP_STATUS[sgp_object@Data$CATCH_UP_KEEP_UP_STATUS_INITIAL=="Keeping Up" &
                                                       sgp_object@Data$SGP >= sgp_object@Data$SGP_TARGET] <- "Keep Up: Yes"
@@ -129,15 +135,28 @@
       sgp_object@Data$CATCH_UP_KEEP_UP_STATUS[sgp_object@Data$CATCH_UP_KEEP_UP_STATUS_INITIAL=="Catching Up" &
                                                       sgp_object@Data$SGP < sgp_object@Data$SGP_TARGET] <- "Catch Up: No"
 
+      ### CATCH_UP_KEEP_UP clean up based upon reality
+
       sgp_object@Data$CATCH_UP_KEEP_UP_STATUS[sgp_object@Data$CATCH_UP_KEEP_UP_STATUS_INITIAL=="Keeping Up" &
                                                       sgp_object@Data$CATCH_UP_KEEP_UP_STATUS == "Keep Up: Yes" &
                                                       as.numeric(sgp_object@Data$ACHIEVEMENT_LEVEL) <= level.to.get] <- "Keep Up: No"
 
       sgp_object@Data$CATCH_UP_KEEP_UP_STATUS[sgp_object@Data$CATCH_UP_KEEP_UP_STATUS_INITIAL=="Catching Up" &
+                                                      sgp_object@Data$CATCH_UP_KEEP_UP_STATUS == "Catch Up: No" &
+                                                      as.numeric(sgp_object@Data$ACHIEVEMENT_LEVEL) > level.to.get] <- "Catch Up: Yes"
+
+      sgp_object@Data$CATCH_UP_KEEP_UP_STATUS[sgp_object@Data$CATCH_UP_KEEP_UP_STATUS_INITIAL=="Catching Up" &
                                                       sgp_object@Data$CATCH_UP_KEEP_UP_STATUS == "Catch Up: Yes" &
                                                       as.numeric(sgp_object@Data$ACHIEVEMENT_LEVEL) <= level.to.get &
                                                       sgp_object@Data$GRADE == max(sgp_object@Data$GRADE[!is.na(sgp_object@Data$SGP_TARGET)])] <- "Catch Up: No"
-      
+
+      sgp_object@Data$CATCH_UP_KEEP_UP_STATUS[sgp_object@Data$CATCH_UP_KEEP_UP_STATUS_INITIAL=="Keeping Up" &
+                                                      sgp_object@Data$CATCH_UP_KEEP_UP_STATUS == "Keep Up: No" &
+                                                      as.numeric(sgp_object@Data$ACHIEVEMENT_LEVEL) > level.to.get &
+                                                      sgp_object@Data$GRADE == max(sgp_object@Data$GRADE[!is.na(sgp_object@Data$SGP_TARGET)])] <- "Keep Up: Yes"
+
+      sgp_object@Data$CATCH_UP_KEEP_UP_STATUS <- factor(sgp_object@Data$CATCH_UP_KEEP_UP_STATUS)
+
     } ## END sgp.projections.lagged=TRUE
 
     key(sgp_object@Data) <- c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID")

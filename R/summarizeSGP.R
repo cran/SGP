@@ -129,17 +129,17 @@
         tmp.sgp.summaries <- sgp.summaries
         sgp.summaries.names <- unlist(strsplit(names(sgp.summaries), "[.]"))
       } 
-      ListExpr <- parse(text=paste("quote(as.list(c(", paste(unlist(tmp.sgp.summaries), collapse=", "),")))",sep="")) 
-      ByExpr <- parse(text=paste("quote(list(", paste(sgp.groups.to.summarize, collapse=", "), "))", sep=""))
-      tmp <- tmp.dt[, eval(eval(ListExpr)), by=eval(eval(ByExpr))]
+      ListExpr <- parse(text=paste("as.list(c(", paste(unlist(tmp.sgp.summaries), collapse=", "),"))",sep="")) 
+      ByExpr <- parse(text=paste("list(", paste(sgp.groups.to.summarize, collapse=", "), ")", sep=""))
+      tmp <- tmp.dt[, eval(ListExpr), by=eval(ByExpr)]
       if (produce.confidence.interval & "CSEM" %in% confidence.interval.groups$TYPE) {
-        SIM_ByExpr1 <- parse(text=paste("quote(list(", paste(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))
+        SIM_ByExpr1 <- parse(text=paste("list(", paste(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))
                                [!(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))) %in% key(tmp.dt)], collapse=", "), 
-                               ", ", paste(names(tmp.simulation.dt)[grep("SGP_SIM_", names(tmp.simulation.dt))], collapse=", "), "))", sep=""))
-        SIM_ByExpr2 <- parse(text=paste("quote(list(", paste(sgp.groups.to.summarize, collapse=", "), "))", sep=""))
-        tmp.sim <- tmp.dt[tmp.simulation.dt, eval(eval(SIM_ByExpr1))][, -(1:2), with=FALSE][,
-                                                                                  lapply(.SD, median_na), by=eval(eval(SIM_ByExpr2))][, 
-                                                                                                            as.list(round(apply(.SD, 1, quantile, probs=confidence.interval.groups$QUANTILES))), by=eval(eval(SIM_ByExpr2))]
+                               ", ", paste(names(tmp.simulation.dt)[grep("SGP_SIM_", names(tmp.simulation.dt))], collapse=", "), ")", sep=""))
+        SIM_ByExpr2 <- parse(text=paste("list(", paste(sgp.groups.to.summarize, collapse=", "), ")", sep=""))
+        tmp.sim <- tmp.dt[tmp.simulation.dt, eval(SIM_ByExpr1)][, -(1:2), with=FALSE][,
+                                                                                  lapply(.SD, median_na), by=eval(SIM_ByExpr2)][, 
+                                                                                                            as.list(round(apply(.SD, 1, quantile, probs=confidence.interval.groups$QUANTILES))), by=eval(SIM_ByExpr2)]
         tmp <- data.table(merge.data.frame(tmp, tmp.sim, by = unlist(strsplit(as.character(sgp.groups.to.summarize), ", ")),all=TRUE))
       }
       names(tmp)[-seq(length(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))))] <- sgp.summaries.names

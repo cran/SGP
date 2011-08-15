@@ -2,7 +2,8 @@
 function(panel.data,	## REQUIRED
 	sgp.labels,	## REQUIRED  
 	grade.progression,	## REQUIRED  
-	max.forward.progression,
+	max.forward.progression.years,
+	max.forward.progression.grade,
 	max.order.for.progression,
 	use.my.knots.boundaries,
 	use.my.coefficient.matrices,
@@ -25,12 +26,18 @@ function(panel.data,	## REQUIRED
 	###
 	##########################################################
 
-	.smooth.bound.iso.row <- function(x, grade, iso=isotonize) {
+	.smooth.bound.iso.row <- function(x, grade, iso=isotonize, missing.taus, na.replace) {
 		x[which(is.na(x))] <- approx(x, xout=which(is.na(x)))$y
 		bnd <- panel.data[["Knots_Boundaries"]][[tmp.path.knots.boundaries]][[paste("loss.hoss_", grade, sep="")]]
 		x[x < bnd[1]] <- bnd[1] ; x [x > bnd[2]] <- bnd[2]
-		if (iso) return(round(sort(x), digits=5))
-		else return(round(x, digits=5))
+		if (!iso) return(round(x, digits=5)) # Results are the same whether NAs present or not...
+		if (iso & missing.taus) {
+			x <- round(sort(x), digits=5)
+			count <- 1
+			na.row <- rep(NA,100)
+			for (r in 1:length(na.replace)) if (na.replace[r]) {na.row[r] <- x[count]; count<-count+1}
+			return(na.row)
+		}	else return(round(sort(x), digits=5))
 	}
 
 	.create.path <- function(labels) {
@@ -119,6 +126,7 @@ function(panel.data,	## REQUIRED
 				completed.ids <- c(tmp.data[["ID"]], completed.ids)
 				num.rows <- dim(tmp.data)[1]
 				tmp.data <- as.data.frame(sapply(tmp.data, rep, each=100))
+				missing.taus=FALSE; na.replace=NULL # put these outside of j loop so that stay's true/non-null if only SOME of coef matrices are non-normal dimensions.
 				for (j in seq_along(grade.projection.sequence.priors[[i]])) {
 					mod <- character()
 					int <- "cbind(rep(1, 100*num.rows),"
@@ -131,6 +139,14 @@ function(panel.data,	## REQUIRED
 					.check.my.coefficient.matrices(matrix.names, grade.projection.sequence[j], k)
 					tmp.scores <- eval(parse(text=paste(int, substring(mod, 2), ")", sep="")))
 					tmp.matrix <- eval(parse(text=mat))
+					if (dim(tmp.matrix)[2] != 100) {
+						tau.num <- ceiling(as.numeric(substr(colnames(tmp.matrix), 6, nchar(colnames(tmp.matrix))))*100)
+						na.replace <- 1:100 %in% tau.num
+						na.mtx <- matrix(NA, nrow=nrow(tmp.matrix), ncol=100)
+						for (r in 1:length(na.replace)) if (na.replace[r]) na.mtx[,r] <- tmp.matrix[,r]
+						tmp.matrix <- na.mtx
+						missing.taus=TRUE
+					}
 					num.chunks <- floor(num.rows/chunk.size)
 					chunk.list <- vector("list", num.chunks+1)
 					for (chunk in 0:num.chunks) {
@@ -141,17 +157,17 @@ function(panel.data,	## REQUIRED
 							quantile.list[[m]] <-  tmp.scores[m+lower.index:(upper.index-1)*100,] %*% tmp.matrix[,m] 
 						}
 						chunk.list[[chunk+1]] <- apply(matrix(do.call(c, quantile.list), ncol=100), 1, 
-							function(x) .smooth.bound.iso.row(x, grade.projection.sequence[j]))
+							function(x) .smooth.bound.iso.row(x, grade.projection.sequence[j], missing.taus=missing.taus, na.replace=na.replace)) #ADDED args for cases w/o 100 columns...
 					}
 					tmp.data <- data.frame(tmp.data, as.vector(do.call(cbind, chunk.list)))
 					names(tmp.data)[length(names(tmp.data))] <- paste("SS", grade.projection.sequence[j], sep="")
 					tmp.gp <- c(tmp.gp, grade.projection.sequence[j])
-				} ## Eng j loop
+				} ## END j loop
 				tmp.percentile.trajectories[[i]] <- tmp.data[,-(1:grade.projection.sequence.priors[[i]][1]+1)]
 			} ## END if statement
-		} ## End i loop
+		} ## END i loop
 		do.call(rbind, tmp.percentile.trajectories)
-	} ## End function
+	} ## END function
 
 	.sgp.targets <- function(data, cut, convert.0and100) {
 		tmp <- which.min(c(data < cut, FALSE))
@@ -383,13 +399,14 @@ function(panel.data,	## REQUIRED
 	### Calculate growth projections/trajectories 
 
 	max.grade <- .get.max.matrix.grade(matrix.names)
+	if (!missing(max.forward.progression.grade)) max.grade <- max.forward.progression.grade
 
 	if (tmp.last+1 > max.grade) {
 		stop("Supplied grade.progression and coefficient matrices do not allow projection. See help page for details.")
 	}
 
-	if (!missing(max.forward.progression)) {
-		grade.projection.sequence <- (tmp.last+1):min(max.grade, tmp.last+1+max.forward.progression)
+	if (!missing(max.forward.progression.years)) {
+		grade.projection.sequence <- (tmp.last+1):min(max.grade, tmp.last+1+max.forward.progression.years)
 	} else {
 		grade.projection.sequence <- (tmp.last+1):max.grade
 	}

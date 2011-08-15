@@ -1,11 +1,13 @@
 Package: SGP
-Version: 0.3-5.0
-Date: 2011-7-23
+Type: Package
 Title: An R Package for the Calculation and Visualization of Student
         Growth Percentiles.
-Author@R: c(person("Damian", "Betebenner",
-        email="dbetebenner@nciea.org"), person("Adam", "Van Iwaarden",
-        email="Vaniwaarden@colorado.edu"))
+Version: 0.4-0.0
+Date: 2011-8-15
+Authors@R: c(person("Damian", "Betebenner",
+        email="dbetebenner@nciea.org", role=c("aut", "cre")),
+        person("Adam", "Van Iwaarden",
+        email="Vaniwaarden@colorado.edu", role="aut"))
 Author: Damian W. Betebenner <dbetebenner@nciea.org> and Adam Van
         Iwaarden <Vaniwaarden@colorado.edu> with contributions from Ben
         Domingue, Jonathan Weeks, John Stewart, Jinnie Choi, Xin Wei,
@@ -15,14 +17,15 @@ Author: Damian W. Betebenner <dbetebenner@nciea.org> and Adam Van
         (Indiana), Robert Hochsegang (Indiana), Xuewen Sheng (Kansas),
         Robert Lee (Massachusetts), Ken Thompson (Mississippi), Soo
         Yeon Cho (Missouri), Jeff Halsell (Nevada), Selcuk Ozdemir
-        (Nevada), Deb Wiswell (New Hampshire), Ana Karantonis (Rhode
-        Island), Dr. Deborah Jonas (Virginia), Joseph Newton
-        (Wisconsin), Dr. Philip Olsen (Wisconsin), Nick Stroud
+        (Nevada), Deb Wiswell (New Hampshire), Katya Levitan-Reiner
+        (New Haven Public Schools), Ana Karantonis (Rhode Island), Dr.
+        Deborah Jonas (Virginia), Justin Meyer (Wisconsin), Joseph
+        Newton (Wisconsin), Dr. Philip Olsen (Wisconsin), Nick Stroud
         (Wisconsin).
 Maintainer: Damian W. Betebenner <dbetebenner@nciea.org>
-Depends: R (>= 2.10), data.table (>= 1.6.2), foreach, grid, methods,
+Depends: R (>= 2.10), data.table (>= 1.6.4), foreach, grid, methods,
         plyr, quantreg, splines
-Suggests: boot, colorspace, doMC, gridBase, pdf2, randomNames (>=
+Suggests: boot, colorspace, multicore, gridBase, pdf2, randomNames (>=
         0.0-3), sn, snow
 Description: Functions to calculate student growth percentiles and
         percentile growth projections/trajectories for students using
@@ -41,6 +44,6 @@ URL: http://cran.r-project.org/web/packages/SGP/,
 LazyLoad: Yes
 LazyData: Yes
 License: CC BY-SA 3.0 US | CC BY-NC-SA 3.0 + file LICENSE
-Packaged: 2011-07-24 01:53:11 UTC; damian
 Repository: CRAN
-Date/Publication: 2011-07-24 05:15:28
+Packaged: 2011-08-15 01:15:24 UTC; damian
+Date/Publication: 2011-08-15 09:07:26
