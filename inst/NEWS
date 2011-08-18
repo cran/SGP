@@ -1,3 +1,9 @@
+Changes in version: SGP_0.4-5.0
+
+  o Added enhanced check to built in knots and boundaries for states.
+  o Fixed a bug in studentGrowthProjections when chunk.size is a perfect divisor of the number of rows of the data.
+  o Refined studentGrowthPlot to accomodate annual cutscore changes in states with a vertical scale (e.g., West Virginia). Thanks Juan D'Brot WVDOE.
+
 Changes in version: SGP_0.4-0.0
 
   o Fixed a bug in visualizeSGP that didn't transform projection cuts for the studentGrowthPlot to the transformed scale when necessary.

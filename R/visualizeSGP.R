@@ -237,18 +237,22 @@
         }
       } ## END piecewise.transform
 
-      create.long.cutscores <- function(state, content_area) {
+      create.long.cutscores.sgPlot <- function(state, content_area) {
         number.achievement.level.regions <- length(stateData[[state]][["Student_Report_Information"]][["Achievement_Level_Labels"]])
         if (!content_area %in% names(stateData[[state]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]])) {
-          tmp.grades <- as.numeric(matrix(unlist(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]][[content_area]]), "_")),
-                                          ncol=2, byrow=TRUE)[,2])
-          tmp.cutscores <- matrix(unlist(stateData[[state]][["Achievement"]][["Cutscores"]][[content_area]]),
-                                  ncol=number.achievement.level.regions-1, byrow=TRUE)
           tmp.list <- list()
-          for (i in seq(number.achievement.level.regions-1)) {
-            tmp.list[[i]] <- data.frame(GRADE=c(min(tmp.grades,na.rm=TRUE)-1, tmp.grades, max(tmp.grades,na.rm=TRUE)+1),
-                                        CUTLEVEL=rep(i, length(tmp.grades)+2),
-                                        CUTSCORES=c(extendrange(tmp.cutscores[,i], f=0.15)[1], tmp.cutscores[,i], extendrange(tmp.cutscores[,i], f=0.15)[2]))
+          for (i in grep(content_area, names(stateData[[state]][["Achievement"]][["Cutscores"]]))) {
+            tmp.grades <- as.numeric(matrix(unlist(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]][[i]]), "_")),
+                                          ncol=2, byrow=TRUE)[,2])
+            tmp.cutscores <- matrix(unlist(stateData[[state]][["Achievement"]][["Cutscores"]][[i]]),
+                                  ncol=number.achievement.level.regions-1, byrow=TRUE)
+            tmp.year <- unlist(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]])[i], "[.]"))[2]
+          for (j in seq(number.achievement.level.regions-1)) {
+            tmp.list[[paste(i, j, sep="_")]] <- data.frame(GRADE=c(min(tmp.grades,na.rm=TRUE)-1, tmp.grades, max(tmp.grades,na.rm=TRUE)+1),
+                                        CUTLEVEL=rep(j, length(tmp.grades)+2),
+                                        CUTSCORES=c(extendrange(tmp.cutscores[,j], f=0.15)[1], tmp.cutscores[,j], extendrange(tmp.cutscores[,j], f=0.15)[2]),
+                                        YEAR=rep(tmp.year, length(tmp.grades)+2))
+          }
           }
           subset(do.call(rbind, tmp.list), CUTLEVEL %in% 1:(number.achievement.level.regions-1))
         } else {
@@ -263,7 +267,7 @@
           }
           do.call(rbind, tmp.list)
         }
-      } ## END create.long.cutscores
+      } ## END create.long.cutscores.sgPlot
 
 
       ### Define quantities/variables related to state
@@ -274,7 +278,7 @@
         tmp.organization <- stateData[[state]][["Assessment_Program_Information"]][["Organization"]]
         Cutscores <- list()
         for (i in tmp.content_areas) {
-          Cutscores[[i]] <- create.long.cutscores(state, i)
+          Cutscores[[i]] <- create.long.cutscores.sgPlot(state, i)
         }
         number.achievement.level.regions <- length(stateData[[state]][["Student_Report_Information"]][["Achievement_Level_Labels"]])
 
@@ -304,8 +308,10 @@
 	key(tmp.table) <- key(sgp_object@Data) <- names(tmp.table) <- c("ID", "CONTENT_AREA", "YEAR")
 	tmp.table <- sgp_object@Data[tmp.table]
 	if (sgPlot.demo.report) {
-		tmp.table$SCHOOL_NUMBER <- tmp.schools <- -99L
-		tmp.table$DISTRICT_NUMBER <- tmp.districts <- -999L
+			tmp.table$SCHOOL_NUMBER <- as.integer(tmp.table$SCHOOL_NUMBER) 
+			tmp.table$SCHOOL_NUMBER <- tmp.schools <- -99L
+			tmp.table$DISTRICT_NUMBER <- as.integer(tmp.table$DISTRICT_NUMBER) 
+			tmp.table$DISTRICT_NUMBER <- tmp.districts <- -999L
 	}
 
       ### Anonymize (if requested)
@@ -361,6 +367,7 @@
                              paste("SCHOOL_NAME", tmp.last.year, sep="."), paste("SCHOOL_NUMBER", tmp.last.year, sep="."), 
                              paste("DISTRICT_NAME", tmp.last.year, sep="."), paste("DISTRICT_NUMBER", tmp.last.year, sep="."))  
 
+      isr_data <<- isr_data[, variables.to.keep, with=FALSE]
       isr_data <- isr_data[, variables.to.keep, with=FALSE]
       
       ### Merge in 1 year projections (if requested & available) and transform using piecewise.tranform (if required)
@@ -622,7 +629,7 @@
               grid.text(x=0.02, y=0.70, paste("For more information please visit", tmp.organization$Name, "at", tmp.organization$URL, "or call", tmp.organization$Phone_Number), 
                         gp=gpar(cex=0.8, col="white"), default.units="native", just="left")
               copyright.text <- paste("Cooperatively developed by the ", tmp.organization$Name, " & the Center for Assessment, Inc.", sep="")
-              grid.text(x=0.02, y=0.30, paste(copyright.text, ". Distributed by the ", tmp.organization$Name, sep=""), 
+              grid.text(x=0.02, y=0.30, paste(copyright.text, " Distributed by the ", tmp.organization$Name, ".", sep=""), 
                         gp=gpar(cex=0.8, col="white"), default.units="native", just="left")
 
 #              grid.text(x=0.995, y=0.18, copyright.text, gp=gpar(col="white", cex=0.45), default.units="native", just="right")
@@ -644,13 +651,14 @@
 
                 grid.roundrect(x=unit(0.5, "native"), y=unit(interpretation.y, "native"), width=unit(0.9, "native"), height=unit(0.06, "native"), 
                                gp=gpar(fill=sgPlot.header.footer.color, col="black"))
-                grid.text(x=0.5, y=interpretation.y+0.011, paste("How to interpret this", tmp.abbreviation), gp=gpar(fontface="bold", cex=0.95, col="white"))
+                grid.text(x=0.5, y=interpretation.y+0.011, "How to interpret this student", gp=gpar(fontface="bold", cex=0.95, col="white"))
                 grid.text(x=0.5, y=interpretation.y-0.011, "growth & achievement report", gp=gpar(fontface="bold", cex=0.95, col="white"))
 
-                grid.roundrect(x=unit(0.2, "native"), y=unit(interpretation.y-0.08, "native"), width=unit(0.1, "native"), height=unit(0.04, "native"), r=unit(0.02, "inches"), 
+                grid.roundrect(x=unit(0.2, "native"), y=unit(interpretation.y-0.08, "native"), width=unit(0.1, "native"), height=unit(0.05, "native"), r=unit(0.02, "inches"), 
                                gp=gpar(fill=achievement.level.region.colors[1], lwd=1))
                 grid.circle(x=0.2, y=interpretation.y-0.08, r=0.02, default.units="native", gp=gpar(fill="white"))
-                grid.text(x=0.325, y=interpretation.y-0.08, paste(tmp.abbreviation, "Scale Score"), gp=gpar(cex=0.9), default.units="native", just="left")
+                grid.text(x=0.325, y=interpretation.y-0.0675, tmp.abbreviation, gp=gpar(cex=0.9), default.units="native", just="left")
+                grid.text(x=0.325, y=interpretation.y-0.0925, "Scale Score", gp=gpar(cex=0.9), default.units="native", just="left")
 
                 tmp.rect.height <- 0.125/number.achievement.level.regions
                 for (i in seq(number.achievement.level.regions)) {
@@ -679,14 +687,14 @@
 
                 grid.circle(x=0.075, y=suggested.y-0.07, r=0.01, gp=gpar(fill="black"), default.units="native")
                 grid.text(x=0.12, y=suggested.y-0.07, "Review past growth to assess", gp=gpar(cex=0.8), default.units="native", just="left")
-                grid.text(x=0.12, y=suggested.y-0.09, paste("student progress toward", tmp.abbreviation), gp=gpar(cex=0.8), default.units="native", just="left")
-                grid.text(x=0.12, y=suggested.y-0.11, "achievement goals", gp=gpar(cex=0.8), default.units="native", just="left")
+                grid.text(x=0.12, y=suggested.y-0.09, "student academic progress toward", gp=gpar(cex=0.8), default.units="native", just="left")
+                grid.text(x=0.12, y=suggested.y-0.11, paste(tmp.abbreviation, "achievement goals."), gp=gpar(cex=0.8), default.units="native", just="left")
 
                 grid.circle(x=0.075, y=suggested.y-0.14, r=0.01, gp=gpar(fill="black"), default.units="native")
                 grid.text(x=0.12, y=suggested.y-0.14, "Develop remediation or enrich-", gp=gpar(cex=0.8), default.units="native", just="left")
                 grid.text(x=0.12, y=suggested.y-0.16, "ment plans based on rate of", gp=gpar(cex=0.8), default.units="native", just="left")
                 grid.text(x=0.12, y=suggested.y-0.18, "growth needed to reach higher", gp=gpar(cex=0.8), default.units="native", just="left")
-                grid.text(x=0.12, y=suggested.y-0.20, paste(tmp.abbreviation, "achievement levels"), gp=gpar(cex=0.8), default.units="native", just="left")
+                grid.text(x=0.12, y=suggested.y-0.20, paste(tmp.abbreviation, "achievement levels."), gp=gpar(cex=0.8), default.units="native", just="left")
 
                 if (sgPlot.fan) {
                    grid.circle(x=0.075, y=suggested.y-0.23, r=0.01, gp=gpar(fill="black"), default.units="native")

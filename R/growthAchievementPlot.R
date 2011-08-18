@@ -15,6 +15,7 @@
 
 	CUTLEVEL <- GRADE <- YEAR <- ID <- SCALE_SCORE <- level_1_curve <- NULL ## To prevent R CMD check warnings
 	content_area <- toupper(content_area)
+        number.achievement.level.regions <- length(stateData[[state]][["Student_Report_Information"]][["Achievement_Level_Labels"]])
 
         if (state %in% state.abb)  state.name.label <- state.name[state.abb==state]
         if (state=="DEMO") state.name.label <- "Demonstration"
@@ -80,22 +81,41 @@
 		return(z*10^floor(log(x,10)))
 	}
 
-      create.long.cutscores <- function(state, content_area) {
+	get.my.cutscore.year <- function(state, content_area, year) {
+		tmp.cutscore.years <- sapply(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]])[grep(content_area, names(stateData[[state]][["Achievement"]][["Cutscores"]]))], "[.]"),
+			function(x) x[2])
+		if (any(!is.na(tmp.cutscore.years))) {
+		if (year %in% tmp.cutscore.years) {
+                  return(paste(content_area, year, sep="."))
+               } else {
+                  if (year==sort(c(year, tmp.cutscore.years))[1]) {
+                     return(content_area)
+                  } else {
+                     return(paste(content_area, rev(sort(tmp.cutscore.years))[1], sep="."))
+                  }
+               }
+             } else {
+                  return(content_area)
+             }
+	}
+
+      create.long.cutscores <- function(state, content_area, year) {
         number.achievement.level.regions <- length(stateData[[state]][["Student_Report_Information"]][["Achievement_Level_Labels"]])
         if (!content_area %in% names(stateData[[state]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]])) {
-          tmp.grades <- as.numeric(matrix(unlist(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]][[content_area]]), "_")),
+           my.content_area <- get.my.cutscore.year(state, content_area, year)
+           tmp.grades <- as.numeric(matrix(unlist(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]]), "_")),
                                           ncol=2, byrow=TRUE)[,2])
-          tmp.cutscores <- matrix(unlist(stateData[[state]][["Achievement"]][["Cutscores"]][[content_area]]),
+           tmp.cutscores <- matrix(unlist(stateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]]),
                                   ncol=number.achievement.level.regions-1, byrow=TRUE)
-          tmp.list <- list()
-          for (i in seq(number.achievement.level.regions-1)) {
-            tmp.list[[i]] <- data.frame(GRADE=c(min(tmp.grades,na.rm=TRUE)-1, tmp.grades, max(tmp.grades,na.rm=TRUE)+1),
+           tmp.list <- list()
+           for (i in seq(number.achievement.level.regions-1)) {
+             tmp.list[[i]] <- data.frame(GRADE=c(min(tmp.grades,na.rm=TRUE)-1, tmp.grades, max(tmp.grades,na.rm=TRUE)+1),
                                         CUTLEVEL=rep(i, length(tmp.grades)+2),
                                         CUTSCORES=c(extendrange(tmp.cutscores[,i], f=0.15)[1], tmp.cutscores[,i], extendrange(tmp.cutscores[,i], f=0.15)[2]))
           }
           subset(do.call(rbind, tmp.list), CUTLEVEL %in% 1:(number.achievement.level.regions-1))
         } else {
-          tmp.grades <- as.numeric(matrix(unlist(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]][[content_area]]), "_")),
+          tmp.grades <- as.numeric(matrix(unlist(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]]), "_")),
                                           ncol=2, byrow=TRUE)[,2])
           tmp.list <- list()
           for (i in seq(number.achievement.level.regions-1)) {
@@ -217,17 +237,17 @@
 
 	if (format=="print") {
 		format.colors.background <- rgb(0.985, 0.985, 1.0)
-		format.colors.region <- c("grey52", "grey63", "grey74", "grey85")
+		format.colors.region <- paste("grey", round(seq(62, 91, length=number.achievement.level.regions)), sep="")
                 format.colors.font <- "grey20"
 	} else {
 		format.colors.background <- rgb(0.48, 0.48, 0.52)
-		format.colors.region <- c("#6BAED6", "#9ECAE1", "#C6DBEF", "#DEEBF7")
+		format.colors.region <- c("#4D98C1", "#6BAED6", "#9ECAE1", "#C6DBEF", "#DEEBF7")[seq(number.achievement.level.regions)]
                 format.colors.font <- rgb(0.985, 0.985, 1.0)
 	}
 
 	xscale.range <- c(gaPlot.grade_range[1]-0.5, gaPlot.grade_range[2]+0.5)
 
-	temp_cutscores <- subset(create.long.cutscores(state, content_area), GRADE %in% tmp.unique.grades) 
+	temp_cutscores <- subset(create.long.cutscores(state, content_area, year), GRADE %in% tmp.unique.grades) 
 
 	## Create data sets to be used for plot production
 

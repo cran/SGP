@@ -11,8 +11,8 @@ functions are used to calculate and visualize student growth percentiles and per
 These norm referenced growth values are currently used in a number of state testing and accountability systems. The functions employ quantile 
 regression (using the \code{quantreg} package) to estimate the conditional density for current achievement using each student's achievement history. 
 Percentile growth projections/trajectories are calculated using the coefficient matrices derived from the student growth percentile analyses. These quantities
-are summarized in a variety of ways to describe student growth. As of the 0.2-0.0 release, the package also includes functions the graphics functions 
-\code{\link{bubblePlot}}, \code{\link{studentGrowthPlot}}, nd \code{\link{growthAchievementPlot}} to produce high quality graphical representations associated with the student 
+are summarized in a variety of ways to describe student growth. As of the 0.2-0.0 release, the package also includes the graphics functions 
+\code{\link{bubblePlot}}, \code{\link{studentGrowthPlot}}, and \code{\link{growthAchievementPlot}} to produce high quality graphical representations associated with the student 
 growth percentile analyses. 
 }
 
@@ -20,7 +20,7 @@ growth percentile analyses.
 \tabular{ll}{
 Package: \tab SGP\cr
 Type: \tab Package\cr
-Version: \tab 0.4-0.0\cr
+Version: \tab 0.4-5.0\cr
 Date: \tab 2011-8-15\cr
 License: \tab CC BY-SA 3.0 US | CC BY-NC-SA 3.0 + file LICENSE\cr
 LazyLoad: \tab yes\cr
