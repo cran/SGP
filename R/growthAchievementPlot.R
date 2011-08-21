@@ -101,8 +101,8 @@
 
       create.long.cutscores <- function(state, content_area, year) {
         number.achievement.level.regions <- length(stateData[[state]][["Student_Report_Information"]][["Achievement_Level_Labels"]])
+        my.content_area <- get.my.cutscore.year(state, content_area, year)
         if (!content_area %in% names(stateData[[state]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]])) {
-           my.content_area <- get.my.cutscore.year(state, content_area, year)
            tmp.grades <- as.numeric(matrix(unlist(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]]), "_")),
                                           ncol=2, byrow=TRUE)[,2])
            tmp.cutscores <- matrix(unlist(stateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]]),

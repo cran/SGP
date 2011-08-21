@@ -78,7 +78,9 @@ interpolate.grades <- function(grades, data.year.span) {
 
             if (first.scale.score == 0) {
                    year_span <- 0
-                   return (list(interp.df = data.frame(GRADE=2:8), year_span=year_span))
+                   return (list(interp.df = data.frame(GRADE=2:8), 
+					year_span=year_span,
+					years=rep(NA, 7)))
             } else {
               if (last.scale.score < data.year.span) {
                   grades[(last.scale.score+1):data.year.span] <- (grades[last.scale.score]-1):(grades[last.scale.score] - (data.year.span - last.scale.score))
@@ -99,9 +101,17 @@ interpolate.grades <- function(grades, data.year.span) {
 				year_span=year_span, 
 				years=sapply(temp.grades-grades[1], function(x) .year.increment(Report_Parameters$Current_Year, x))))
               } else {
+                  if (grades[1] == 11) {
+                     year_span <- 4
+                     temp.grades <- extend.grades(c(rev(head(grades, -1)), 12))
+                     return (list(interp.df = data.frame(GRADE=temp.grades), 
+				year_span=year_span, 
+				years=sapply(temp.grades-grades[1], function(x) .year.increment(Report_Parameters$Current_Year, x))))
+                  }
+
                   if (grades[1] == 10) {
                      year_span <- 4
-                     temp.grades <- extend.grades(rev(grades))
+                     temp.grades <- extend.grades(c(rev(head(grades, -1)), 11))
                      return (list(interp.df = data.frame(GRADE=temp.grades), 
 				year_span=year_span, 
 				years=sapply(temp.grades-grades[1], function(x) .year.increment(Report_Parameters$Current_Year, x))))
@@ -473,7 +483,7 @@ if (Connect_Points=="Arrows") {
    }
 } ## END Connect_Points=="Arrows"
 
-if (Grades[1] != 10 & !is.na(cuts.ny1.text[1])){
+if (Grades[1] != max(grades.reported.in.state) & !is.na(cuts.ny1.text[1])){
 
 for (i in seq(number.growth.levels)) {
    grid.polygon(x=c(current.year, rep(current.year+1, 2), current.year), 

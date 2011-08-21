@@ -128,61 +128,28 @@
         
        # Content area stuff
 
-       tmp.content_areas <- sort(unique(sgp_object@Data[YEAR==tmp.last.year]$CONTENT_AREA)) %w/o% NA
-
-       # Demo report school selector
-
-	if (sgPlot.demo.report) {
-		sgPlot.anonymize <- TRUE
-		tmp.ids <- list()
-		key(sgp_object@Data) <- c("VALID_CASE", "YEAR", "GRADE")
-		for (i in stateData[[state]][["Student_Report_Information"]]$Grades_Reported) {
-			tmp.ids[[i]] <- as.character(sample(unique(sgp_object@Data[J("VALID_CASE", tmp.last.year, i)]$ID), 10))
-		}
-		if (is.factor(sgp_object@Data$ID)) {
-			sgPlot.students <- as.factor(unlist(tmp.ids)) 
-		} else {
-			sgPlot.students <- as.integer(unlist(tmp.ids))
-		}
-	}
-
-       if (is.null(sgPlot.students)) {
-
-	# District stuff
-
-	if (is.null(sgPlot.districts)) {
-		tmp.districts <- sort(unique(sgp_object@Data[YEAR==tmp.last.year]$DISTRICT_NUMBER))
-	} else {
-		tmp.districts <- sgPlot.districts
-		if (is.factor(sgp_object@Data$DISTRICT_NUMBER)) tmp.districts <- as.factor(tmp.districts)
-	}
-        
-	# School stuff
-
-	if (is.null(sgPlot.schools)) {
-		tmp.schools <- sort(unique(sgp_object@Data[YEAR==tmp.last.year]$SCHOOL_NUMBER))
-	} else {
-		tmp.schools <- sgPlot.schools
-		if (is.factor(sgp_object@Data$SCHOOL_NUMBER)) tmp.schools <- as.factor(tmp.schools)
-	}
+	tmp.content_areas <- sort(unique(sgp_object@Data[YEAR==tmp.last.year]$CONTENT_AREA)) %w/o% NA
 
 	# Reconcile choice of District and Schools
 
-	if (is.null(sgPlot.schools) & is.null(sgPlot.districts)) {
+       if (is.null(sgPlot.students)) {
+
+	if (identical(toupper(sgPlot.schools), "ALL") | identical(toupper(sgPlot.districts), "ALL")) {
 		tmp.districts <- sort(unique(sgp_object@Data[YEAR==tmp.last.year]$DISTRICT_NUMBER)) %w/o% NA
 		tmp.schools <- sort(unique(sgp_object@Data[YEAR==tmp.last.year]$SCHOOL_NUMBER)) %w/o% NA
+		sgPlot.demo.report=FALSE
 	}
 
 	if (is.null(sgPlot.schools) & !is.null(sgPlot.districts)) {
          	tmp.districts <- sgPlot.districts
-         	if (is.factor(sgp_object@Data$DISTRICT_NUMBER)) tmp.districts <- as.factor(tmp.districts)
 		tmp.schools <- unique(sgp_object@Data$SCHOOL_NUMBER[sgp_object@Data$DISTRICT_NUMBER %in% tmp.districts]) %w/o% NA
+		sgPlot.demo.report=FALSE
 	}
 
 	if (!is.null(sgPlot.schools) & is.null(sgPlot.districts)) {
          	tmp.schools <- sgPlot.schools 
-		if (is.factor(sgp_object@Data$SCHOOL_NUMBER)) tmp.schools <- as.factor(tmp.schools)
 		tmp.districts <- unique(sgp_object@Data$DISTRICT_NUMBER[sgp_object@Data$SCHOOL_NUMBER %in% tmp.schools]) %w/o% NA
+		sgPlot.demo.report=FALSE
 	}
 
 	if (!is.null(sgPlot.schools) & !is.null(sgPlot.districts)) {
@@ -190,11 +157,28 @@
          	tmp.schools <- sgPlot.schools 
 		tmp.schools <- unique(c(tmp.schools, sgp_object@Data$SCHOOL_NUMBER[sgp_object@Data$DISTRICT_NUMBER %in% tmp.districts])) %w/o% NA
 		tmp.districts <- unique(c(tmp.districts, sgp_object@Data$DISTRICT_NUMBER[sgp_object@Data$SCHOOL_NUMBER %in% tmp.schools])) %w/o% NA
-         	if (is.factor(sgp_object@Data$DISTRICT_NUMBER)) tmp.districts <- as.factor(tmp.districts)
-		if (is.factor(sgp_object@Data$SCHOOL_NUMBER)) tmp.schools <- as.factor(tmp.schools)
+		sgPlot.demo.report=FALSE
 	}
-     } ## END if(is.null(sgPlot.students | sgPlot.demo.report))
- 
+        if (is.factor(sgp_object@Data$DISTRICT_NUMBER)) tmp.districts <- as.factor(tmp.districts)
+	if (is.factor(sgp_object@Data$SCHOOL_NUMBER)) tmp.schools <- as.factor(tmp.schools)
+
+       # Demo report school selector
+
+       if (sgPlot.demo.report) {
+                sgPlot.anonymize <- TRUE
+                tmp.ids <- list()
+                key(sgp_object@Data) <- c("VALID_CASE", "YEAR", "GRADE")
+                for (i in stateData[[state]][["Student_Report_Information"]]$Grades_Reported) {
+                        tmp.ids[[i]] <- as.character(sample(unique(sgp_object@Data[J("VALID_CASE", tmp.last.year, i)]$ID), 10))
+                }
+                if (is.factor(sgp_object@Data$ID)) {
+                        sgPlot.students <- as.factor(unlist(tmp.ids))
+                } else {
+                        sgPlot.students <- as.integer(unlist(tmp.ids))
+                }
+       }
+     } ## END if(is.null(sgPlot.students))
+
 
       ### Utility functions
 
@@ -308,10 +292,10 @@
 	key(tmp.table) <- key(sgp_object@Data) <- names(tmp.table) <- c("ID", "CONTENT_AREA", "YEAR")
 	tmp.table <- sgp_object@Data[tmp.table]
 	if (sgPlot.demo.report) {
-			tmp.table$SCHOOL_NUMBER <- as.integer(tmp.table$SCHOOL_NUMBER) 
-			tmp.table$SCHOOL_NUMBER <- tmp.schools <- -99L
-			tmp.table$DISTRICT_NUMBER <- as.integer(tmp.table$DISTRICT_NUMBER) 
-			tmp.table$DISTRICT_NUMBER <- tmp.districts <- -999L
+		tmp.table$SCHOOL_NUMBER <- as.integer(tmp.table$SCHOOL_NUMBER) 
+		tmp.table$SCHOOL_NUMBER <- tmp.schools <- -99L
+		tmp.table$DISTRICT_NUMBER <- as.integer(tmp.table$DISTRICT_NUMBER) 
+		tmp.table$DISTRICT_NUMBER <- tmp.districts <- -999L
 	}
 
       ### Anonymize (if requested)
@@ -367,7 +351,6 @@
                              paste("SCHOOL_NAME", tmp.last.year, sep="."), paste("SCHOOL_NUMBER", tmp.last.year, sep="."), 
                              paste("DISTRICT_NAME", tmp.last.year, sep="."), paste("DISTRICT_NUMBER", tmp.last.year, sep="."))  
 
-      isr_data <<- isr_data[, variables.to.keep, with=FALSE]
       isr_data <- isr_data[, variables.to.keep, with=FALSE]
       
       ### Merge in 1 year projections (if requested & available) and transform using piecewise.tranform (if required)
@@ -419,6 +402,7 @@
               tmp_district_name <- as.character(isr_data[J(i)][[paste("DISTRICT_NAME", tmp.last.year, sep=".")]][1])
               district_folder <- gsub(" ", "_", paste(tmp_district_name, " (", i, ")", sep=""))
             } else {
+              tmp_district_name <- as.character(isr_data[J(i)][[paste("DISTRICT_NAME", tmp.last.year, sep=".")]][1])
               district_folder <- as.character(i)
             }
           }
@@ -444,6 +428,7 @@
                 tmp_school_name <- as.character(tmp_district_data[J(j)][[paste("SCHOOL_NAME", tmp.last.year, sep=".")]][1])
                 school_folder <- gsub(" ", "_", paste(tmp_school_name, " (", j, ")", sep=""))
               } else {
+                tmp_school_name <- as.character(tmp_district_data[J(j)][[paste("SCHOOL_NAME", tmp.last.year, sep=".")]][1])
                 school_folder <- as.character(j)
               }
             }
@@ -461,11 +446,7 @@
           cat(paste("pdfauthor={", tmp.organization$Name, "/Center for Assessment Inc.},\n", sep=""), 
               "pdfcreator={pdfLaTeX},\n", 
               paste("pdfproducer={", tmp.organization$Name, "/Center for Assessment Inc.}}\n", sep=""), 
-              "\\pdfminorversion=6
-\\pdfobjcompresslevel=3
-\\pdfcompresslevel=9
-\\pdfmapfile{}
-\\begin{document}\n", sep="", file=paste("school_catalog_", j, ".tex", sep=""), append=TRUE)
+              "\\begin{document}\n", sep="", file=paste("school_catalog_", j, ".tex", sep=""), append=TRUE)
           cat(paste("\\pdfbookmark[-1]{", tmp_district_name, "}{", i, "}\n", sep=""), file=paste("school_catalog_", j, ".tex", sep=""), append=TRUE)
           cat(paste("\\pdfbookmark[0]{", tmp_school_name, "}{", j, "}\n", sep=""), file=paste("school_catalog_", j, ".tex", sep=""), append=TRUE)
           ###############################################################################################
@@ -500,23 +481,27 @@
 
             for (n in unique(tmp_grade_data[["ID"]])) {
               tmp_student_data <- tmp_grade_data[ID==n]
-              FIRST_NAME <- gsub(" ", "-", tmp_student_data[[tmp.keys[5]]][1]) 
-              LAST_NAME <- gsub(" ", "-", tmp_student_data[[tmp.keys[4]]][1])
+              FIRST_NAME <- gsub(" |/", "-", tmp_student_data[[tmp.keys[5]]][1]) 
+              LAST_NAME <- gsub(" |/", "-", tmp_student_data[[tmp.keys[4]]][1])
               if (sgPlot.anonymize) {
                 student_number <- 1234567890
               } else {
                 student_number <- n
               }
-
+              if (sgPlot.folder.names=="name" | sgPlot.anonymize) {
+                 file_name <- paste(paste(FIRST_NAME, LAST_NAME, student_number, year_folder, sep="_"), ".pdf", sep="")
+              } else {
+                 file_name <- paste(n, ".pdf", sep="")
+              }
 
               ################################ SCHOOL Report Catalog LaTeX Code ###########################
               if (is.null(sgPlot.front.page)) {
                 cat(paste("\\pdfbookmark[2]{", paste(LAST_NAME, ", ", FIRST_NAME, " (", student_number, ")", sep=""), "}{", n , "}
-\\includepdf[fitpaper=true]{", path.to.pdfs, "/", FIRST_NAME, "_", LAST_NAME, "_", student_number, "_", year_folder, ".pdf}\n", sep=""), 
+\\includepdf[fitpaper=true]{", path.to.pdfs, "/", file_name, "}\n", sep=""), 
                     file=paste("school_catalog_", j, ".tex", sep=""), append=TRUE)
               } else {
                 cat(paste("\\include{", sgPlot.front.page, "}\n\\pdfbookmark[2]{", paste(LAST_NAME, ", ", FIRST_NAME, " (", student_number, ")", sep=""), "}{", n , "}
-\\includepdf[fitpaper=true,pages=2]{", path.to.pdfs, "/", FIRST_NAME, "_", LAST_NAME, "_", student_number, "_", year_folder, ".pdf}\n", sep=""), 
+\\includepdf[fitpaper=true,pages=2]{", path.to.pdfs, "/", file_name, "}\n", sep=""), 
                     file=paste("school_catalog_", j, ".tex", sep=""), append=TRUE)
               }
               ################################################################################################
@@ -530,15 +515,11 @@
               cat(paste("pdfauthor={", tmp.organization$Name, "/Center for Assessment Inc.},\n", sep=""), 
                   "pdfcreator={pdfLaTeX},\n", 
                   paste("pdfproducer={", tmp.organization$Name, "/Center for Assessment Inc.}}\n", sep=""), 
-                  "\\pdfminorversion=6
-\\pdfobjcompresslevel=3
-\\pdfcompresslevel=9
-\\pdfmapfile{}
-\\begin{document}\n", file=paste("student_report_", j, ".tex", sep=""), append=TRUE)
+                  "\\begin{document}\n", file=paste("student_report_", j, ".tex", sep=""), append=TRUE)
               if (!is.null(sgPlot.front.page)) {
                 cat("\\includepdf[fitpaper=true]{", sgPlot.front.page, "}\n", file=paste("student_report_", j, ".tex", sep=""), append=TRUE)
               }
-              cat(paste("\\includepdf[fitpaper=true]{", path.to.pdfs, "/", FIRST_NAME, "_", LAST_NAME, "_", student_number, "_", year_folder, ".pdf}\n", sep=""), 
+              cat(paste("\\includepdf[fitpaper=true]{", path.to.pdfs, "/", file_name, "}\n", sep=""), 
                   file=paste("student_report_", j, ".tex", sep=""), append=TRUE)
 
               cat("\\end{document}", file=paste("student_report_", j, ".tex", sep=""), append=TRUE)
@@ -558,7 +539,7 @@
                 stop("Individual Student Report Templates currently only available for situations with 2 or 3 content areas.")
               }
 
-              pdf(paste(path.to.pdfs, "/", FIRST_NAME, "_", LAST_NAME, "_", student_number, "_", year_folder, ".pdf", sep=""), 
+              pdf(paste(path.to.pdfs, "/", file_name, sep=""), 
                   width=report.width, height=report.height, version="1.4", encoding="ISOLatin2", family="URWHelvetica")
 
 
@@ -626,7 +607,7 @@
 
               pushViewport(bottom.border.vp)
               grid.rect(gp=gpar(fill=sgPlot.header.footer.color, col=sgPlot.header.footer.color))
-              grid.text(x=0.02, y=0.70, paste("For more information please visit", tmp.organization$Name, "at", tmp.organization$URL, "or call", tmp.organization$Phone_Number), 
+              grid.text(x=0.02, y=0.70, paste("For more information please visit the", tmp.organization$Name, "at", tmp.organization$URL, "or call", tmp.organization$Phone_Number), 
                         gp=gpar(cex=0.8, col="white"), default.units="native", just="left")
               copyright.text <- paste("Cooperatively developed by the ", tmp.organization$Name, " & the Center for Assessment, Inc.", sep="")
               grid.text(x=0.02, y=0.30, paste(copyright.text, " Distributed by the ", tmp.organization$Name, ".", sep=""), 
@@ -721,8 +702,7 @@
               ## Code to LaTeX document attaching first page
 
               system(paste("pdflatex -interaction=batchmode student_report_", j, ".tex", sep=""))
-              file.rename(paste("student_report_", j, ".pdf", sep=""), paste(path.to.pdfs, "/", FIRST_NAME, "_", LAST_NAME, "_", student_number, "_", year_folder, ".pdf", sep=""))
-
+              file.rename(paste("student_report_", j, ".pdf", sep=""), paste(path.to.pdfs, "/", file_name, sep=""))
 
             } ## END for loop for STUDENTS (n)
           } ## END for loop for GRADES (k)
@@ -733,7 +713,7 @@
                                                                              paste(year_folder, "_", district_folder, "_", school_folder, "_Individual_SGP_Report_Catalog.pdf", sep="")))
 
           if (sgPlot.cleanup) {
-            files.to.remove <- list.files(pattern="tex|aux|log|out", all.files=TRUE)
+            files.to.remove <- list.files(pattern=as.character(j), all.files=TRUE)
             lapply(files.to.remove, file.remove)
           }
 
