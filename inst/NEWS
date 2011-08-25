@@ -1,3 +1,17 @@
+Changes in version: SGP_0.5-0.0
+
+  o Modified functionality to calculate confidence intervals for SGP. calculate.confidence.intervals argument now accepts state acronym and supplied CSEM variable as part of panel.data
+  o Added Mississippi data to stateData
+  o Refined and corrected minor bug in .get.config in analyzeSGP.
+  o Improved sgpPlot.cleanup to avoid removing files unintentionally.
+  o Refined parallel implementation in analyzeSGP.
+
+
+Changes in version: SGP_0.4-6.0
+
+  o Worked out bug in production of studentGrowthPlots for students with completely missing data.
+  o Added to and corrected stateData for West Virginia.
+
 Changes in version: SGP_0.4-5.0
 
   o Added enhanced check to built in knots and boundaries for states.

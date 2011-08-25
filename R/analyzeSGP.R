@@ -31,12 +31,11 @@ function(sgp_object,
 
 	.get.config <- function(content_area, year, grades) {
 		tmp.data <- sgp_object@Data[J("VALID_CASE", content_area), c("YEAR", "GRADE"), with=FALSE]
-		.sgp.panel.years <- sort(unique(tmp.data$YEAR))[1:which(sort(unique(tmp.data$YEAR)) == year)]
+		tmp.unique.years <- sort(unique(tmp.data$YEAR))
+		.sgp.panel.years <- tmp.unique.years[1:which(tmp.unique.years == year)]
 		.sgp.content.areas <- rep(content_area, length(.sgp.panel.years))
-		.sgp.grade.sequences <- lapply(grades[-1], function(x) tail(grades[grades <= x], length(unique(tmp.data$YEAR))-1))
-		for (g in seq_along(.sgp.grade.sequences)) {
-			.sgp.grade.sequences[[g]]<-.sgp.grade.sequences[[g]][tail(.sgp.grade.sequences[[g]],1)-.sgp.grade.sequences[[g]] <= length(.sgp.panel.years)-1]
-		}
+		tmp.sgp.grade.sequences <- lapply(grades[-1], function(x) tail(grades[grades <= x], length(tmp.unique.years)))
+		.sgp.grade.sequences <- sapply(tmp.sgp.grade.sequences, function(x) x[(tail(x,1)-x) <= length(.sgp.panel.years)-1])
 		list(sgp.content.areas=.sgp.content.areas, sgp.panel.years=.sgp.panel.years, sgp.grade.sequences=.sgp.grade.sequences) 
 	}
 
@@ -63,6 +62,9 @@ function(sgp_object,
 			sgp.vnames <- c("ID", paste("GRADE", sgp.iter[["sgp.panel.years"]], sep="."), 
 				paste("SCALE_SCORE", sgp.iter[["sgp.panel.years"]], sep="."))
 			if (simulate.sgps) {
+				if (!exists("calculate.confidence.intervals")) {
+					calculate.confidence.intervals <- state
+				}
 				for (k in sgp.iter[["sgp.grade.sequences"]]) {
 					tmp_sgp_object <- studentGrowthPercentiles(
 						panel.data=tmp_sgp_object,
@@ -71,10 +73,7 @@ function(sgp_object,
 						growth.levels=state,
 						panel.data.vnames=sgp.vnames,
 						grade.progression=k,
-						calculate.confidence.intervals=list(state=state,  
-							confidence.quantiles=c(0.16,0.84),
-							simulation.iterations=100, 
-							distribution="Normal", round=1),
+						calculate.confidence.intervals=calculate.confidence.intervals,  
 						...)
 				} ## END k loop
 			} else {
@@ -290,11 +289,8 @@ function(sgp_object,
 		
 			if (toupper(parallel.config[["TYPE"]]) == "FOREACH") {
 				require(foreach)
-				if (!is.null(parallel.config[["WORKERS"]])) {
-					cores <- parallel.config[["WORKERS"]]
-				} else cores = getOption("cores")
 				foreach.options <-parallel.config[["OPTIONS"]] # works fine if NULL
-				sgp_object@SGP <- foreach(sgp.iter=iter(sgp.config), .packages="SGP", .combine=".mergeSGP", .inorder=FALSE,
+				sgp_object@SGP <- foreach(sgp.iter=iter(sgp.config), .packages="SGP", .combine=".mergeSGP", .inorder=FALSE, .export="sgp_object",
 					.options.multicore=foreach.options, .options.mpi= foreach.options, .options.redis= foreach.options, .options.smp= foreach.options) %dopar% {
 						return(.analyzeSGP_Internal(sgp.iter))
 				}

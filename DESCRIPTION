@@ -2,8 +2,8 @@ Package: SGP
 Type: Package
 Title: An R Package for the Calculation and Visualization of Student
         Growth Percentiles.
-Version: 0.4-5.0
-Date: 2011-8-15
+Version: 0.5-0.0
+Date: 2011-8-21
 Authors@R: c(person("Damian", "Betebenner",
         email="dbetebenner@nciea.org", role=c("aut", "cre")),
         person("Adam", "Van Iwaarden",
@@ -24,10 +24,10 @@ Author: Damian W. Betebenner <dbetebenner@nciea.org> and Adam Van
         (Wisconsin), Dr. Philip Olsen (Wisconsin), Nick Stroud
         (Wisconsin).
 Maintainer: Damian W. Betebenner <dbetebenner@nciea.org>
-Depends: R (>= 2.10), data.table (>= 1.6.4), foreach, grid, methods,
-        plyr, quantreg, splines
-Suggests: boot, colorspace, multicore, gridBase, pdf2, randomNames (>=
-        0.0-3), sn, snow
+Depends: R (>= 2.12), boot, colorspace, data.table (>= 1.6.4), foreach,
+        grid, gridBase, methods, plyr, randomNames (>= 0.0-3),
+        quantreg, splines
+Suggests: multicore, pdf2, sn, snow
 Description: Functions to calculate student growth percentiles and
         percentile growth projections/trajectories for students using
         large scale, longitudinal assessment data.  Functions use
@@ -46,5 +46,5 @@ LazyLoad: Yes
 LazyData: Yes
 License: CC BY-SA 3.0 US | CC BY-NC-SA 3.0 + file LICENSE
 Repository: CRAN
-Packaged: 2011-08-18 10:18:51 UTC; damian
-Date/Publication: 2011-08-18 15:08:26
+Packaged: 2011-08-25 10:47:19 UTC; damian
+Date/Publication: 2011-08-25 12:16:41

@@ -100,22 +100,22 @@ function(panel.data,         ## REQUIRED
 		}
 	}
 
-    .create.coefficient.matrices <- function(data, k, by.grade) {
-      tmp.data <- .get.panel.data(data, k, by.grade)
-      mod <- character()
-      s4Ks <- "Knots=list("
-      s4Bs <- "Boundaries=list("
-      for (i in rev(tmp.gp)[2:(k+1)]) {
-        .check.knots.boundaries(knot.names, i)
-        knt <- paste("Knots_Boundaries[['", tmp.path.knots.boundaries, "']][['knots_", i, "']]", sep="")
-        bnd <- paste("Knots_Boundaries[['", tmp.path.knots.boundaries, "']][['boundaries_", i, "']]", sep="")
-        mod <- paste(mod, " + bs(SS", i, ", knots=", knt, ", Boundary.knots=", bnd, ")", sep="")
-        s4Ks <- paste(s4Ks, "knots_", i, "=", knt, ",", sep="")
-        s4Bs <- paste(s4Bs, "boundaries_", i, "=", bnd, ",", sep="")
-      }
-      tmp.mtx <- eval(parse(text=paste("rq(SS", tmp.last, " ~ ", substring(mod,4), ", tau=taus, data=tmp.data, method=rq.method)[['coefficients']]", sep="")))
-      eval(parse(text=paste("new('splineMatrix', tmp.mtx, ", substring(s4Ks, 1, nchar(s4Ks)-1), "), ", substring(s4Bs, 1, nchar(s4Bs)-1), "), ", "Date=Sys.time())", sep="")))
-    }
+	.create.coefficient.matrices <- function(data, k, by.grade) {
+		tmp.data <- .get.panel.data(data, k, by.grade)
+		mod <- character()
+		s4Ks <- "Knots=list("
+		s4Bs <- "Boundaries=list("
+		for (i in rev(tmp.gp)[2:(k+1)]) {
+			.check.knots.boundaries(knot.names, i)
+			knt <- paste("Knots_Boundaries[['", tmp.path.knots.boundaries, "']][['knots_", i, "']]", sep="")
+			bnd <- paste("Knots_Boundaries[['", tmp.path.knots.boundaries, "']][['boundaries_", i, "']]", sep="")
+			mod <- paste(mod, " + bs(SS", i, ", knots=", knt, ", Boundary.knots=", bnd, ")", sep="")
+			s4Ks <- paste(s4Ks, "knots_", i, "=", knt, ",", sep="")
+			s4Bs <- paste(s4Bs, "boundaries_", i, "=", bnd, ",", sep="")
+		}
+		tmp.mtx <- eval(parse(text=paste("rq(SS", tmp.last, " ~ ", substring(mod,4), ", tau=taus, data=tmp.data, method=rq.method)[['coefficients']]", sep="")))
+		eval(parse(text=paste("new('splineMatrix', tmp.mtx, ", substring(s4Ks, 1, nchar(s4Ks)-1), "), ", substring(s4Bs, 1, nchar(s4Bs)-1), "), ", "Date=Sys.time())", sep="")))
+		}
 
 	.check.knots.boundaries <- function(names, grade) {
 		tmp <- do.call(rbind, strsplit(names, "_"))
@@ -291,31 +291,36 @@ function(panel.data,         ## REQUIRED
 					textGrob(x=-17, y=50, "Empirical SGP Distribution", default.units="native", gp=gpar(cex=0.7), rot=90, vp="qq")))))
 	} 
 
-	.csem.score.simulator <- function(scale_scores, grade, content_area, year, state, distribution="Normal", round=1) {
+	.csem.score.simulator <- function(scale_scores, grade, content_area, year, state, variable, distribution, round) {
 		GRADE <- CONTENT_AREA <- YEAR <- NULL ## To avoid R CMD check warnings
-		min.max <- stateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area]][[paste("loss.hoss_", grade, sep="")]]
-		if ("YEAR" %in% names(stateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
-			CSEM_Data <- subset(stateData[[state]][["Assessment_Program_Information"]][["CSEM"]], GRADE==grade & CONTENT_AREA==content_area & YEAR==year)
-		} else {
-			CSEM_Data <- subset(stateData[[state]][["Assessment_Program_Information"]][["CSEM"]], GRADE==grade & CONTENT_AREA==content_area)
+		if (is.null(round)) round <- 1
+		if (is.null(distribution)) distribution <- "Normal"
+		if (!is.null(state)) min.max <- stateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area]][[paste("loss.hoss_", grade, sep="")]]
+		if (!is.null(variable)) min.max <- range(scale_scores, na.rm=TRUE)
+		if (!is.null(state)) {
+			if ("YEAR" %in% names(stateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
+				CSEM_Data <- subset(stateData[[state]][["Assessment_Program_Information"]][["CSEM"]], GRADE==grade & CONTENT_AREA==content_area & YEAR==year)
+			} else {
+				CSEM_Data <- subset(stateData[[state]][["Assessment_Program_Information"]][["CSEM"]], GRADE==grade & CONTENT_AREA==content_area)
+			}
+			CSEM_Function <- splinefun(CSEM_Data[["SCALE_SCORE"]], CSEM_Data[["SCALE_SCORE_CSEM"]], method="natural")
+			tmp.scale <- CSEM_Function(scale_scores)
+		} 
+		if (!is.null(variable)) {
+			tmp.scale <- panel.data[[variable]]
 		}
-		CSEM_Data <- stateData[[state]][["Assessment_Program_Information"]][["CSEM"]][
-			stateData[[state]][["Assessment_Program_Information"]][["CSEM"]][["GRADE"]]==grade & 
-			stateData[[state]][["Assessment_Program_Information"]][["CSEM"]][["CONTENT_AREA"]]==content_area,]
-		CSEM_Function <- splinefun(CSEM_Data[["SCALE_SCORE"]], CSEM_Data[["SCALE_SCORE_CSEM"]], method="natural")
-		tmp.scale <- CSEM_Function(scale_scores)
-		tmp.shape <- tan((pi/2)*((min.max[1]+min.max[2]) - 2*scale_scores)/(min.max[2]-min.max[1]))
-		if(distribution=="Skew-Normal") {
-			require(sn) 
-			tmp.score <- round_any(as.numeric(rsn(length(scale_scores), location=scale_scores, scale=tmp.scale, shape=tmp.shape)), round)
+			if(distribution=="Skew-Normal") {
+				require(sn) 
+				tmp.shape <- tan((pi/2)*((min.max[1]+min.max[2]) - 2*scale_scores)/(min.max[2]-min.max[1]))
+				tmp.score <- round_any(as.numeric(rsn(length(scale_scores), location=scale_scores, scale=tmp.scale, shape=tmp.shape)), round)
+			}
+			if(distribution=="Normal") {
+				tmp.score <- round_any(as.numeric(rnorm(length(scale_scores), mean=scale_scores, sd=tmp.scale)), round)
+			}
+			tmp.score[tmp.score < min.max[1]] <- min.max[1]
+			tmp.score[tmp.score > min.max[2]] <- min.max[2]
+			return(tmp.score)
 		}
-		if(distribution=="Normal") {
-			tmp.score <- round_any(as.numeric(rnorm(length(scale_scores), mean=scale_scores, sd=tmp.scale)), round)
-		}
-		tmp.score[tmp.score < min.max[1]] <- min.max[1]
-		tmp.score[tmp.score > min.max[2]] <- min.max[2]
-		return(tmp.score)
-	}
 
 
 	############################################################################
@@ -353,23 +358,31 @@ function(panel.data,         ## REQUIRED
 		tmp.growth.levels <- list()
 		if (!is.list(growth.levels) & !is.character(growth.levels)) {
 			message("growth.levels must be supplied as a list or character abbreviation. See help page for details. studentGrowthPercentiles will be calculated without augmented growth.levels")
+			tf.growth.levels <- FALSE
 		}
 		if (is.list(growth.levels)) {
 			if (!identical(names(growth.levels), c("my.cuts", "my.levels"))) {
 				message("Please specify an appropriate list for growth.levels. See help page for details. Student growth percentiles will be calculated without augmented growth.levels")
+				tf.growth.levels <- FALSE
 			} else {
 				tmp.growth.levels <- growth.levels
+				tf.growth.levels <- TRUE
 			} 
 		}
 		if (is.character(growth.levels)) {
 			if (!growth.levels %in% names(stateData)) {
-				message("Growth Level are currently not specified for the state indicated. Please contact the SGP package administrator to have your state's data included in the package. Student growth percentiles will be calculated without augmented growth.levels")
+				message("Growth Level are currently not specified for the indicated state. Please contact the SGP package administrator to have your state's data included in the package. Student growth percentiles will be calculated without augmented growth.levels")
+				tf.growth.levels <- FALSE
 			} else {
 			tmp.growth.levels[["my.cuts"]] <- stateData[[growth.levels]][["Growth"]][["Cutscores"]][["Cuts"]]
 			tmp.growth.levels[["my.levels"]] <- stateData[[growth.levels]][["Growth"]][["Levels"]]
+				tf.growth.levels <- TRUE
 			}
 		}
+	} else {
+		tf.growth.levels <- FALSE
 	}
+
 	if (!missing(use.my.knots.boundaries)) {
 		if (!is.list(use.my.knots.boundaries) & !is.character(use.my.knots.boundaries)) {
 			stop("use.my.knots.boundaries must be supplied as a list or character abbreviation. See help page for details.")
@@ -437,18 +450,38 @@ function(panel.data,         ## REQUIRED
 	}
 	if (!missing(calculate.confidence.intervals)) {
 		csem.tf <- TRUE
-		if (!is.list(calculate.confidence.intervals)) {
-			message("Please specify an appropriate list for calculate.confidence.intervals. See help page for details. SGPs will be calculated without confidence intervals.")
+		if (!is.character(calculate.confidence.intervals) & !is.list(calculate.confidence.intervals)) {
+			message("Please supply an appropriate state acronym, variable or list containing details to calculate.confidence.intervals. See help page for details. SGPs will be calculated without confidence intervals.")
 			csem.tf <- FALSE
 		}
-		if (!((("state" %in% names(calculate.confidence.intervals)) | ("variable" %in% names(calculate.confidence.intervals))) &
-			c("confidence.quantiles", "simulation.iterations", "distribution", "round") %in% names(calculate.confidence.intervals))) {
-			message("Please specify an appropriate list for calculate.confidence.intervals including state/csem variable, confidence.quantiles, simulation.iterations, distribution and round. See help page for details. SGPs will be calculated without confidence intervals.")
+		if (is.list(calculate.confidence.intervals)) {
+			if (!(("state" %in% names(calculate.confidence.intervals)) | ("variable" %in% names(calculate.confidence.intervals)))) {
+				message("Please specify an appropriate list for calculate.confidence.intervals including state/csem variable, confidence.quantiles, simulation.iterations, distribution and round. See help page for details. SGPs will be calculated without confidence intervals.")
+				csem.tf <- FALSE
+			}
+			if ("variable" %in% names(calculate.confidence.intervals) & missing(panel.data.vnames)) {
+				stop("To utilize a supplied CSEM variable for confidence interval calculation you must specify the variables to be used for student growth percentile calculations with the panel.data.vnames argument. See help page for details.")
+			}
+			if (all(c("state", "variable") %in% names(calculate.confidence.intervals))) {
+				stop("Please specify EITHER a state OR a CSEM variable for SGP confidence interval calculation. See help page for details.")
+			}
+		} 
+		if (is.character(calculate.confidence.intervals)) {
+			if (!calculate.confidence.intervals %in% c(names(stateData), names(panel.data))) {
+				message("Please provide an appropriate state acronym or variable name in supplied data corresponding to CSEMs. See help page for details. SGPs will be calculated without confidence intervals.")
 			csem.tf <- FALSE
+			}
+			if (calculate.confidence.intervals %in% names(stateData)) {
+				calculate.confidence.intervals <- list(state=calculate.confidence.intervals)
+			}
+			if (calculate.confidence.intervals %in% names(panel.data)) {
+				calculate.confidence.intervals <- list(variable=calculate.confidence.intervals)
+			}
 		}
 	} else {
 		csem.tf <- FALSE
 	}
+
 
 	### Create object to store the studentGrowthPercentiles objects
 
@@ -595,29 +628,32 @@ function(panel.data,         ## REQUIRED
 			tmp.predictions <- .get.percentile.predictions(tmp.data, j)
 			tmp.quantiles[[j]] <- data.table(ID=tmp.data[["ID"]], ORDER=j, SGP=.get.quantiles(tmp.predictions, tmp.data[[tail(SS,1)]]))
 			if (csem.tf) {
+				if (is.null(calculate.confidence.intervals$simulation.iterations)) calculate.confidence.intervals$simulation.iterations <- 100
 				for (k in seq(calculate.confidence.intervals$simulation.iterations)) { 
 					set.seed(k)
 					if (k==1) {
 						tmp.csem.quantiles[[j]] <- data.frame(ID=tmp.data[["ID"]],
 						SGP_SIM_1=.get.quantiles(tmp.predictions, .csem.score.simulator(
-							tmp.data[[tail(SS,1)]],
-							tmp.last,
-							sgp.labels$my.subject,
-							sgp.labels$my.year,
-							calculate.confidence.intervals$state,
-							calculate.confidence.intervals$distribution,
-							calculate.confidence.intervals$round)))
+							scale_scores=tmp.data[[tail(SS,1)]],
+							grade=tmp.last,
+							content_area=sgp.labels$my.subject,
+							year=sgp.labels$my.year,
+							state=calculate.confidence.intervals$state,
+							variable=calculate.confidence.intervals$variable,
+							distribution=calculate.confidence.intervals$distribution,
+							round=calculate.confidence.intervals$round)))
 					} else {
 						tmp.csem.quantiles[[j]] <- cbind(tmp.csem.quantiles[[j]], 
 							.get.quantiles(tmp.predictions, .csem.score.simulator(
-								tmp.data[[tail(SS,1)]],
-								tmp.last,
-								sgp.labels$my.subject,
-								sgp.labels$my.year,
-								calculate.confidence.intervals$state,
-								calculate.confidence.intervals$distribution,
-								calculate.confidence.intervals$round)))
-								names(tmp.csem.quantiles[[j]])[k+1]<-paste("SGP_SIM", k, sep="_")
+								scale_scores=tmp.data[[tail(SS,1)]],
+								grade=tmp.last,
+								content_area=sgp.labels$my.subject,
+								year=sgp.labels$my.year,
+								state=calculate.confidence.intervals$state,
+								variable=calculate.confidence.intervals$variable,
+								distribution=calculate.confidence.intervals$distribution,
+								round=calculate.confidence.intervals$round)))
+								names(tmp.csem.quantiles[[j]])[k+1] <- paste("SGP_SIM", k, sep="_")
 					}
 				} ## END k loop
 			} ## END CSEM analysis
@@ -641,7 +677,7 @@ function(panel.data,         ## REQUIRED
 			}
 		}
 
-		if (!missing(growth.levels)) {
+		if (tf.growth.levels) {
 			quantile.data <- data.table(quantile.data, SGP_LEVEL=factor(findInterval(quantile.data[["SGP"]], tmp.growth.levels[["my.cuts"]]), 
 				labels=tmp.growth.levels[["my.levels"]]))
 		}
@@ -650,6 +686,12 @@ function(panel.data,         ## REQUIRED
 			simulation.data <- data.table(rbind.all(tmp.csem.quantiles), key="ID")
 			simulation.data <- simulation.data[c(which(!duplicated(simulation.data))[-1]-1, nrow(simulation.data))]
 
+			if (is.character(calculate.confidence.intervals) | 
+				(is.list(calculate.confidence.intervals) & !("confidence.quantiles" %in% names(calculate.confidence.intervals)))) {
+				tmp.cq <- round(t(apply(simulation.data[, -1, with=FALSE], 1, quantile, probs = c(0.16, 0.84))))
+					colnames(tmp.cq) <- paste("SGP_", c(0.16, 0.84), "_CONFIDENCE_BOUND", sep="")
+					quantile.data <- cbind(quantile.data, tmp.cq)
+			}
 			if (!is.null(calculate.confidence.intervals$confidence.quantiles)) {
 				tmp.cq <- round(t(apply(simulation.data[, -1, with=FALSE], 1, quantile, probs = calculate.confidence.intervals$confidence.quantiles)))
 					colnames(tmp.cq) <- paste("SGP_", calculate.confidence.intervals$confidence.quantiles, "_CONFIDENCE_BOUND", sep="")

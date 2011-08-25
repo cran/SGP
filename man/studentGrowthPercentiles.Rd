@@ -83,8 +83,15 @@ studentGrowthPercentiles(panel.data,
    coefficient matrices to use for student growth percentile calculations. Can be used to calculate baseline referenced student growth percentiles or to calculate student growth percentiles for small groups of excluded students without recalculating an entire set of data. If missing, coefficient matrices are calculated based upon the provided data and stores them in \cr
  \code{panel.data$Coefficient_Matrices$my.year.my.subject} where \code{my.year} and \code{my.subject} are provided by \code{sgp.labels}.
   }
- \item{calculate.confidence.intervals}{A list of the form \code{list(state= , confidence.quantiles= ,} \cr
- \code{simulation.iterations= , distribution= , round= )} specifying the \code{state} from which to use the CSEMs (note, CSEM data must be embedded in stateData set. To have your state CSEMs embedded in the \code{stateData} set, please contact the package administrator), \code{confidence.quantiles} to report from the simulated SGPs calculated for each student, \code{simulation.iterations} indicating the number of simulated SGPs to calculate, \code{distribution} indicating whether to the the \code{Normal} or \code{Skew-Normal} to calculate SGPs, and \code{round} (defaults to 1, which is an integer - see \code{round_any} from \code{plyr} package for details) giving the level to round to. If requested, simulations are calculated and simulated SGPs are stored in \code{panel.data$Simulated_SGPs}.
+ \item{calculate.confidence.intervals}{A character vector providing either a state acronym or a variable name from the supplied panel data. If a state acronym, CSEM tables from the embedded 
+   \code{\link{stateData}} (note: CSEM data must be embedded in the \code{stateData} set. To have your state CSEMs embedd in the \code{stateData} set, please contact the package
+   administrator) will be used. If a variable name, the supplied panel data must contain a variable providing student level CSEMs (e.g., with adaptive testing). NOTE: If a variable
+   name is supplied, the user must also use the argument \code{panel.data.vnames} indicating what variables in the supplied \code{panel.data} will be used for the \code{studentGrowthPercentile} 
+   analysis. For greater control, the user can also supply a list of the form \code{list(state= , confidence.quantiles= , simulation.iterations= , distribution= , round= )} or 
+   \code{list(variable= , confidence.quantiles= , simulation.iterations= , distribution= , round= )} specifying the \code{state} or \code{variable} to use,
+   \code{confidence.quantiles} to report from the simulated SGPs calculated for each student, \code{simulation.iterations} indicating the number of simulated SGPs to calculate, 
+   \code{distribution} indicating whether to the the \code{Normal} or \code{Skew-Normal} to calculate SGPs, and \code{round} (defaults to 1, which is an integer - see \code{round_any} 
+   from \code{plyr} package for details) giving the level to round to. If requested, simulations are calculated and simulated SGPs are stored in \code{panel.data$Simulated_SGPs}.
   } 
   \item{print.other.gp}{Boolean argument (defaults to FALSE) indicating whether growth percentiles of all orders should be returned. The default returns only the highest order growth percentile for each student.
   }
