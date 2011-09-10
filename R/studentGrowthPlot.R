@@ -4,6 +4,7 @@ function(Scale_Scores,               ## List of Scale Scores
                                      ## if supplied Scale_Scores used for text
 	Achievement_Levels,          ## NOTE: Achievement_Levels must/should be supplied as factors with appropriate level codings 
 	SGP,                         ## List of SGPs
+	SGP_Levels,                  ## List of SGP Levels
 	Grades,                      ## List of Grade levels for student
 	Cuts_NY1,                    ## Vector of NY1 cutscores
 	Connect_Points="Arrows",     ## Current "Arrows" or "None"
@@ -42,11 +43,9 @@ ach.level.labels <- function(perlevel){
            return(tmp)
 }
 
-sgp.level.labels <- function(sgp){
-           tmp.int <- findInterval(sgp, growth.level.cutscores)+1
-           tmp <- growth.level.labels[tmp.int]
-           tmp[is.na(tmp)] <- missing.data.symbol
-           return(tmp)
+sgp.level.labels <- function(sgp_level){
+           sgp_level[is.na(sgp_level)] <- missing.data.symbol
+           return(sgp_level)
 }
 
 arrow.color <- function(sgp){
@@ -213,7 +212,7 @@ if (grade.values$year_span == 5) {
                     gp.text <- SGP[4:1]
                     gp.text[which(is.na(SGP[4:1]))] <- missing.data.symbol
 
-                    gp.levels.text <- sgp.level.labels(SGP[4:1])
+                    gp.levels.text <- sgp.level.labels(SGP_Levels[4:1])
 
                     cuts.ny1.text <- rep(NA, number.growth.levels)
 }
@@ -236,7 +235,7 @@ if (grade.values$year_span == 4) {
                     gp.text <- c(SGP[3:1], " ")
                     gp.text[which(is.na(SGP[3:1]))] <- missing.data.symbol
 
-                    gp.levels.text <- c(sgp.level.labels(SGP[3:1]), " ")
+                    gp.levels.text <- c(sgp.level.labels(SGP_Levels[3:1]), " ")
 
                     cuts.ny1.text <- Cuts_NY1
 }
@@ -259,7 +258,7 @@ if (grade.values$year_span == 3) {
                     gp.text <- c(SGP[2:1], rep(" ", 2))
                     gp.text[which(is.na(SGP[2:1]))] <- missing.data.symbol
 
-                    gp.levels.text <- c(sgp.level.labels(SGP[2:1]), rep(" ", 2))
+                    gp.levels.text <- c(sgp.level.labels(SGP_Levels[2:1]), rep(" ", 2))
 
                     cuts.ny1.text <- Cuts_NY1
 }
@@ -282,7 +281,7 @@ if (grade.values$year_span == 2) {
                     gp.text <- c(SGP[1], rep(" ", 3))
                     gp.text[which(is.na(SGP[1]))] <- missing.data.symbol
 
-                    gp.levels.text <- c(sgp.level.labels(SGP[1]), rep(" ", 3))
+                    gp.levels.text <- c(sgp.level.labels(SGP_Levels[1]), rep(" ", 3))
 
                     cuts.ny1.text <- Cuts_NY1
 }
@@ -528,16 +527,16 @@ grid.polygon(x=c(0,1,1,0),
 }
 
 grid.text(x=.9, y=(level_1_curve(xscale.range[1]) + yscale.range[1])/2, names(achievement.level.labels)[1], 
-          gp=gpar(col=border.color, fontface=2, cex=.75), default.units="native", just="right")
+          gp=gpar(col=border.color, fontface=2, fontfamily="Helvetica-Narrow", cex=.75), default.units="native", just="right")
 grid.text(x=.9, y=(eval(parse(text=paste("level_", number.achievement.level.regions-1, "_curve(xscale.range[1])", sep=""))) + yscale.range[2])/2, 
           names(achievement.level.labels)[number.achievement.level.regions], 
-          gp=gpar(col=border.color, fontface=2, cex=.75), default.units="native", just="right")
+          gp=gpar(col=border.color, fontface=2, fontfamily="Helvetica-Narrow", cex=.85), default.units="native", just="right")
 
 if (number.achievement.level.regions > 2) {
     for (i in 2:(number.achievement.level.regions-1)) {
          grid.text(x=.9, y=(eval(parse(text=paste("(level_", i-1, "_curve(xscale.range[1]) + level_", i, "_curve(xscale.range[1]))/2", sep="")))),
                    names(achievement.level.labels)[i], 
-                   gp=gpar(col=border.color, fontface=2, cex=.75), default.units="native", just="right")
+                   gp=gpar(col=border.color, fontface=2, fontfamily="Helvetica-Narrow", cex=.85), default.units="native", just="right")
     }
 }
 
@@ -605,8 +604,8 @@ grid.roundrect(width=unit(0.95, "native"), r=unit(.02, "snpc"), gp=gpar(lwd=1.8,
 
 grid.text(x=.5, y=.875, content.area.label, gp=gpar(col=border.color, cex=1.8, fontface=2, fontfamily="Helvetica-Narrow"), 
           default.units="native") ## For PDF Versions
-grid.text(x=0.08, y=0.75, "Achievement", gp=gpar(col=border.color, cex=.75, fontface=2), default.units="native", just="left")
-grid.text(x=0.08, y=0.525, "Growth", gp=gpar(col=border.color, cex=.75, fontface=2), default.units="native", just="left")
+grid.text(x=0.08, y=0.75, "Achievement", gp=gpar(col=border.color, cex=.85, fontface=2, fontfamily="Helvetica-Narrow"), default.units="native", just="left")
+grid.text(x=0.08, y=0.525, "Growth", gp=gpar(col=border.color, cex=.75, fontface=2, fontfamily="Helvetica-Narrow"), default.units="native", just="left")
 grid.text(x=0.275, y=0.455, "Level", gp=gpar(col=border.color, cex=.6), default.units="native", just="center")
 grid.text(x=0.75, y=0.455, "Percentiles", gp=gpar(col=border.color, cex=.6), default.units="native", just="center")
 

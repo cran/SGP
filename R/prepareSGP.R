@@ -8,7 +8,7 @@
 	started.at <- proc.time()
 	message(paste("Started prepareSGP", date()))
 
-	if (class(data)[1]=="SGP") {
+	if (is.SGP(data)) {
 
 		message(paste("Finished prepareSGP", date(), "in", timetaken(started.at), "\n"))
 
@@ -75,6 +75,10 @@
 	data <- data.table(data)
 	key(data) <- c("VALID_CASE","CONTENT_AREA","YEAR","ID")
 
+	## Create list identifying date and SGP Package version:
+
+	version <- list(SGP_Package_Version=as.character(packageVersion("SGP")), Date_Prepared=date())
+
 	################################################################	
 	## INCLUDE CODE HERE TO HANDLE DUPLICATE CASES
 	################################################################	
@@ -82,7 +86,7 @@
 	
 	##  Create the SGP object
 
-	sgp_object <- new("SGP", Data=data, Names=tmp.var.names)
+	sgp_object <- new("SGP", Data=data, Names=tmp.var.names, Version=version)
 
 	
 	##  Print finish time

@@ -248,7 +248,7 @@ function(panel.data,	## REQUIRED
 		stop("User must supply student achievement data for student growth percentile calculations. See help page for details.")
 	}
 
-	if (!(class(panel.data) %in% c("list", "SGP"))) {
+	if (!is.list(panel.data)) {
 		stop("Supplied panel.data not of a supported class. See help for details of supported classes")
 	} else {
 		if (!(all(c("Panel_Data", "Coefficient_Matrices", "Knots_Boundaries") %in% names(panel.data)))) {
@@ -281,8 +281,8 @@ function(panel.data,	## REQUIRED
 			stop("use.my.knots.boundaries must be supplied as a list or character abbreviation. See help page for details.")
 		}
 		if (is.list(use.my.knots.boundaries)) {
-			if (!(class(panel.data) %in% c("list", "SGP"))) {
-				stop("use.my.knots.boundaries is only appropriate when panel data is of class list or SGP. See help page for details.")
+			if (!is.list(panel.data)) {
+				stop("use.my.knots.boundaries is only appropriate when panel data is of class list. See help page for details.")
 			}
 			if (!identical(names(use.my.knots.boundaries), c("my.year", "my.subject")) & 
 				!identical(names(use.my.knots.boundaries), c("my.year", "my.subject", "my.extra.label"))) {

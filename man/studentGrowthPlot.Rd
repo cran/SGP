@@ -9,6 +9,7 @@ studentGrowthPlot(Scale_Scores,
 	Plotting_Scale_Scores, 
 	Achievement_Levels, 
 	SGP, 
+	SGP_Levels, 
 	Grades, 
 	Cuts_NY1,
 	Connect_Points="Arrows",
@@ -28,6 +29,9 @@ studentGrowthPlot(Scale_Scores,
 	}
 	\item{SGP}{
 		A vector of historical student growth percentiles.
+	}
+	\item{SGP_Levels}{
+		A vector of historical growth (SGP) levels (e.g., low, typical, high).
 	}
 	\item{Grades}{
 		A vector of historical grades student was tested in.
