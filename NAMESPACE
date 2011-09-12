@@ -8,6 +8,7 @@ importFrom("splines", "bs")
 export(
 	"abcSGP",
 	"analyzeSGP",
+	"baselineSGP",
 	"bubblePlot",
 	"bubblePlot_Styles",
 	"combineSGP",
@@ -15,6 +16,7 @@ export(
 	"prepareSGP",
 	"studentGrowthPercentiles",
 	"studentGrowthPlot",
+	"studentGrowthPlot_Styles",
 	"studentGrowthProjections",
 	"summarizeSGP",
 	"viewSummaryGroups",

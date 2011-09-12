@@ -39,7 +39,7 @@ summarizeSGP(sgp_object,
   \item{state}{Acronym indicating state associated with the summaries for access to assessment program information embedded in \code{\link{stateData}}.
   }
   \item{years}{A vector indicating year(s) in which to produce summary tables associated with student growth percentile and percentile growth trajectory/projection analyses. If missing the
-function will use the data to calculate years and produce summaries for all available years.
+function will use the data to calculate years and produce summaries for the most recent three years.
   }
   \item{content_areas}{A vector indicating content area(s) in which to produce student growth percentiles and/or student growth projections/trajectories. 
 If missing the function will use the data to infer the content area(s) available for analyses.

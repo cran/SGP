@@ -49,7 +49,7 @@
     }
     if (missing(years)) {
       for (i in content_areas) {
-        years <- sort(tail(unique(sgp_object@Data[J("VALID_CASE", content_areas)]$YEAR), -2), decreasing=TRUE)
+        years <- sort(tail(unique(sgp_object@Data[J("VALID_CASE", content_areas)]$YEAR), 3), decreasing=TRUE)
       }
     }
 

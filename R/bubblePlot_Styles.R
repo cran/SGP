@@ -323,7 +323,7 @@ if (2 %in% bPlot.styles) {
 
 		# Loop over current & prior and bPlot.levels 
 
-		for (levels.iter in levels(bPlot.data$V1)) {
+		for (levels.iter in levels(factor(bPlot.data$V1))) {
 		for (y.variable.iter in my.iters$tmp.y.variable) { 
 
 		# Create labels
@@ -542,7 +542,7 @@ if (11 %in% bPlot.styles) {
 
 		# Loop over current & prior and bPlot.levels 
 
-		for (levels.iter in levels(bPlot.data$V1)) {
+		for (levels.iter in levels(factor(bPlot.data$V1))) {
 		for (y.variable.iter in my.iters$tmp.y.variable) { 
 
 		# Create labels

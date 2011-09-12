@@ -26,7 +26,9 @@ visualizeSGP(
            bPlot.draft=FALSE,
            bPlot.format="print",
            bPlot.folder="Visualizations/bubblePlots",
+           sgPlot.save.sgPlot.data=FALSE,
            sgPlot.years=NULL,
+           sgPlot.content_areas=NULL,
            sgPlot.districts=NULL,
            sgPlot.schools=NULL,
            sgPlot.students=NULL,
@@ -37,7 +39,9 @@ visualizeSGP(
            sgPlot.fan=TRUE,  
            sgPlot.anonymize=FALSE,
            sgPlot.cleanup=TRUE,
-           sgPlot.demo.report=TRUE,
+           sgPlot.demo.report=FALSE,
+           sgPlot.produce.plots=TRUE,
+           sgPlot.parallel.config=list(TYPE="FOREACH", OPTIONS=list(preschedule=FALSE)),
            gaPlot.years=NULL,
            gaPlot.content_areas=NULL,
            gaPlot.students=NULL,
@@ -88,8 +92,14 @@ achievement as the vertical dimension of the \code{\link{bubblePlot}}.
   }
   \item{bPlot.folder}{Character vector indicating where \code{\link{bubblePlot}}s should be placed. Default folder is "Visualizations/bubblePlots".
   }
+  \item{sgPlot.save.sgPlot.data}{A boolean argument indicating whether wide formatted data should be save as part of indivividual student report production. For operational
+student report production construction, using a wide formatted file for a large state can save in having to reshape the same long file multiple times.
+  }
   \item{sgPlot.years}{A vector indicating year for which to produce \code{\link{studentGrowthPlot}}s. The supplied year indicates the \emph{final} year associated with each
 student's \code{\link{studentGrowthPlot}}. If missing the function will use the last year available in the data to produce \code{\link{studentGrowthPlot}}s.
+  }
+  \item{sgPlot.content_areas}{A vector indicating the content areas for which to produce \code{\link{studentGrowthPlot}}s. If missing, the function will utilize all available
+content areas.
   }
   \item{sgPlot.districts}{A vector indicating which districts to produce \code{\link{studentGrowthPlot}}s for. If missing the function will use \emph{all} available 
 districts in the data to produce \code{\link{studentGrowthPlot}}s.
@@ -101,7 +111,7 @@ schools in the data to produce \code{\link{studentGrowthPlot}}s. If both \code{s
   \item{sgPlot.students}{A vector of student \code{ID}s indicating which students to produce \code{\link{studentGrowthPlot}}s for. If missing the function will 
 use \emph{all} available students in the data to produce \code{\link{studentGrowthPlot}}s. 
   }
-  \item{sgPlot.header.footer.color}{Character vector (defaults to a blue) indicating the color of the header/footer associated with the 
+  \item{sgPlot.header.footer.color}{Character vector (default is blue) indicating the color of the header/footer associated with the 
 \code{\link{studentGrowthPlot}}. Another good color is \code{goldenrod2}.
   }
   \item{sgPlot.front.page}{A path to a PDF to be used as the front page to the \code{\link{studentGrowthPlot}}. The default is missing so that no front page is
@@ -124,6 +134,12 @@ codes available in \code{sgp_object@Data}.
   \item{sgPlot.demo.report}{A boolean argument (defaults to TRUE) indicating whether to just produce a sample \code{\link{studentGrowthPlot}} catalogs. Note: When producing
 \code{\link{studentGrowthPlot}}s for an entire state, considerable resources are required to produce this many reports. We are actively working on parallelizing this functionality
 to reduce report production time by two orders of magnitude.  
+  }
+  \item{sgPlot.produce.plots}{A boolean argument (defaults to TRUE) indicating whether to produce \code{\link{studentGrowthPlot}}s. Useful when one just wants to produce
+wide formatted data without the actual student growth plots. 
+  }
+  \item{sgPlot.parallel.config}{A list indicating the \code{TYPE} of back end used for the parallel computation and \code{OPTIONS} that apply to that parallel back end. Default is to use 
+\code{FOREACH} for the back end with \code{OPTIONS=list(preschedule=FALSE)}
   }
   \item{gaPlot.years}{A vector indicating year for which to produce \code{\link{growthAchievementPlot}}s. If missing the function will use the last year available 
 in the data to produce \code{\link{growthAchievementPlot}}s.

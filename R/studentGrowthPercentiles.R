@@ -335,13 +335,14 @@ function(panel.data,         ## REQUIRED
 	if (!(is.matrix(panel.data) | is.list(panel.data))) {
 		stop("Supplied panel.data not of a supported class. See help for details of supported classes")
 	}
-	if (class(panel.data) %in% c("list", "SGP") & !("Panel_Data" %in% names(panel.data))) {
-		stop("Supplied panel.data missing Panel_Data")
+	if (identical(class(panel.data), "list")) {
+		if (!("Panel_Data" %in% names(panel.data))) {
+			stop("Supplied panel.data missing Panel_Data")
 	}
-	if (class(panel.data) %in% c("list", "SGP")) {
-		if (!is.data.frame(panel.data[["Panel_Data"]])) {
-			stop("Supplied panel.data$Panel_Data is not a data.frame")   
-	}}
+	}
+	if (identical(class(panel.data), "list") & !is.data.frame(panel.data[["Panel_Data"]])) {
+		stop("Supplied panel.data$Panel_Data is not a data.frame")   
+	}
 
 	if (!missing(sgp.labels)) {
 		if (!is.list(sgp.labels)) {
@@ -388,8 +389,8 @@ function(panel.data,         ## REQUIRED
 			stop("use.my.knots.boundaries must be supplied as a list or character abbreviation. See help page for details.")
 		}
 		if (is.list(use.my.knots.boundaries)) {
-			if (!(class(panel.data) %in% c("list", "SGP"))) {
-				stop("use.my.knots.boundaries is only appropriate when panel data is of class list or SGP. See help page for details.")
+			if (!identical(class(panel.data), "list")) {
+				stop("use.my.knots.boundaries is only appropriate when panel data is of class list. See help page for details.")
 			}
 			if (!identical(names(use.my.knots.boundaries), c("my.year", "my.subject")) & 
 				!identical(names(use.my.knots.boundaries), c("my.year", "my.subject", "my.extra.label"))) {
@@ -411,8 +412,8 @@ function(panel.data,         ## REQUIRED
 	}
 
 	if (!missing(use.my.coefficient.matrices)) {
-		if (!(class(panel.data) %in% c("list", "SGP"))) {
-			stop("use.my.coefficient.matrices is only appropriate when panel data is of class list or SGP. See help page for details.")
+		if (!identical(class(panel.data), "list")) {
+			stop("use.my.coefficient.matrices is only appropriate when panel data is of class list. See help page for details.")
 		}
 		if (!is.list(use.my.coefficient.matrices)) {
 			stop("Please specify an appropriate list for use.my.coefficient.matrices. See help page for details.")
@@ -489,7 +490,7 @@ function(panel.data,         ## REQUIRED
 
 	for (i in tmp.objects) {
 		assign(i, list())
-		if (class(panel.data) %in% c("SGP", "list")) {
+		if (identical(class(panel.data), "list")) {
 			if (!is.null(panel.data[[i]])) {
 				assign(i, panel.data[[i]])
 		}}
@@ -508,7 +509,7 @@ function(panel.data,         ## REQUIRED
 	if (identical(class(panel.data), "data.frame")) {
 		Panel_Data <- panel.data
 	}
-	if (class(panel.data) %in% c("list", "SGP")) {
+	if (identical(class(panel.data), "list")) {
 		Panel_Data <- panel.data[["Panel_Data"]]
 	} 
 
