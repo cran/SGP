@@ -26,11 +26,17 @@ across years with the results being used to produce a variety of high quality vi
     \item{\code{ELL_STATUS}}{Student English Language Learner status}
     \item{\code{IEP_STATUS}}{Student Individual Education Plan status}
     \item{\code{GIFTED_AND_TALENTED_PROGRAM_STATUS}}{Student Gifted and Talented Program status}
+    \item{\code{INSTRUCTOR_NUMBER_1}}{First instructor number associated with student record}
+    \item{\code{INSTRUCTOR_NUMBER_2}}{Second instructor number associated with student record}
     \item{\code{SCHOOL_NUMBER}}{School number associated with student record}
     \item{\code{SCHOOL_NAME}}{School name associated with school number and student record}
     \item{\code{EMH_LEVEL}}{Elementary, Middle, High school indicator for school attended}
     \item{\code{DISTRICT_NUMBER}}{District number associated with student record}
     \item{\code{DISTRICT_NAME}}{District name associated with school number and student record}
+    \item{\code{INSTRUCTOR_1_ENROLLMENT_STATUS}}{Indicator of enrollment status for instructor 1}
+    \item{\code{INSTRUCTOR_2_ENROLLMENT_STATUS}}{Indicator of enrollment status for instructor 2}
+    \item{\code{INSTRUCTOR_1_WEIGHT}}{Proporational weight associated with instructor 1}
+    \item{\code{INSTRUCTOR_2_WEIGHT}}{Proporational weight associated with instructor 2}
     \item{\code{SCHOOL_ENROLLMENT_STATUS}}{Indicator of full academic year student enrollment in school}
     \item{\code{DISTRICT_ENROLLMENT_STATUS}}{Indicator of full academic year student enrollment in school}
     \item{\code{STATE_ENROLLMENT_STATUS}}{Indicator of full academic year student enrollment in school}

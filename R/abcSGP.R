@@ -8,7 +8,9 @@ function(sgp_object,
 	sgp.percentiles=TRUE, 
 	sgp.projections=TRUE,
 	sgp.projections.lagged=TRUE,
-	sgp.percentiles.baseline=FALSE,
+	sgp.percentiles.baseline=TRUE,
+	sgp.projections.baseline=TRUE,
+	sgp.projections.lagged.baseline=TRUE,
 	simulate.sgps=TRUE,
 	parallel.config,
 	save.intermediate.results=FALSE,
@@ -89,6 +91,8 @@ function(sgp_object,
 			sgp.projections=sgp.projections,
 			sgp.projections.lagged=sgp.projections.lagged,
 			sgp.percentiles.baseline=sgp.percentiles.baseline,
+			sgp.projections.baseline=sgp.projections.baseline,
+			sgp.projections.lagged.baseline=sgp.projections.lagged.baseline,
 			simulate.sgps=simulate.sgps,
 			parallel.config = parallel.config)
 
@@ -105,7 +109,8 @@ function(sgp_object,
 			years=years,
 			content_areas=content_areas,
 			sgp.percentiles=sgp.percentiles,
-			sgp.projections.lagged=sgp.projections.lagged)
+			sgp.projections.lagged=sgp.projections.lagged,
+			sgp.projections.lagged.baseline=sgp.projections.lagged.baseline)
 
                 if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}
@@ -137,6 +142,7 @@ function(sgp_object,
 			state=state,
 			bPlot.years=years,
 			sgPlot.years=years,
+			sgPlot.demo.report=TRUE,
 			gaPlot.years=years,
 			bPlot.content_areas=content_areas,
 			gaPlot.content_areas=content_areas)

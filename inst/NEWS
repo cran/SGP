@@ -1,3 +1,29 @@
+Changes in version: SGP_0.7-0.0
+
+  o ETHNICITY and GENDER variables are no longer required to create anonymized (random name) student growth plots. Dummy values are created if missing. 
+  o Began outputSGP as a function to faciliate output of SGP results in common formats. 
+  o Added robust parallelism to analyzeSGP to better facilitate analysis of large scale data sets on multi-core/multi-cpu environments. 
+  o Added functionality to combineSGP to merge in baseline student growth percentiles and baseline student growth percentile targets.
+  o Added functionality to analyzeSGP to calculate baseline student growth projections and lagged baseline student growth projections.
+  o Fixed a bug preventing use of provided CSEM variable when supplied as an addition variable in the supplied data.frame.
+  o Fixed a bug in visualizeSGP for studentGrowthPlot production when sgPlot.years is supplied.
+  o Refined scale score axis span and labels in growth achievement plot. 
+  o Changed goodness.of.fit default to TRUE with the calculation of baseline student growh percentiles. 
+  o Added state test abbreviation to main title of bubble plots. 
+  o Refined analyzeSGP and baselineSGP to deal with non-consecutive grades when calculating baseline referenced student growth percentiles. 
+  o Added Utah data to stateData. 
+  o Fixed naming issue in bubblePlot_Style 2. 
+  o Fixed bugs impacting states with non-uniform cutscores by year in bubblePlot_Styles and studentGrowthPlot (Thanks Juan D'Brot). 
+  o Fixed a bug preventing users from using their own supplied list of cutscores (Thanks Katherine Castellano). 
+  o Added baseline coefficient matrices for Massachusetts to stateData and changed cutscores to match gtheta values used in SGP calculations. 
+  o Added dummy instructor numbers, weights, and enrollment status to sgpData_LONG. 
+  o Changed "Date" slot to "Version" slot in splineMatrix class so that SGP version meta-data was available and consistent with SGP class.
+  o Improved goodness of fit color function that avoids errors when empty cells (i.e., color=NA) occur because of badly misfit data.
+
+Changes in version: SGP_0.6-1.0
+
+  o Added check on file name to bubblePlot to remove forward slashes "/".
+
 Changes in version: SGP_0.6-0.0
 
   o Removed modulo score transformation from stateData as piecewise.transform takes care of this internally.
@@ -11,8 +37,8 @@ Changes in version: SGP_0.6-0.0
 
 Changes in version: SGP_0.5-0.0
 
-  o Modified functionality to calculate confidence intervals for SGP. calculate.confidence.intervals argument now accepts state acronym and supplied CSEM variable as part of panel.data
-  o Added Mississippi data to stateData
+  o Modified functionality to calculate confidence intervals for SGP. calculate.confidence.intervals argument now accepts state acronym and supplied CSEM variable as part of panel.data.
+  o Added Mississippi data to stateData.
   o Refined and corrected minor bug in .get.config in analyzeSGP.
   o Improved sgpPlot.cleanup to avoid removing files unintentionally.
   o Refined parallel implementation in analyzeSGP.
@@ -78,7 +104,7 @@ Changes in version: SGP_0.3-0.0
 
 Changes in version: SGP_0.2-1.0
 
-  o Added functionality to auto-detect state names based upon SGP object name convention: State_Data (e.g. ,Colorado_Data) 
+  o Added functionality to auto-detect state names based upon SGP object name convention: State_Data (e.g. ,Colorado_Data). 
   o Fixed bug allowing users to specify multiple sgp.summaries in summarizeSGP. 
   o Corrected error in achievement level labels in Nevada state data. 
 

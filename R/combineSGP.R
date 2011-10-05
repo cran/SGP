@@ -4,7 +4,9 @@
            years,
            content_areas,
            sgp.percentiles=TRUE,
+           sgp.percentiles.baseline=TRUE,
            sgp.projections.lagged=TRUE,
+           sgp.projections.lagged.baseline=TRUE,
            max.lagged.sgp.target.years.forward=4
            ) {
 
@@ -62,10 +64,33 @@
     }
 
 
+    ## Merge Baseline SGPs with student data
+    
+    if (sgp.percentiles.baseline) { 
+      tmp.list <- list() 
+      tmp.names <- do.call(paste, c(expand.grid(content_areas, years), sep="."))
+      for (i in paste(tmp.names, "BASELINE", sep=".")) {
+        names(sgp_object@SGP[["SGPercentiles"]][[i]])[-1] <- paste(names(sgp_object@SGP[["SGPercentiles"]][[i]])[-1], "BASELINE", sep="_")
+        tmp.list[[i]] <- data.table(CONTENT_AREA=unlist(strsplit(i, "[.]"))[1],
+                                    YEAR=type.convert(unlist(strsplit(i, "[.]"))[2]),
+                                    sgp_object@SGP[["SGPercentiles"]][[i]])
+      }
 
-    ## Create SGP targets and merge with student data
+      if (length(grep("SGP_BASELINE", names(sgp_object@Data)))==0) {
+          sgp_object@Data <- data.table(rbind.all(tmp.list), VALID_CASE=factor(1, levels=1:2, labels=c("VALID_CASE", "INVALID_CASE")),
+              key=paste(key(sgp_object@Data), collapse=","))[sgp_object@Data]
+      } else {
+          sgp_object@Data[CJ("VALID_CASE", content_areas, years)] <- data.table(rbind.all(tmp.list), VALID_CASE=factor(1, levels=1:2, labels=c("VALID_CASE", "INVALID_CASE")), 
+              key=paste(key(sgp_object@Data), collapse=","))[sgp_object@Data[CJ("VALID_CASE", content_areas, years),  
+              names(sgp_object@Data) %w/o% ((names(tmp.list[[1]]) %w/o% c("CONTENT_AREA", "YEAR", "ID"))), with=FALSE]][, names(sgp_object@Data), with=FALSE]
+      }
+    }
 
-    if (sgp.projections.lagged) { 
+
+
+    ## Create SGP targets (Cohort referenced) and merge with student data
+
+    if (sgp.projections.lagged | sgp.projections.lagged.baseline) { 
 
       level.to.get <- which.max(stateData[[state]][["Achievement"]][["Levels"]][["Proficient"]]=="Proficient")-1
 
@@ -84,28 +109,28 @@
 
       ## Merge Relevant Targets with CATCH_UP_KEEP_UP_STATUS_INITIAL
 
-      tmp.list <- list()
-      key(sgp_object@Data) <- c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID")
-      tmp.names <- do.call(paste, c(expand.grid(content_areas, years, "LAGGED"), sep="."))
-      for (i in tmp.names) {
-        cols.to.get <- grep(paste("LEVEL_", level.to.get, sep=""), names(sgp_object@SGP[["SGProjections"]][[i]]))
-        num.cols.to.get <- min(max.lagged.sgp.target.years.forward, length(cols.to.get))
-        tmp.list[[i]] <- data.table(CONTENT_AREA=unlist(strsplit(i, "[.]"))[1],
+      if (sgp.projections.lagged) {
+
+         tmp.list <- list()
+         key(sgp_object@Data) <- c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID")
+         tmp.names <- do.call(paste, c(expand.grid(content_areas, years, "LAGGED"), sep="."))
+         for (i in tmp.names) {
+           cols.to.get <- grep(paste("LEVEL_", level.to.get, sep=""), names(sgp_object@SGP[["SGProjections"]][[i]]))
+           num.cols.to.get <- min(max.lagged.sgp.target.years.forward, length(cols.to.get))
+           tmp.list[[i]] <- data.table(CONTENT_AREA=unlist(strsplit(i, "[.]"))[1],
                                     YEAR=type.convert(unlist(strsplit(i, "[.]"))[2]),
                                     sgp_object@SGP[["SGProjections"]][[i]][,c(1,cols.to.get[1:num.cols.to.get])])
-      }
+         }
 
-      tmp_object_1 <- sgp_object@Data[, c(key(sgp_object@Data), "CATCH_UP_KEEP_UP_STATUS_INITIAL"), with=FALSE][
-        data.table(VALID_CASE=factor(1, levels=1:2, labels=c("VALID_CASE", "INVALID_CASE")), rbind.all(tmp.list),key=paste(key(sgp_object@Data), collapse=","))][
-        !is.na(CATCH_UP_KEEP_UP_STATUS_INITIAL)]
+         tmp_object_1 <- sgp_object@Data[, c(key(sgp_object@Data), "CATCH_UP_KEEP_UP_STATUS_INITIAL"), with=FALSE][
+           data.table(VALID_CASE=factor(1, levels=1:2, labels=c("VALID_CASE", "INVALID_CASE")), rbind.all(tmp.list),key=paste(key(sgp_object@Data), collapse=","))][
+           !is.na(CATCH_UP_KEEP_UP_STATUS_INITIAL)]
 
-      ## Find min/max of targets based upon CATCH_UP_KEEP_UP_STATUS_INITIAL status
+         ## Find min/max of targets based upon CATCH_UP_KEEP_UP_STATUS_INITIAL status
 
       VALID_CASE <- NULL
       catch_keep_functions <- c(min, max)
-###      jExpression <- parse(text=paste("quote({catch_keep_functions[[unclass(CATCH_UP_KEEP_UP_STATUS_INITIAL)]](",paste(names(tmp_object_1)[grep("LEVEL", names(tmp_object_1))], collapse=", "),", na.rm=TRUE)})", sep=""))
       jExpression <- parse(text=paste("{catch_keep_functions[[unclass(CATCH_UP_KEEP_UP_STATUS_INITIAL)]](",paste(names(tmp_object_1)[grep("LEVEL", names(tmp_object_1))], collapse=", "),", na.rm=TRUE)}", sep=""))
-###      tmp_object_2 <- tmp_object_1[, eval(eval(jExpression)), by=list(ID, CONTENT_AREA, YEAR, VALID_CASE)]
       tmp_object_2 <- tmp_object_1[, eval(jExpression), by=list(ID, CONTENT_AREA, YEAR, VALID_CASE)]
       names(tmp_object_2)[dim(tmp_object_2)[2]] <- "SGP_TARGET"
       key(tmp_object_2) <- key(sgp_object@Data)
@@ -116,6 +141,43 @@
            sgp_object@Data[CJ("VALID_CASE", content_areas, years)] <- tmp_object_2[sgp_object@Data[CJ("VALID_CASE", content_areas, years),  
               names(sgp_object@Data) %w/o% ((names(tmp_object_2) %w/o% c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))), with=FALSE]][, names(sgp_object@Data), with=FALSE]
       }
+    }
+
+    if (sgp.projections.lagged.baseline) {
+
+         tmp.list <- list()
+         key(sgp_object@Data) <- c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID")
+         tmp.names <- do.call(paste, c(expand.grid(content_areas, years, "LAGGED.BASELINE"), sep="."))
+         for (i in tmp.names) {
+           cols.to.get <- grep(paste("LEVEL_", level.to.get, sep=""), names(sgp_object@SGP[["SGProjections"]][[i]]))
+           num.cols.to.get <- min(max.lagged.sgp.target.years.forward, length(cols.to.get))
+           tmp.list[[i]] <- data.table(CONTENT_AREA=unlist(strsplit(i, "[.]"))[1],
+                                    YEAR=type.convert(unlist(strsplit(i, "[.]"))[2]),
+                                    sgp_object@SGP[["SGProjections"]][[i]][,c(1,cols.to.get[1:num.cols.to.get])])
+         }
+
+         tmp_object_1 <- sgp_object@Data[, c(key(sgp_object@Data), "CATCH_UP_KEEP_UP_STATUS_INITIAL"), with=FALSE][
+           data.table(VALID_CASE=factor(1, levels=1:2, labels=c("VALID_CASE", "INVALID_CASE")), rbind.all(tmp.list),key=paste(key(sgp_object@Data), collapse=","))][
+           !is.na(CATCH_UP_KEEP_UP_STATUS_INITIAL)]
+
+         ## Find min/max of targets based upon CATCH_UP_KEEP_UP_STATUS_INITIAL status
+
+      VALID_CASE <- NULL
+      catch_keep_functions <- c(min, max)
+      jExpression <- parse(text=paste("{catch_keep_functions[[unclass(CATCH_UP_KEEP_UP_STATUS_INITIAL)]](",paste(names(tmp_object_1)[grep("LEVEL", names(tmp_object_1))], collapse=", "),", na.rm=TRUE)}", sep=""))
+      tmp_object_2 <- tmp_object_1[, eval(jExpression), by=list(ID, CONTENT_AREA, YEAR, VALID_CASE)]
+      names(tmp_object_2)[dim(tmp_object_2)[2]] <- "SGP_TARGET_BASELINE"
+      key(tmp_object_2) <- key(sgp_object@Data)
+
+      if (length(grep("SGP_TARGET_BASELINE", names(sgp_object@Data)))==0) {
+           sgp_object@Data <- tmp_object_2[sgp_object@Data]
+      } else {
+           sgp_object@Data[CJ("VALID_CASE", content_areas, years)] <- tmp_object_2[sgp_object@Data[CJ("VALID_CASE", content_areas, years),  
+              names(sgp_object@Data) %w/o% ((names(tmp_object_2) %w/o% c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))), with=FALSE]][, names(sgp_object@Data), with=FALSE]
+      }
+    }
+
+    if (sgp.projections.lagged) {
 
       ## Create CATCH_UP_KEEP_UP_STATUS variable
 
@@ -156,8 +218,9 @@
                                                       sgp_object@Data$GRADE == max(sgp_object@Data$GRADE[!is.na(sgp_object@Data$SGP_TARGET)])] <- "Keep Up: Yes"
 
       sgp_object@Data$CATCH_UP_KEEP_UP_STATUS <- factor(sgp_object@Data$CATCH_UP_KEEP_UP_STATUS)
+   } 
 
-    } ## END sgp.projections.lagged=TRUE
+   } ## END sgp.projections.lagged | sgp.projections.lagged.baseline
 
     key(sgp_object@Data) <- c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID")
 

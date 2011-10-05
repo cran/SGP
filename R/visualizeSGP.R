@@ -21,6 +21,7 @@
            sgPlot.districts=NULL,
            sgPlot.schools=NULL,
            sgPlot.students=NULL,
+           sgPlot.reports.by.student=FALSE,
            sgPlot.header.footer.color="#4CB9CC",
            sgPlot.front.page=NULL,
            sgPlot.folder="Visualizations/studentGrowthPlots",
@@ -348,7 +349,7 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 		tmp.last.year <- tail(tmp.years, 1)
 	} else {
 		tmp.all.years <- sort(unique(sgp_object@Data[J("VALID_CASE")][["YEAR"]])) 
-		tmp.years <- tail(tmp.all.years[1:which(tmp.all.years==sgPlot.years)], 5)
+		tmp.years <- tail(tmp.all.years[1:which(tmp.all.years==tail(sort(sgPlot.years), 1))], 5)
 		tmp.last.year <- tail(tmp.years, 1)
 	}
 
@@ -370,8 +371,9 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 			sgPlot.anonymize <- TRUE
 			tmp.ids <- list()
 			key(sgp_object@Data) <- c("VALID_CASE", "YEAR", "GRADE")
-			for (i in stateData[[state]][["Student_Report_Information"]]$Grades_Reported) {
-				tmp.ids[[i]] <- as.character(sample(unique(sgp_object@Data[J("VALID_CASE", tmp.last.year, i)]$ID), 10))
+			tmp.grades.reported <- stateData[[state]][["Student_Report_Information"]]$Grades_Reported
+			for (i in seq_along(tmp.grades.reported)) {
+				tmp.ids[[i]] <- as.character(sample(unique(sgp_object@Data[J("VALID_CASE", tmp.last.year, tmp.grades.reported[i])]$ID), 10))
 			}
 			sgp_object@Data$SCHOOL_NUMBER <- as.integer(sgp_object@Data$SCHOOL_NUMBER)
 			sgp_object@Data$SCHOOL_NUMBER[sgp_object@Data$ID %in% unlist(tmp.ids)] <- -99L
@@ -465,6 +467,8 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
      
 		if (sgPlot.anonymize) {
 			require(randomNames)
+			if (!"ETHNICITY" %in% names(tmp.table)) tmp.table[["ETHNICITY"]] <- 1
+			if (!"GENDER" %in% names(tmp.table)) tmp.table[["GENDER"]] <- round(runif(dim(tmp.table)[1], min=0, max=1))
 			tmp.dt <- tmp.table[,list(ID, ETHNICITY, GENDER)]
 			key(tmp.dt) <- "ID"
 			tmp.dt <- tmp.dt[!duplicated(tmp.dt),]
@@ -544,7 +548,7 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 
 if (sgPlot.save.sgPlot.data) {
 	key(sgPlot.data) <- c("ID")
-	tmp.file.name <- paste(c(state.name, "Demonstration")[which(state==c(state.abb, "DEMO"))], "ISR_Data", sep="_")
+	tmp.file.name <- paste(c(gsub(" ", "_", state.name), "Demonstration")[which(state==c(state.abb, "DEMO"))], "ISR_Data", sep="_")
 	assign(tmp.file.name, sgPlot.data)
 	save(list=tmp.file.name, file=paste(tmp.file.name, ".Rdata", sep=""))
 }
@@ -553,7 +557,6 @@ if (sgPlot.save.sgPlot.data) {
 
 if (sgPlot.produce.plots) {
 	if (is.null(sgPlot.students) | length(sgPlot.students) > 100) { ### Parallel processing only when lots of students
-
 		tmp.iter <- list()
 		for (k in 1:dim(tmp.districts.and.schools)[1]) {
 			tmp.iter[[k]] <- list(Districts=tmp.districts.and.schools[k][["DISTRICT_NUMBER"]], Schools=tmp.districts.and.schools[k][["SCHOOL_NUMBER"]])
@@ -571,7 +574,7 @@ if (sgPlot.produce.plots) {
 							content_areas=tmp.content_areas,
 							districts=district.school.iter$Districts,
 							schools=district.school.iter$Schools,
-							reports.by.student=!is.null(sgPlot.students),
+							reports.by.student=sgPlot.reports.by.student,
 							sgPlot.years=tmp.years,
 							sgPlot.folder=sgPlot.folder,
 							sgPlot.folder.names=sgPlot.folder.names,
@@ -584,13 +587,14 @@ if (sgPlot.produce.plots) {
 			}
 		}
 	} else {
-		studentGrowthPlot_Styles(sgPlot.data=sgPlot.data,
+		studentGrowthPlot_Styles(
+			sgPlot.data=sgPlot.data,
 			state=state,
 			last.year=tmp.last.year,
 			content_areas=tmp.content_areas,
 			districts=tmp.districts.and.schools[["DISTRICT_NUMBER"]],
 			schools=tmp.districts.and.schools[["SCHOOL_NUMBER"]],
-			reports.by.student=!is.null(sgPlot.students),
+			reports.by.student=sgPlot.reports.by.student,
 			sgPlot.years=tmp.years,
 			sgPlot.folder=sgPlot.folder,
 			sgPlot.folder.names=sgPlot.folder.names,

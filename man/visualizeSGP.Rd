@@ -32,6 +32,7 @@ visualizeSGP(
            sgPlot.districts=NULL,
            sgPlot.schools=NULL,
            sgPlot.students=NULL,
+           sgPlot.reports.by.student=FALSE,
            sgPlot.header.footer.color="#4CB9CC",
            sgPlot.front.page=NULL,
            sgPlot.folder="Visualizations/studentGrowthPlots",
@@ -110,6 +111,9 @@ schools in the data to produce \code{\link{studentGrowthPlot}}s. If both \code{s
   }
   \item{sgPlot.students}{A vector of student \code{ID}s indicating which students to produce \code{\link{studentGrowthPlot}}s for. If missing the function will 
 use \emph{all} available students in the data to produce \code{\link{studentGrowthPlot}}s. 
+  }
+  \item{sgPlot.reports.by.student}{A boolean variable indicating whether the reports should be collated as single reports in a single folder or deposited into a district/school/grade folder 
+hierarchy. The default is FALSE which puts the reports into their appropriate district/school/grade slot. 
   }
   \item{sgPlot.header.footer.color}{Character vector (default is blue) indicating the color of the header/footer associated with the 
 \code{\link{studentGrowthPlot}}. Another good color is \code{goldenrod2}.
