@@ -60,19 +60,19 @@
 		my.labels <- list()
 		my.labels$x.year.label <- pretty_year(year.iter)
 		if (length(grep("PRIOR", y.variable.iter)) > 0) {
-			y.year <- paste(as.numeric(unlist(strsplit(as.character(year.iter), "_")))-1, collapse="-")
-			if (bubblePlot_LEVEL=="Summary") my.labels$y.year.label <- paste(y.year, "Prior Percent at/above Proficient")
-			if (bubblePlot_LEVEL=="Individual") my.labels$y.year.label <- paste(y.year, "Prior Achievement Level")
-			if (bubblePlot_LEVEL=="Summary") my.labels$main.title <- "Growth and Prior Achievement"
-			if (bubblePlot_LEVEL=="Individual") my.labels$main.title <- "Growth and Prior Achievement"
+			my.labels$y.year <- paste(as.numeric(unlist(strsplit(as.character(year.iter), "_")))-1, collapse="_")
+			if (bubblePlot_LEVEL=="Summary") my.labels$y.year.label <- paste(pretty_year(my.labels$y.year), "Prior Percent at/above Proficient")
+			if (bubblePlot_LEVEL=="Individual") my.labels$y.year.label <- paste(pretty_year(my.labels$y.year), "Prior Achievement Level")
+			if (bubblePlot_LEVEL=="Summary") my.labels$main.title <- paste(test.abbreviation.label, "Growth and Prior Achievement")
+			if (bubblePlot_LEVEL=="Individual") my.labels$main.title <- paste(test.abbreviation.label, "Growth and Prior Achievement")
 			if (bubblePlot_LEVEL=="Summary") my.labels$pdf.title <- "Bubble_Plot_(Prior_Achievement)"
 			if (bubblePlot_LEVEL=="Individual") my.labels$pdf.title <- "Student_Bubble_Plot_(Prior_Achievement)"
 		} else {
-			y.year <- pretty_year(year.iter)
-			if (bubblePlot_LEVEL=="Summary") my.labels$y.year.label <- paste(y.year, "Percent at/above Proficient")
-			if (bubblePlot_LEVEL=="Individual") my.labels$y.year.label <- paste(y.year, "Achievement Level")
-			if (bubblePlot_LEVEL=="Summary") my.labels$main.title <- "Growth and Achievement"
-			if (bubblePlot_LEVEL=="Individual") my.labels$main.title <- "Growth and Achievement"
+			my.labels$y.year <- year.iter
+			if (bubblePlot_LEVEL=="Summary") my.labels$y.year.label <- paste(pretty_year(my.labels$y.year), "Percent at/above Proficient")
+			if (bubblePlot_LEVEL=="Individual") my.labels$y.year.label <- paste(pretty_year(my.labels$y.year), "Achievement Level")
+			if (bubblePlot_LEVEL=="Summary") my.labels$main.title <- paste(test.abbreviation.label, "Growth and Achievement")
+			if (bubblePlot_LEVEL=="Individual") my.labels$main.title <- paste(test.abbreviation.label, "Growth and Achievement")
 			if (bubblePlot_LEVEL=="Summary") my.labels$pdf.title <- "Bubble_Plot_(Current_Achievement)"
 			if (bubblePlot_LEVEL=="Individual") my.labels$pdf.title <- "Student_Bubble_Plot_(Current_Achievement)"
 		}
@@ -329,7 +329,6 @@ if (2 %in% bPlot.styles) {
 		# Create labels
 
 		bPlot.labels <- create.bPlot.labels(year.iter, y.variable.iter, bubblePlot_LEVEL) 
-		district.name.label <- as.character(bPlot.data[DISTRICT_NUMBER==district_number.iter]$DISTRICT_NAME[1])
 
 		### Create bubblePlot ###
 
@@ -351,7 +350,7 @@ if (2 %in% bPlot.styles) {
 				paste(bPlot.labels$y.year.label, " (Count)")),
 			bubble_plot_labels.BUBBLE_TITLES=bPlot.data[["SCHOOL_NAME"]],
 			bubble_plot_titles.MAIN=bPlot.labels$main.title,
-			bubble_plot_titles.SUB1=paste(district.name.label, "School Performance"),
+			bubble_plot_titles.SUB1=paste(state.name.label, "School Performance"),
 			bubble_plot_titles.SUB2=paste(bPlot.labels$x.year.label, test.abbreviation.label, capwords(content_area.iter)),
 			bubble_plot_titles.LEGEND1="School Size",
 			bubble_plot_titles.LEGEND2_P1="Percentage Students",
@@ -623,6 +622,26 @@ if (100 %in% bPlot.styles) {
 		started.at <- proc.time()
 		message(paste("Started bubblePlot Style 100", date()), "\n")
 
+		### Utility functions
+
+		get.my.cutscore.year <- function(state, content_area, year) {
+			tmp.cutscore.years <- sapply(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]])[
+				grep(content_area, names(stateData[[state]][["Achievement"]][["Cutscores"]]))], "[.]"), function(x) x[2])
+			if (any(!is.na(tmp.cutscore.years))) {
+				if (year %in% tmp.cutscore.years) {
+					return(paste(content_area, year, sep="."))
+				} else {
+					if (year==sort(c(year, tmp.cutscore.years))[1]) {
+						return(content_area)
+					} else {
+						return(paste(content_area, rev(sort(tmp.cutscore.years))[1], sep="."))
+					}
+				}
+			} else {
+				return(content_area)
+			}
+		}
+
 		### Create Prior Scale Score (if requested)
 
 		if (bPlot.prior.achievement) {
@@ -648,17 +667,16 @@ if (100 %in% bPlot.styles) {
 		
 		# Subset data
 
-		tmp.bPlot.data <- sgp_object@Data[J(year.iter, content_area.iter, my.iters$tmp.districts[district.iter])]
+		tmp.bPlot.data.1 <- sgp_object@Data[J(year.iter, content_area.iter, my.iters$tmp.districts[district.iter])]
 
-		tmp.unique.schools <- my.iters$tmp.schools[my.iters$tmp.schools %in% unique(tmp.bPlot.data$SCHOOL_NUMBER)]
+		tmp.unique.schools <- my.iters$tmp.schools[my.iters$tmp.schools %in% unique(tmp.bPlot.data.1$SCHOOL_NUMBER)]
 		for (school.iter in seq_along(tmp.unique.schools)) { ### Loop over schools (seq_along to get integer for anonymize)
 
 		# Subset data
 
-		tmp.bPlot.data <- tmp.bPlot.data[SCHOOL_NUMBER==tmp.unique.schools[school.iter] & !is.na(SGP)]
+		tmp.bPlot.data <- tmp.bPlot.data.1[SCHOOL_NUMBER==tmp.unique.schools[school.iter] & !is.na(SGP)]
 
 		for (grade.iter in sort(unique(tmp.bPlot.data$GRADE))) { ### Loop over unique grades in school
-
 		bPlot.data <- subset(tmp.bPlot.data, GRADE==grade.iter)
 
 		if (dim(bPlot.data)[1] > 0) {
@@ -681,13 +699,14 @@ if (100 %in% bPlot.styles) {
 
 		# Create cutscore ranges
 
+		my.content_area <- get.my.cutscore.year(state, content_area.iter, bPlot.labels$y.year) 
 		if (y.variable.iter=="SCALE_SCORE") {
 			tmp.y.ticks <- sort(c(stateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area.iter]][[paste("loss.hoss", grade.iter, sep="_")]],
-				stateData[[state]][["Achievement"]][["Cutscores"]][[content_area.iter]][[paste("GRADE", grade.iter, sep="_")]])) 
+				stateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]])) 
 		}
 		if (y.variable.iter=="SCALE_SCORE_PRIOR") {
 			tmp.y.ticks <- sort(c(stateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area.iter]][[paste("loss.hoss", grade.iter-1, sep="_")]],
-				stateData[[state]][["Achievement"]][["Cutscores"]][[content_area.iter]][[paste("GRADE", grade.iter-1, sep="_")]])) 
+				stateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter-1, sep="_")]])) 
 		}
 
 

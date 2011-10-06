@@ -56,6 +56,20 @@ arrow.color <- function(sgp){
       paste(as.numeric(unlist(strsplit(as.character(year), "_")))+increment, collapse="_")
 }
 
+get.my.cutscore.year <- function(state, content_area, year) {
+        tmp.cutscore.years <- sapply(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]])[grep(content_area, names(stateData[[state]][["Achievement"]][["Cutscores"]]))], "[.]"),
+                function(x) x[2])
+        if (year %in% tmp.cutscore.years) {
+                return(year)
+        } else {
+                if (year==sort(c(year, tmp.cutscore.years))[1]) {
+                        return(NA)
+                } else {
+                        return(rev(sort(tmp.cutscore.years))[1])
+                }
+        }
+}
+
 interpolate.grades <- function(grades, data.year.span) {
 
             last.number <- function (x) {
@@ -98,14 +112,14 @@ interpolate.grades <- function(grades, data.year.span) {
                   temp.grades <- extend.grades(rev(grades))
                   return (list(interp.df = data.frame(GRADE=temp.grades), 
 				year_span=year_span, 
-				years=sapply(temp.grades-grades[1], function(x) .year.increment(Report_Parameters$Current_Year, x))))
+				years=sapply(seq(1-max(which(grades[1]==temp.grades)), length=length(temp.grades)), function(x) .year.increment(Report_Parameters$Current_Year, x))))
               } else {
                   if (grades[1] == 11) {
                      year_span <- 4
                      temp.grades <- extend.grades(c(rev(head(grades, -1)), 12))
                      return (list(interp.df = data.frame(GRADE=temp.grades), 
 				year_span=year_span, 
-				years=sapply(temp.grades-grades[1], function(x) .year.increment(Report_Parameters$Current_Year, x))))
+				years=sapply(seq(1-max(which(grades[1]==temp.grades)), length=length(temp.grades)), function(x) .year.increment(Report_Parameters$Current_Year, x))))
                   }
 
                   if (grades[1] == 10) {
@@ -113,7 +127,7 @@ interpolate.grades <- function(grades, data.year.span) {
                      temp.grades <- extend.grades(c(rev(head(grades, -1)), 11))
                      return (list(interp.df = data.frame(GRADE=temp.grades), 
 				year_span=year_span, 
-				years=sapply(temp.grades-grades[1], function(x) .year.increment(Report_Parameters$Current_Year, x))))
+				years=sapply(seq(1-max(which(grades[1]==temp.grades)), length=length(temp.grades)), function(x) .year.increment(Report_Parameters$Current_Year, x))))
                   }
 
                   if (grades[1] == 9) {
@@ -121,7 +135,7 @@ interpolate.grades <- function(grades, data.year.span) {
                      temp.grades <- extend.grades(c(rev(head(grades, -1)), 10))
                      return (list(interp.df = data.frame(GRADE=temp.grades), 
 				year_span=year_span, 
-				years=sapply(temp.grades-grades[1], function(x) .year.increment(Report_Parameters$Current_Year, x))))
+				years=sapply(seq(1-max(which(grades[1]==temp.grades)), length=length(temp.grades)), function(x) .year.increment(Report_Parameters$Current_Year, x))))
                   }
              
                   if (grades[1] == 8) {
@@ -129,7 +143,7 @@ interpolate.grades <- function(grades, data.year.span) {
                      temp.grades <- extend.grades(c(rev(head(grades, -1)), 9))
                      return (list(interp.df = data.frame(GRADE=temp.grades), 
 				year_span=year_span, 
-				years=sapply(temp.grades-grades[1], function(x) .year.increment(Report_Parameters$Current_Year, x))))
+				years=sapply(seq(1-max(which(grades[1]==temp.grades)), length=length(temp.grades)), function(x) .year.increment(Report_Parameters$Current_Year, x))))
                   }
 
                   if (grades[1] == 7) {
@@ -137,7 +151,7 @@ interpolate.grades <- function(grades, data.year.span) {
                      temp.grades <- extend.grades(c(rev(head(grades, -1)), 8))
                      return (list(interp.df = data.frame(GRADE=temp.grades), 
 				year_span=year_span, 
-				years=sapply(temp.grades-grades[1], function(x) .year.increment(Report_Parameters$Current_Year, x))))
+				years=sapply(seq(1-max(which(grades[1]==temp.grades)), length=length(temp.grades)), function(x) .year.increment(Report_Parameters$Current_Year, x))))
                   }
 
                   if (grades[1] == 6) {
@@ -145,7 +159,7 @@ interpolate.grades <- function(grades, data.year.span) {
                      temp.grades <- extend.grades(c(rev(head(grades, -1)), 7))
                      return (list(interp.df = data.frame(GRADE=temp.grades), 
 				year_span=year_span, 
-				years=sapply(temp.grades-grades[1], function(x) .year.increment(Report_Parameters$Current_Year, x))))
+				years=sapply(seq(1-max(which(grades[1]==temp.grades)), length=length(temp.grades)), function(x) .year.increment(Report_Parameters$Current_Year, x))))
                   }
 
                   if (grades[1] == 5) {
@@ -154,7 +168,7 @@ interpolate.grades <- function(grades, data.year.span) {
                      temp.grades <- extend.grades(c(rev(grades), head(6:7, data.year.span-year_span)))
                      return (list(interp.df = data.frame(GRADE=temp.grades), 
 				year_span=year_span, 
-				years=sapply(temp.grades-grades[1], function(x) .year.increment(Report_Parameters$Current_Year, x))))
+				years=sapply(seq(1-max(which(grades[1]==temp.grades)), length=length(temp.grades)), function(x) .year.increment(Report_Parameters$Current_Year, x))))
                   }
 
                   if (grades[1] == 4) {
@@ -163,7 +177,7 @@ interpolate.grades <- function(grades, data.year.span) {
                      temp.grades <- extend.grades(c(rev(grades), head(5:7, data.year.span-year_span)))
                      return (list(interp.df = data.frame(GRADE=temp.grades), 
 				year_span=year_span, 
-				years=sapply(temp.grades-grades[1], function(x) .year.increment(Report_Parameters$Current_Year, x))))
+				years=sapply(seq(1-max(which(grades[1]==temp.grades)), length=length(temp.grades)), function(x) .year.increment(Report_Parameters$Current_Year, x))))
                   }
 
                   if (grades[1] == 3) {
@@ -172,7 +186,7 @@ interpolate.grades <- function(grades, data.year.span) {
                      temp.grades <- extend.grades(c(rev(grades), head(4:7, data.year.span-year_span)))
                      return (list(interp.df = data.frame(GRADE=temp.grades), 
 				year_span=year_span, 
-				years=sapply(temp.grades-grades[1], function(x) .year.increment(Report_Parameters$Current_Year, x))))
+				years=sapply(seq(1-max(which(grades[1]==temp.grades)), length=length(temp.grades)), function(x) .year.increment(Report_Parameters$Current_Year, x))))
                   }
               } 
        }
@@ -409,11 +423,7 @@ pushViewport(growth.chart.vp)
 
 for (i in seq(number.achievement.level.regions-1)){
     temp <- cbind(temp_id=seq_len(nrow(grade.values$interp.df)), grade.values$interp.df, YEAR=grade.values$years)
-    temp$YEAR[!unique(temp$YEAR) %in% unique(Cutscores$YEAR)] <- NA
-    if (any(!is.na(temp$YEAR))) {
-       tmp.last.observation <- max(which(!is.na(temp$YEAR)))
-       temp$YEAR[tmp.last.observation:length(temp$YEAR)] <- temp$YEAR[tmp.last.observation]
-    }
+    temp$YEAR <- sapply(temp$YEAR, function(x) get.my.cutscore.year(Report_Parameters$State, Report_Parameters$Content_Area, as.character(x)))
     temp <- merge(temp, subset(Cutscores, CUTLEVEL==i), all.x=TRUE)
     temp <- temp[order(temp$temp_id),]$CUTSCORE
     temp[which(is.na(temp))] <- approx(temp, xout=which(is.na(temp)))$y
@@ -422,7 +432,6 @@ for (i in seq(number.achievement.level.regions-1)){
 
 tmp.x.points <- seq(xscale.range[1], xscale.range[2], length=40)
 x.boundary.values.1 <- c(xscale.range[1], tmp.x.points, xscale.range[2])
-##y.boundary.values.1 <- c(yscale.range[1], level_1_curve(tmp.x.points), yscale.range[1])
 y.boundary.values.1 <- c(yscale.range[1], eval(parse(text="level_1_curve(tmp.x.points)")), yscale.range[1])
 assign(paste("x.boundary.values.", number.achievement.level.regions, sep=""), 
        c(xscale.range[1], tmp.x.points, xscale.range[2]))

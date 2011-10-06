@@ -5,7 +5,7 @@
 			 content_areas,
 			 grade.sequences,
 			 baseline.max.order,
-			 calculate.sgps=FALSE,
+			 return.matrices.only=FALSE,
 			 ...) {
 
     started.at <- proc.time()
@@ -18,11 +18,6 @@
 		if (any(sapply(c(state.name, "Demonstration"), function(x) regexpr(x, tmp.name)))==1) {
 			state <- c(state.abb, "DEMO")[which(sapply(c(state.name, "Demonstration"), function(x) regexpr(x, tmp.name))==1)]
 		}
-	}
-
-	rbind.all <- function(.list, ...){
-		if(length(.list)==1) return(.list[[1]])
-		Recall(c(list(rbind(.list[[1]], .list[[2]], ...)), .list[-(1:2)]), ...)
 	}
 
 	test.year.sequence <- function(years, grades) { #bd-i had to rewrite it to get it to work with properly formatted years
@@ -53,6 +48,8 @@
 	list_1
 	}
 
+	is.whole <- function(a) { floor(a[!is.na(a)])==a[!is.na(a)] }
+
 	### Create Relevant argument-variables if missing
 	key(sgp_object@Data) <- c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID")
 	
@@ -62,9 +59,9 @@
 	if (missing(grade.sequences)) {
 		valid.grades <- sort(unique(sgp_object@Data[J("VALID_CASE", content_areas)][["GRADE"]]))
 		grade.sequences <- lapply(valid.grades[-1], function(x) tail(valid.grades[valid.grades <= x], (baseline.max.order+1)))    #deals with 'holes'
-		for (g in seq_along(grade.sequences)) {
-			grade.sequences[[g]] <- grade.sequences[[g]][tail(grade.sequences[[g]],1)-grade.sequences[[g]] <= baseline.max.order] #deals with 'holes'
-		}
+	}
+	for (g in seq_along(grade.sequences)) {
+		grade.sequences[[g]] <- grade.sequences[[g]][tail(grade.sequences[[g]],1)-grade.sequences[[g]] <= baseline.max.order] #deals with 'holes'
 	}
 		
 	acceptable.grade.sequences <- list()
@@ -95,32 +92,42 @@
 											idvar="ID", 
 											timevar="GRADE", 
 											direction="wide",
-											drop=c("VALID_CASE", "CONTENT_AREA", "YEAR"))
-					tmp.list[[k]] <- tmp.list[[k]][!apply(is.na(tmp.list[[k]]), 1, any)][,c("ID", paste("SCALE_SCORE.", j, sep="")), with=FALSE]
+											drop=names(sgp_object@Data)[!names(sgp_object@Data) %in% c('ID', 'SCALE_SCORE', 'GRADE')])
+					tmp.list[[k]] <- tmp.list[[k]][!apply(is.na(tmp.list[[k]]), 1, any)]#[,c("ID", paste("SCALE_SCORE.", j, sep="")), with=FALSE] # not necessary after change to drop= above
 				}
-				tmp.uber.list[[head(j,1)]] <- rbind.all(tmp.list) # kind of weird naming convention (head(j,1) but puts the data w/ most columns first for rbind.fill. 
+				tmp.uber.list[[head(j,1)]] <- do.call(rbind.fill, tmp.list) # kind of weird naming convention (head(j,1) but puts the data w/ most columns first for rbind.fill. 
 			} ## END loop over acceptable.grade.sequences
 			sgp.uber.data <- data.table(do.call(rbind.fill, tmp.uber.list))
 			sgp.uber.data <- data.table(sgp.uber.data$ID, 
 				as.data.frame(matrix(rep(grade.sequences[[i]], each=dim(sgp.uber.data)[1]), ncol=length(grade.sequences[[i]]))), sgp.uber.data[,-1, with=FALSE])
 			if (length(acceptable.grade.sequences[[i]]) > 1) {
+				if (class(sgp_object@Data$SCALE_SCORE) != "integer" & !all(is.whole(sgp_object@Data$SCALE_SCORE))) {#temporarily convert theta/z like values to integer to key on them
+					convert.back = TRUE
+					sgp.uber.data[,grep("SCALE_SCORE", names(sgp.uber.data))] <- round(sgp.uber.data[,grep("SCALE_SCORE", names(sgp.uber.data)), with=FALSE] * 100000)
+				}	else convert.back = FALSE
 				key(sgp.uber.data)<-names(sgp.uber.data); key(sgp.uber.data)<-"V1" #sorts all duplicates from lowest-order to highest-order of priors
 				sgp.uber.data <- sgp.uber.data[-(which(duplicated(sgp.uber.data))-1),]# removes all lower-order priors after sorting
+				if(convert.back) sgp.uber.data[,grep("SCALE_SCORE", names(sgp.uber.data))] <- sgp.uber.data[,grep("SCALE_SCORE", names(sgp.uber.data)), with=FALSE]/100000
 			}
 			tmp_sgp_object[["Panel_Data"]] <- data.frame(sgp.uber.data) #function doesn't take data.tables ???  thought we fixed that...
 
-			tmp_sgp_object <- studentGrowthPercentiles(panel.data = tmp_sgp_object,
-													sgp.labels = list(my.year="BASELINE", my.subject=h), 
-													use.my.knots.boundaries = state,
-													calculate.sgps = calculate.sgps,
-													drop.nonsequential.grade.progression.variables = FALSE, #always taken care of in data reshape above.
-													grade.progression = grade.sequences[[i]],
-													...)	
+			tmp_sgp_object <- studentGrowthPercentiles(
+						panel.data = tmp_sgp_object,
+						sgp.labels = list(my.year="BASELINE", my.subject=h), 
+						use.my.knots.boundaries = state,
+						calculate.sgps = FALSE,
+						drop.nonsequential.grade.progression.variables = FALSE, #always taken care of in data reshape above.
+						grade.progression = grade.sequences[[i]],
+						...)	
 		} ## END loop over grade.sequences
 	} ## END loop over content
 	
+    message(paste("Finished baselineSGP", date(), "in", timetaken(started.at), "\n"))
+	if (return.matrices.only) {
+		return(tmp_sgp_object)
+	} else {
 	sgp_object@SGP <- .mergeSGP(sgp_object@SGP, tmp_sgp_object)
 	key(sgp_object@Data) <- c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID")
-    message(paste("Finished baselineSGP", date(), "in", timetaken(started.at), "\n"))
-    return(sgp_object)
+	return(sgp_object)
+	}
   } ## END baselineSGP Function

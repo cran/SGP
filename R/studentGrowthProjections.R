@@ -333,7 +333,7 @@ function(panel.data,	## REQUIRED
 		}}
 		if (is.list(performance.level.cutscores)) {
 			if (any(names(performance.level.cutscores) %in% sgp.labels$my.subject)) {
-				tmp.cutscores <- performance.level.cutscores[[sgp.labels$my.subject]]
+				tmp.cutscores <- performance.level.cutscores
 				tf.cutscores <- TRUE
 			} else {
 				stop("\nList of cutscores provided in performance.level.cutscores must include a subject name that matches my.subject in sgp.labels (CASE SENSITIVE). See help page for details.\n\n")

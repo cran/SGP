@@ -63,10 +63,9 @@ if (bubble_plot_configs.BUBBLE_TIPS) {
 
 # Create directory for file
 
+bubble_plot_configs.BUBBLE_PLOT_NAME <- gsub("/", "-", bubble_plot_configs.BUBBLE_PLOT_NAME)
 if (!is.null(bubble_plot_configs.BUBBLE_PLOT_PATH)) {
-        if (is.na(file.info(bubble_plot_configs.BUBBLE_PLOT_PATH)$isdir)){
-                dir.create(bubble_plot_configs.BUBBLE_PLOT_PATH, recursive=TRUE, showWarnings=FALSE)
-        }
+        dir.create(bubble_plot_configs.BUBBLE_PLOT_PATH, recursive=TRUE, showWarnings=FALSE)
 	file.path.and.name <- file.path(bubble_plot_configs.BUBBLE_PLOT_PATH, bubble_plot_configs.BUBBLE_PLOT_NAME)
 } else {
 	file.path.and.name <- bubble_plot_configs.BUBBLE_PLOT_NAME

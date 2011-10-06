@@ -114,7 +114,8 @@ function(panel.data,         ## REQUIRED
 			s4Bs <- paste(s4Bs, "boundaries_", i, "=", bnd, ",", sep="")
 		}
 		tmp.mtx <- eval(parse(text=paste("rq(SS", tmp.last, " ~ ", substring(mod,4), ", tau=taus, data=tmp.data, method=rq.method)[['coefficients']]", sep="")))
-		eval(parse(text=paste("new('splineMatrix', tmp.mtx, ", substring(s4Ks, 1, nchar(s4Ks)-1), "), ", substring(s4Bs, 1, nchar(s4Bs)-1), "), ", "Date=Sys.time())", sep="")))
+		version <- list(SGP_Package_Version=as.character(packageVersion("SGP")), Date_Prepared=date())
+		eval(parse(text=paste("new('splineMatrix', tmp.mtx, ", substring(s4Ks, 1, nchar(s4Ks)-1), "), ", substring(s4Bs, 1, nchar(s4Bs)-1), "), ", "Version=version)", sep="")))
 		}
 
 	.check.knots.boundaries <- function(names, grade) {
@@ -184,14 +185,9 @@ function(panel.data,         ## REQUIRED
 
 	.goodness.of.fit <- function(data1) {
 		.cell.color <- function(x){
-			tmp.cell.color <- character(length(x))
 			my.reds <- c("#FFFFFF", "#FEF1E1", "#FBD9CA", "#F9C1B4", "#F7A99E", "#F59188", "#F27972", "#F0615C", "#EE4946", "#EC3130", "#EA1A1A")
-			tmp.diff <- abs(x - 10)
-			tmp.cell.color[tmp.diff < 1] <- my.reds[1]
-			for (i in 1:9){
-			tmp.cell.color[tmp.diff >= i & tmp.diff < i+1] <- my.reds[i+1]
-			}
-			tmp.cell.color[tmp.diff >= 10] <- my.reds[11]
+			tmp.cell.color <- my.reds[findInterval(abs(x - 10), 1:10)+1]
+			tmp.cell.color[is.na(tmp.cell.color)] <- "#000000"	
 			return(tmp.cell.color)
 		}
 
@@ -307,7 +303,7 @@ function(panel.data,         ## REQUIRED
 			tmp.scale <- CSEM_Function(scale_scores)
 		} 
 		if (!is.null(variable)) {
-			tmp.scale <- panel.data[[variable]]
+			tmp.scale <- variable
 		}
 			if(distribution=="Skew-Normal") {
 				require(sn) 
@@ -511,8 +507,8 @@ function(panel.data,         ## REQUIRED
 	}
 	if (identical(class(panel.data), "list")) {
 		Panel_Data <- panel.data[["Panel_Data"]]
-	} 
-
+	}
+	
 	### Create ss.data from Panel_Data
 
 	if (!missing(panel.data.vnames)) {
@@ -630,6 +626,17 @@ function(panel.data,         ## REQUIRED
 			tmp.quantiles[[j]] <- data.table(ID=tmp.data[["ID"]], ORDER=j, SGP=.get.quantiles(tmp.predictions, tmp.data[[tail(SS,1)]]))
 			if (csem.tf) {
 				if (is.null(calculate.confidence.intervals$simulation.iterations)) calculate.confidence.intervals$simulation.iterations <- 100
+				if (!is.null(calculate.confidence.intervals$variable)) {
+					if (missing(panel.data.vnames)) {
+						tmp.csem.variable <- Panel_Data[Panel_Data[,1] %in% 
+							ss.data[tmp.data[["ID"]]][["ORIGINAL.ID"]],calculate.confidence.intervals$variable] 
+					} else {
+						tmp.csem.variable <- Panel_Data[Panel_Data[,panel.data.vnames[1]] %in% 
+							ss.data[tmp.data[["ID"]]][["ORIGINAL.ID"]],calculate.confidence.intervals$variable] 
+					}
+				} else {
+					tmp.csem.variable <- NULL
+				}
 				for (k in seq(calculate.confidence.intervals$simulation.iterations)) { 
 					set.seed(k)
 					if (k==1) {
@@ -640,7 +647,7 @@ function(panel.data,         ## REQUIRED
 							content_area=sgp.labels$my.subject,
 							year=sgp.labels$my.year,
 							state=calculate.confidence.intervals$state,
-							variable=calculate.confidence.intervals$variable,
+							variable=tmp.csem.variable,
 							distribution=calculate.confidence.intervals$distribution,
 							round=calculate.confidence.intervals$round)))
 					} else {
@@ -651,7 +658,7 @@ function(panel.data,         ## REQUIRED
 								content_area=sgp.labels$my.subject,
 								year=sgp.labels$my.year,
 								state=calculate.confidence.intervals$state,
-								variable=calculate.confidence.intervals$variable,
+								variable=tmp.csem.variable,
 								distribution=calculate.confidence.intervals$distribution,
 								round=calculate.confidence.intervals$round)))
 								names(tmp.csem.quantiles[[j]])[k+1] <- paste("SGP_SIM", k, sep="_")

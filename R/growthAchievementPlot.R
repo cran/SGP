@@ -398,8 +398,15 @@ pushViewport(left.axis.vp)
 
 if (gaPlot.show.scale.transformations) {
          grid.lines(0.6, ss.axis.range, gp=gpar(lwd=1.5, col=format.colors.font), default.units="native")
-
-         for (i in seq(ss.axis.range[1], ss.axis.range[2], by=50)) {
+         tmp.diff <- ss.axis.range[2]-ss.axis.range[1]
+         if (tmp.diff < 2.5) my.by <- 0.25
+         if (tmp.diff >= 2.5 & tmp.diff < 5) my.by <- 0.5
+         if (tmp.diff >= 5 & tmp.diff < 25) my.by <- 2.5
+         if (tmp.diff >= 25 & tmp.diff < 50) my.by <- 5
+         if (tmp.diff >= 50 & tmp.diff < 250) my.by <- 25
+         if (tmp.diff >= 250 & tmp.diff < 1000) my.by <- 50
+         if (tmp.diff >= 1000 & tmp.diff < 5000) my.by <- 250
+         for (i in seq(ss.axis.range[1], ss.axis.range[2], by=my.by)) {
          grid.lines(c(0.5, 0.6), i, gp=gpar(lwd=1.5, col=format.colors.font), default.units="native")
          grid.text(x=0.45, y=i, formatC(i, digits=0, format="f"), gp=gpar(col=format.colors.font, cex=0.8), just="right", default.units="native")
          }

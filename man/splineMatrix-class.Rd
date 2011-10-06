@@ -13,7 +13,7 @@ Objects can be created by calls of the form \code{new("splineMatrix", ...)}, but
   \describe{
     \item{\code{Knots}:}{A list(s) of numeric values used as the \code{knots} to generate the B-spline basis matrix in \code{\link{studentGrowthPercentiles}} }
     \item{\code{Boundaries}:}{A list(s) of numeric values as the \code{Boundary.knots}to generate the B-spline basis matrix in \code{\link{studentGrowthPercentiles}} }
-    \item{\code{Date}:}{Date and time stamp of when the splineMatrix was created}
+    \item{\code{Version}:}{A list including the version of the SGP package used to construct the splineMatrix object and the date the object was created.}
   }
 }
 

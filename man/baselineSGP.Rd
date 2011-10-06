@@ -7,12 +7,12 @@
 
 \usage{
  baselineSGP(sgp_object,
-         state,
-         years,
-         content_areas,
+        state,
+        years,
+        content_areas,
         grade.sequences,
         baseline.max.order,
-        calculate.sgps=FALSE,
+        return.matrices.only=FALSE,
          ...)
 }
 
@@ -30,7 +30,7 @@ If left missing the function will use the data to infer the content area(s) avai
   \item{grade.sequences}{A vector indicating acceptable grade sequences for which to calculate student growth percentiles and/or student growth projections/trajectories. If left missing the function will use the data to infer all the grade progressions for student growth percentile and student growth projections/trajectories analyses.
   }
   \item{baseline.max.order}{Maximum number of prior scores one wishes to use in the analysis. Defaults to \code{num.panels-2} so that at least two cohorts comprise each baseline norm group. If \code{baseline.max.order=1}, then only 1st order growth percentiles are computed, if \code{baseline.max.order=2}, then 1st and 2nd order are computed, if \code{baseline.max.order=3}, 1st, 2nd, and 3rd ...  }
-  \item{calculate.sgps}{Boolean variable indicating whether to calculate student growth percentiles. Defaults to FALSE to only produce coefficient matrices.
+  \item{return.matrices.only}{Boolean variable indicating whether to calculate student growth percentiles. Defaults to FALSE returning only coefficient matrices.
   }
   \item{...}{Arguments to be passed to \code{\link{studentGrowthPercentiles}} for finer control over SGP calculations. 
   }

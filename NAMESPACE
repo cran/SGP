@@ -13,6 +13,8 @@ export(
 	"bubblePlot_Styles",
 	"combineSGP",
 	"growthAchievementPlot",
+	"is.SGP",
+	"outputSGP",
 	"prepareSGP",
 	"studentGrowthPercentiles",
 	"studentGrowthPlot",
