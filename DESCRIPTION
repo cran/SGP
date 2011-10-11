@@ -1,9 +1,9 @@
 Package: SGP
 Type: Package
 Title: An R Package for the Calculation and Visualization of Student
-        Growth Percentiles.
-Version: 0.7-0.0
-Date: 2011-10-5
+        Growth Percentiles & Percentile Growth Trajectories.
+Version: 0.7-1.0
+Date: 2011-10-11
 Authors@R: c(person("Damian", "Betebenner",
         email="dbetebenner@nciea.org", role=c("aut", "cre")),
         person("Adam", "Van Iwaarden",
@@ -46,5 +46,5 @@ LazyLoad: Yes
 LazyData: Yes
 License: CC BY-SA 3.0 US | CC BY-NC-SA 3.0 + file LICENSE
 Repository: CRAN
-Packaged: 2011-10-06 03:10:16 UTC; damian
-Date/Publication: 2011-10-06 08:46:09
+Packaged: 2011-10-11 22:25:23 UTC; damian
+Date/Publication: 2011-10-12 07:55:45

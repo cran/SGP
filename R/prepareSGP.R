@@ -10,6 +10,7 @@
 
 	if (is.SGP(data)) {
 
+		key(data@Data) <- c("VALID_CASE","CONTENT_AREA","YEAR","ID")
 		message(paste("Finished prepareSGP", date(), "in", timetaken(started.at), "\n"))
 
 		return(data)
