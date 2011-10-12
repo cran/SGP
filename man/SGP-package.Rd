@@ -2,7 +2,7 @@
 \alias{SGP-package}
 \alias{SGP}
 \docType{package}
-\title{SGP: An R Package for the Calculation and Visualization of Student Growth Percentiles.}
+\title{SGP: An R Package for the Calculation and Visualization of Student Growth Percentiles & Percentile Growth Trajectories.}
 \description{
 SGP contains functions to calculate student growth percentiles and percentile growth projections/trajectories following methodology found in Betebenner (2008, 2009).
 The package contains two primary functions, \code{\link{studentGrowthPercentiles}} and \code{\link{studentGrowthProjections}}, and numerous higher level functions
@@ -20,12 +20,12 @@ growth percentile analyses.
 \tabular{ll}{
 Package: \tab SGP\cr
 Type: \tab Package\cr
-Version: \tab 0.7-0.0\cr
-Date: \tab 2011-10-5\cr
+Version: \tab 0.7-1.0\cr
+Date: \tab 2011-10-11\cr
 License: \tab CC BY-SA 3.0 US | CC BY-NC-SA 3.0 + file LICENSE\cr
 LazyLoad: \tab yes\cr
 }
-Calculation of student growth percentiles and percentile growth projections/trajectories is typically performed by grade and subject. Data for growth percentile 
+Calculation of student growth percentiles and percentile growth trajectories/projections is typically performed by grade and subject. Data for growth percentile 
 calculation must be specifically formatted.  See \code{\link{sgpData}} for an example data set. Batch R syntax for performing analyses across all grades and years is 
 provided in the examples of the \code{\link{studentGrowthPercentiles}} and \code{\link{studentGrowthProjections}} using the higher level functions 
 \code{\link{prepareSGP}}, \code{\link{analyzeSGP}}, \code{\link{combineSGP}}, \code{\link{summarizeSGP}}, and \code{visualizeSGP}.} 

@@ -14,7 +14,7 @@ function(sgp_object,
          goodness.of.fit.print=TRUE,
          sgp.config,
          sgp.baseline.config, 
-         parallel.config,
+         parallel.config=NULL,
          ...) {
 
 	started.at <- proc.time()
@@ -113,7 +113,7 @@ function(sgp_object,
 
 	###  Parallel Backend Specific Setup - ADD TESTS?:
 		
-	if (!missing(parallel.config)) {
+	if (!is.null(parallel.config)) {
 		if (toupper(parallel.config[["BACKEND"]][["TYPE"]]) == "FOREACH") {
 			require(foreach)
 			eval(parse(text=paste("require(", parallel.config[["BACKEND"]][["FOREACH_TYPE"]], ")"))) # require(do*)   #  ONLY NEED ONCE
@@ -255,7 +255,7 @@ function(sgp_object,
 	##   Percentiles, Baseline Percentiles, Projections, Lagged Projections -  PARALLEL FLAVORS FIRST
 	#######################################################################################################################
 
-	if (!missing(parallel.config)) {
+	if (!is.null(parallel.config)) {
 		###  INIITIAL SET UP FOR ALL ANALYSES AND BACKEND TYPES
 		# RE-Key data to select only grades in grade progression
 		key(sgp_object@Data) <- c("VALID_CASE", "CONTENT_AREA", "YEAR", "GRADE")
@@ -883,7 +883,7 @@ function(sgp_object,
 ###	SEQUENTIAL OPTION (NON-Parallel Option)
 #############################################################
 
-	if (missing(parallel.config)) {
+	if (is.null(parallel.config)) {
 
 		tmp_sgp_object <- list(Coefficient_Matrices=sgp_object@SGP[["Coefficient_Matrices"]], Knots_Boundaries=sgp_object@SGP[["Knots_Boundaries"]])
 

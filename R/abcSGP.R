@@ -12,7 +12,7 @@ function(sgp_object,
 	sgp.projections.baseline=TRUE,
 	sgp.projections.lagged.baseline=TRUE,
 	simulate.sgps=TRUE,
-	parallel.config,
+	parallel.config=NULL,
 	save.intermediate.results=FALSE,
 	sgp.summaries=list(MEDIAN_SGP="median_na(SGP)",
 		MEDIAN_SGP_TARGET="median_na(SGP_TARGET)",
@@ -53,7 +53,7 @@ function(sgp_object,
 
         ### Check for consistency between simulate.sgps and confidence.interval.groups ###
 
-	if (!is.null(confidence.interval.groups) & !simulate.sgps) {
+	if ("summarizeSGP" %in% plot.types & !is.null(confidence.interval.groups) & !simulate.sgps) {
                 message("Simulated SGPs are required to compute confidence intervals. simulate.sgps will be set to true.")
                 simulate.sgps <- TRUE
         }
@@ -94,7 +94,7 @@ function(sgp_object,
 			sgp.projections.baseline=sgp.projections.baseline,
 			sgp.projections.lagged.baseline=sgp.projections.lagged.baseline,
 			simulate.sgps=simulate.sgps,
-			parallel.config = parallel.config)
+			parallel.config=parallel.config)
 
                 if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}

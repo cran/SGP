@@ -1,3 +1,9 @@
+Changes in version: SGP_0.7-1.0
+
+  o Updated Nevada state data for low, typical, and high cutscores. 
+  o Added "Percentile Growth Trajectories" to package title. 
+  o Rectified argument passing between abcSGP and analyzeSGP for parallel.config argument. 
+
 Changes in version: SGP_0.7-0.0
 
   o ETHNICITY and GENDER variables are no longer required to create anonymized (random name) student growth plots. Dummy values are created if missing. 
