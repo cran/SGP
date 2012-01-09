@@ -4,15 +4,18 @@ import("grid")
 import("methods")
 import("plyr")
 importFrom("splines", "bs")
+import(SGPdata)
 
 export(
 	"abcSGP",
 	"analyzeSGP",
+	"as.splineMatrix",
 	"baselineSGP",
 	"bubblePlot",
 	"bubblePlot_Styles",
 	"combineSGP",
 	"growthAchievementPlot",
+	"is.splineMatrix",
 	"is.SGP",
 	"outputSGP",
 	"prepareSGP",

@@ -6,13 +6,84 @@
 	## Print start time
 
 	started.at <- proc.time()
-	message(paste("Started prepareSGP", date()))
+	message(paste("\nStarted prepareSGP", date()))
+
+	### Utility functions
+
+	achievement_level_recode <- function(sgp_object, state=NULL, year=NULL, content_area=NULL, grade=NULL) {
+
+		CONTENT_AREA <- YEAR <- GRADE <- SCALE_SCORE <- NULL  ### To prevent R CMD check warnings
+
+	        if (is.null(state)) {
+	                tmp.name <- gsub("_", " ", deparse(substitute(sgp_object)))
+	                if (any(sapply(c(state.name, "Demonstration", "sgpData LONG"), function(x) regexpr(x, tmp.name)))==1) {
+	                        state <- c(state.abb, rep("DEMO", 2))[which(sapply(c(state.name, "Demonstration", "sgpData LONG"), function(x) regexpr(x, tmp.name))==1)]
+	                }
+	        }
+
+                if (!"ACHIEVEMENT_LEVEL" %in% names(sgp_object@Data)) {
+                        sgp_object@Data$ACHIEVEMENT_LEVEL <- factor(1, levels=seq_along(SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]]),
+                                labels=SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]])
+                }
+
+	        if (is.null(year)) year <- sort(unique(sgp_object@Data$YEAR))
+	        if (is.null(content_area)) content_area <- sort(unique(sgp_object@Data$CONTENT_AREA[sgp_object@Data$YEAR %in% year]))
+	        if (is.null(grade)) grade <- sort(unique(sgp_object@Data$GRADE[sgp_object@Data$YEAR %in% year & sgp_object@Data$CONTENT_AREA %in% content_area]))
+
+	        get.cutscore.label <- function(state, year, content_area) {
+	                tmp.cutscore.names <- names(SGPstateData[[state]][["Achievement"]][["Cutscores"]])
+	                tmp.cutscore.years <- sapply(strsplit(tmp.cutscore.names[grep(content_area, tmp.cutscore.names)], "[.]"), function(x) x[2])
+	                if (any(!is.na(tmp.cutscore.years))) {
+	                        if (year %in% tmp.cutscore.years) {
+	                                return(paste(content_area, year, sep="."))
+	                        } else {
+	                                if (year==sort(c(year, tmp.cutscore.years))[1]) {
+	                                        return(content_area)
+	                                } else {
+	                                        return(paste(content_area, rev(sort(tmp.cutscore.years))[1], sep="."))
+	                                }
+	                       }
+	                } else {
+	                        return(content_area)
+	                }
+	        }
+
+	        achievement_level_recode_INTERNAL <- function(state, content_area, year, grade, scale_score) {
+	                factor(findInterval(scale_score, SGPstateData[[state]][["Achievement"]][["Cutscores"]][[get.cutscore.label(state, year, content_area)]][[paste("GRADE_", grade, sep="")]])+1,
+	                        levels=seq_along(SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]]),
+	                        labels=SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]])
+	        }
+
+	        key(sgp_object@Data) <- c("VALID_CASE", "CONTENT_AREA", "YEAR", "GRADE")
+	        sgp_object@Data$ACHIEVEMENT_LEVEL[sgp_object@Data[CJ("VALID_CASE", content_area, year, grade), which=TRUE, nomatch=0]] <- 
+	        sgp_object@Data[CJ("VALID_CASE", content_area, year, grade), nomatch=0][, achievement_level_recode_INTERNAL(state, as.character(CONTENT_AREA), as.character(YEAR), GRADE, SCALE_SCORE), 
+			by=list(CONTENT_AREA, YEAR, GRADE)]$V1
+	        key(sgp_object@Data) <- c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID")
+
+	        return(sgp_object)
+	}
+
 
 	if (is.SGP(data)) {
 
 		key(data@Data) <- c("VALID_CASE","CONTENT_AREA","YEAR","ID")
-		message(paste("Finished prepareSGP", date(), "in", timetaken(started.at), "\n"))
+		if (.hasSlot(data, "Version")) {
+			data@Version <- list(SGP_Package_Version=c(data@Version[["SGP_Package_Version"]], as.character(packageVersion("SGP"))), 
+				Date_Prepared=c(data@Version[["Date_Prepared"]], date()))
+		} else {
+			data@Version <- list(SGP_Package_Version=as.character(packageVersion("SGP")), Date_Prepared=date())
+		}
+		if (!is.null(data@SGP[["Coefficient_Matrices"]])) {
+			for (i in names(data@SGP[["Coefficient_Matrices"]])) {
+				splineMatrix.tf <- sapply(data@SGP[["Coefficient_Matrices"]][[i]], is.splineMatrix)
+				if (!any(splineMatrix.tf)) {
+					data@SGP[["Coefficient_Matrices"]][[i]][!splineMatrix.tf] <- 
+						lapply(data@SGP[["Coefficient_Matrices"]][[i]][!splineMatrix.tf], function(x) as.splineMatrix(matrix=x, sgp_object=data))
+				}
+			}
+		} 
 
+		message(paste("Finished prepareSGP", date(), "in", timetaken(started.at), "\n"))
 		return(data)
 	} else {
 	

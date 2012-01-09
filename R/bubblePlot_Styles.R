@@ -24,10 +24,11 @@
 
         if (state %in% c(state.abb, "DEMO")) {
 		state.name.label <- c(state.name, "DEMONSTRATION")[state==c(state.abb, "DEMO")]
-		test.abbreviation.label <- stateData[[state]][["Assessment_Program_Information"]][["Assessment_Abbreviation"]]
+		test.abbreviation.label <- SGPstateData[[state]][["Assessment_Program_Information"]][["Assessment_Abbreviation"]]
 	} else {
 		state.name.label <- test.abbreviation.label <- NULL
 	}
+		state.name.file.label <- gsub("_", " ", state.name.label)
 
         # draft message
 
@@ -156,7 +157,7 @@
 			if (bubblePlot_LEVEL=="Summary") my.iters$tmp.y.variable <- c("PERCENT_AT_ABOVE_PROFICIENT", "PERCENT_AT_ABOVE_PROFICIENT_PRIOR")
 			if (bubblePlot_LEVEL=="Individual") my.iters$tmp.y.variable <- c("SCALE_SCORE", "SCALE_SCORE_PRIOR")
 		} else {
-			if (bubblePlot_LEVEL=="Summary") my.iters$tmp.y.variable <- names(tmp.data)[grep("PERCENT", names(tmp.data))][2]
+			if (bubblePlot_LEVEL=="Summary") my.iters$tmp.y.variable <- "PERCENT_AT_ABOVE_PROFICIENT"
 			if (bubblePlot_LEVEL=="Individual") my.iters$tmp.y.variable <- "SCALE_SCORE"
 		}
 		return(my.iters)
@@ -254,7 +255,7 @@ if (1 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_EXTRAS=bPlot.message,
-			bubble_plot_configs.BUBBLE_PLOT_NAME=paste(paste(state.name.label, year.iter, capwords(content_area.iter), "State", bPlot.labels$pdf.title, sep="_"), ".pdf", sep=""),
+			bubble_plot_configs.BUBBLE_PLOT_NAME=paste(paste(state.name.file.label, year.iter, capwords(content_area.iter), "State", bPlot.labels$pdf.title, sep="_"), ".pdf", sep=""),
 			bubble_plot_configs.BUBBLE_PLOT_PATH=file.path(bPlot.folder, year.iter, "State", "Style_1"),
 			bubble_plot_pdftk.CREATE_CATALOG=FALSE)
 
@@ -369,7 +370,7 @@ if (2 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_EXTRAS=bPlot.message,
-			bubble_plot_configs.BUBBLE_PLOT_NAME=paste(paste(state.name.label, year.iter, capwords(content_area.iter), capwords(levels.iter), "State", bPlot.labels$pdf.title, sep="_"), ".pdf", sep=""),
+			bubble_plot_configs.BUBBLE_PLOT_NAME=paste(paste(state.name.file.label, year.iter, capwords(content_area.iter), capwords(levels.iter), "State", bPlot.labels$pdf.title, sep="_"), ".pdf", sep=""),
 			bubble_plot_configs.BUBBLE_PLOT_PATH=file.path(bPlot.folder, year.iter, "State", "Style_2", bPlot.levels),
 			bubble_plot_pdftk.CREATE_CATALOG=FALSE)
 
@@ -420,7 +421,7 @@ if (10 %in% bPlot.styles) {
 
                 # Loop over unique districts
 
-                for (district_number.iter in my.iters$tmp.districts) { ### Loop over DISTRICT NUMBERS   
+                for (district_number.iter in intersect(my.iters$tmp.districts, bPlot.data$DISTRICT_NUMBER)) { ### Loop over DISTRICT NUMBERS   
                 for (y.variable.iter in my.iters$tmp.y.variable) {  ### Loop over CURRENT and PRIOR achievement (if requested)
 
                 # Create labels
@@ -625,8 +626,8 @@ if (100 %in% bPlot.styles) {
 		### Utility functions
 
 		get.my.cutscore.year <- function(state, content_area, year) {
-			tmp.cutscore.years <- sapply(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]])[
-				grep(content_area, names(stateData[[state]][["Achievement"]][["Cutscores"]]))], "[.]"), function(x) x[2])
+			tmp.cutscore.years <- sapply(strsplit(names(SGPstateData[[state]][["Achievement"]][["Cutscores"]])[
+				grep(content_area, names(SGPstateData[[state]][["Achievement"]][["Cutscores"]]))], "[.]"), function(x) x[2])
 			if (any(!is.na(tmp.cutscore.years))) {
 				if (year %in% tmp.cutscore.years) {
 					return(paste(content_area, year, sep="."))
@@ -634,7 +635,7 @@ if (100 %in% bPlot.styles) {
 					if (year==sort(c(year, tmp.cutscore.years))[1]) {
 						return(content_area)
 					} else {
-						return(paste(content_area, rev(sort(tmp.cutscore.years))[1], sep="."))
+			                        return(paste(content_area, sort(tmp.cutscore.years)[which(year==sort(c(year, tmp.cutscore.years)))-1], sep="."))
 					}
 				}
 			} else {
@@ -699,14 +700,14 @@ if (100 %in% bPlot.styles) {
 
 		# Create cutscore ranges
 
-		my.content_area <- get.my.cutscore.year(state, content_area.iter, bPlot.labels$y.year) 
+		my.content_area <- get.my.cutscore.year(state, content_area.iter, as.character(bPlot.labels$y.year)) 
 		if (y.variable.iter=="SCALE_SCORE") {
-			tmp.y.ticks <- sort(c(stateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area.iter]][[paste("loss.hoss", grade.iter, sep="_")]],
-				stateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]])) 
+			tmp.y.ticks <- sort(c(SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area.iter]][[paste("loss.hoss", grade.iter, sep="_")]],
+				SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]])) 
 		}
 		if (y.variable.iter=="SCALE_SCORE_PRIOR") {
-			tmp.y.ticks <- sort(c(stateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area.iter]][[paste("loss.hoss", grade.iter-1, sep="_")]],
-				stateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter-1, sep="_")]])) 
+			tmp.y.ticks <- sort(c(SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area.iter]][[paste("loss.hoss", grade.iter-1, sep="_")]],
+				SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter-1, sep="_")]])) 
 		}
 
 
@@ -741,7 +742,7 @@ if (100 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_X_TICKS_SIZE=c(rep(0.7, 5), 1, rep(0.7, 5)),
 			bubble_plot_configs.BUBBLE_Y_TICKS=tmp.y.ticks,
 			bubble_plot_configs.BUBBLE_Y_BANDS=tmp.y.ticks,
-			bubble_plot_configs.BUBBLE_Y_BAND_LABELS=stateData[[state]][["Achievement"]][["Levels"]][["Labels"]],
+			bubble_plot_configs.BUBBLE_Y_BAND_LABELS=SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]],
 			bubble_plot_configs.BUBBLE_SUBSET_INCREASE=0.00,
 			bubble_plot_configs.BUBBLE_COLOR="blue",
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),

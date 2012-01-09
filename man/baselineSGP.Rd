@@ -1,8 +1,8 @@
-\name{ baselineSGP}
-\alias{ baselineSGP}
+\name{baselineSGP}
+\alias{baselineSGP}
 \title{Analyze student data to produce student growth percentiles and coefficient matrices from a baseline (i.e. multiple cohort) norm group}
 \description{
-  Utility function/exemplar used to produce student growth percentiles using long formatted data like that provided by \code{\link{prepareSGP}}.
+  Utility function/exemplar used to produce student growth percentiles using long formatted data like that provided by \code{\link{prepareSGP}}. Used as part of \code{\link{analyzeSGP}} for baseline refeenced student growth percentile analyses.
 }
 
 \usage{
@@ -10,34 +10,45 @@
         state,
         years,
         content_areas,
-        grade.sequences,
-        baseline.max.order,
-        return.matrices.only=FALSE,
-         ...)
+        grades,
+	sgp.config,
+	sgp.baseline.config,
+	sgp.percentiles.baseline.max.order=3,
+	return.matrices.only=FALSE,
+	calculate.baseline.sgps=TRUE,
+	goodness.of.fit.print=TRUE,
+	...)
 }
 
 \arguments{
-  \item{sgp_object}{An object of class \code{SGP} containing long formatted data in the \code{code} (from \code{\link{prepareSGP}}) slot. 
+  \item{sgp_object}{An object of class \code{SGP} containing long formatted data in the \code{Data} (from \code{\link{prepareSGP}}) slot. 
   }
-  \item{state}{Acronym indicating state associated with the data for access to embedded knot and boundaries, cutscores and other state related assessment data.
+  \item{state}{Acronym indicating state associated with the data for access to embedded knot and boundaries.
   }
-  \item{years}{A vector indicating year(s) in which to produce student growth percentiles and/or student growth projections/trajectories. If missing the 
-function will use the data to infer the year(s) based upon the assumption of having at least three years of panel data for analyses.
+  \item{years}{A vector indicating year(s) in which to produce baseline referenced student growth percentiles. 
   }
-  \item{content_areas}{A vector indicating content area(s) in which to produce student growth percentiles and/or student growth projections/trajectories. 
-If left missing the function will use the data to infer the content area(s) available for analyses.
+  \item{content_areas}{A vector indicating content area in which to produce baseline referenced student growth percentiles. 
   }
-  \item{grade.sequences}{A vector indicating acceptable grade sequences for which to calculate student growth percentiles and/or student growth projections/trajectories. If left missing the function will use the data to infer all the grade progressions for student growth percentile and student growth projections/trajectories analyses.
+  \item{grades}{A vector indicating which grades to calculate baseline referenced student growth percentiles. 
   }
-  \item{baseline.max.order}{Maximum number of prior scores one wishes to use in the analysis. Defaults to \code{num.panels-2} so that at least two cohorts comprise each baseline norm group. If \code{baseline.max.order=1}, then only 1st order growth percentiles are computed, if \code{baseline.max.order=2}, then 1st and 2nd order are computed, if \code{baseline.max.order=3}, 1st, 2nd, and 3rd ...  }
-  \item{return.matrices.only}{Boolean variable indicating whether to calculate student growth percentiles. Defaults to FALSE returning only coefficient matrices.
+  \item{sgp.config}{If \code{years}, \code{content_areas}, and \code{grades} are missing, user can directly specify a list containing three vectors: \code{baseline.content.areas}, \code{baseline.panel.years}, and \code{baseline.grade.sequences}. This advanced option is helpful for analysis of non-traditional grade progressions and other special cases. See \code{\link{analyzeSGP}} for use cases.
   }
-  \item{...}{Arguments to be passed to \code{\link{studentGrowthPercentiles}} for finer control over SGP calculations. 
+  \item{sgp.baseline.config}{A list containing three vectors: \code{sgp.content.areas}, \code{sgp.panel.years}, \code{sgp.grade.sequences} indicating how baseline student growth percentile analyses are to be conducted. In most cases this value will be calculated by default within the function but can be specified directly for advanced use cases. See source code for more detail on this configuration option.
+  }
+  \item{sgp.percentiles.baseline.max.order}{Integer indicating the maximum order to calculate baseline student growth percentiles (regardless of maximum coefficient matrix order). Default is 3.
+To utilize the maximum matrix order, set to NULL.
+  }
+  \item{return.matrices.only}{Boolean variable indicating whether the function will only return baseline referenced coefficient matrices. Defaults to FALSE.
+  }
+  \item{calculate.baseline.sgps}{Boolean variable indicating whether the function will calcualte baseline referenced student growth percentiles from baseline referenced coefficient matrices. Defaults to TRUE.
+  }
+  \item{goodness.of.fit.print}{Boolean variable indicating whether the function will export goodness of fit plots if baseline referenced student growth percentiles are calculated. Defaults to TRUE.
+  }
+  \item{...}{Arguments to be passed internally to \code{\link{studentGrowthPercentiles}} for finer control over SGP calculations.
   }
 }
 
-\value{Function returns a list containing the long data set in the \code{SGP} slot as a \code{data.table} keyed using \code{VALID_CASE}, \code{CONTENT_AREA}, 
-\code{YEAR}, \code{ID} and the student growth percentile results in the \code{SGP} slot. 
+\value{If \code{return.matrices.only} is set to TRUE function returns a list containing the baseline referenced coefficient matrices. Otherwise function returns the SGP object provided with the sgp_object argument with the baseline referenced coefficient matrices, growth percentiles, etc. embedded.  
 }
 
 \author{Adam Van Iwaarden \email{Vaniwaarden@colorado.edu}, Ben Domingue \email{ben.domingue@gmail.com} and Damian W. Betebenner \email{dbetebenner@nciea.org}}
@@ -46,9 +57,28 @@ If left missing the function will use the data to infer the content area(s) avai
 
 \examples{
 \dontrun{
-##  Create baseline coefficient matrices using all available cohorts in the example data
-Demonstration_Data <- prepareSGP(sgpData_LONG)
-Demonstration_Data <-  baselineSGP(Demonstration_Data)
+##  Calculate baseline referenced SGPs (using coefficient matrices embedded in SGPstateData)
+
+Demonstration_SGP <- prepareSGP(sgpData_LONG)
+Demonstration_SGP <-  baselineSGP(Demonstration_SGP)
+
+
+## Calculate baseline referenced coefficient matrices
+
+SGPstateData[["DEMO"]][["Baseline_splineMatrix"]] <- NULL
+Demonstration_SGP <- prepareSGP(sgpData_LONG)
+DEMO_Baseline_Matrices <- baselineSGP(Demonstration_SGP, return.matrices.only=TRUE, calculate.baseline.sgps=FALSE)
+
+
+## Calculate baseline referenced coefficient matrices and baseline referenced SGPs with 4 years of data
+
+SGPstateData[["DEMO"]][["Baseline_splineMatrix"]] <- NULL
+
+sgpData_LONG_0910 <- subset(sgpData_LONG, YEAR!="2010_2011")
+sgpData_LONG_0910$YEAR <- factor(sgpData_LONG_0910$YEAR) ### To remove "2010_2011" level from factor
+
+Demonstration_SGP <- prepareSGP(sgpData_LONG_0910)
+Demonstration_SGP <- baselineSGP(Demonstration_SGP)
 }  
 }
 

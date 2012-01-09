@@ -52,11 +52,11 @@ require(gridBase)
 # Test for installation of pdf2 package 
 
 if (bubble_plot_configs.BUBBLE_TIPS) {
-	if (!"pdf2" %in% installed.packages()) {
+	if ("pdf2" %in% installed.packages() & as.numeric(version$minor) < 14) {
+		require(pdf2)
+	} else {
 		bubble_plot_configs.BUBBLE_TIPS <- FALSE
 		message("Implentation of BUBBLE_TIPS requires the installation of the package pdf2 from R-Forge: install.packages('pdf2',repos='http://R-Forge.R-project.org')")
-	} else { 
-		require(pdf2)
 	}
 }
 
@@ -75,16 +75,20 @@ if (!is.null(bubble_plot_configs.BUBBLE_PLOT_PATH)) {
 # Calculate relevant quantities
 
 num.sizes <- length(bubble_plot_labels.SIZE)
-num.bubble.lines <- length(bubble_plot_data.BUBBLE_TIPS_LINES)
+if (!missing(bubble_plot_data.BUBBLE_TIPS_LINES)) num.bubble.lines <- length(bubble_plot_data.BUBBLE_TIPS_LINES)
 if (is.null(bubble_plot_data.LEVELS)) {
    num.levels <- 1; tmp.LEVELS <- rep(1, length(bubble_plot_data.X))
 } else {
    num.levels <- length(unique(bubble_plot_labels.LEVELS)); tmp.LEVELS <- bubble_plot_data.LEVELS
 }
 if (!is.null(bubble_plot_configs.BUBBLE_COLOR)) {
-    temp.colors <- rgb2hsv(col2rgb(bubble_plot_configs.BUBBLE_COLOR))
-    my.colors <- hsv(h=temp.colors[1], s=1:num.levels/(num.levels+1), v=temp.colors[3])
-    if (bubble_plot_configs.BUBBLE_COLOR_GRADIENT_REVERSE) my.colors <- rev(my.colors)
+    if (num.levels==1) {
+	my.colors <- bubble_plot_configs.BUBBLE_COLOR
+    } else {
+       temp.colors <- rgb2hsv(col2rgb(bubble_plot_configs.BUBBLE_COLOR))
+       my.colors <- hsv(h=temp.colors[1], s=1:num.levels/(num.levels+1), v=temp.colors[3])
+       if (bubble_plot_configs.BUBBLE_COLOR_GRADIENT_REVERSE) my.colors <- rev(my.colors)
+    }
 } else {
      require(colorspace)
      my.colors <- rev(rainbow_hcl(num.levels))
@@ -119,7 +123,7 @@ bubblecolor <- function(x){
 
 bubblesize <- function(schoolsize, numstud.range){
                       slope <- (max.cex - min.cex)/(sqrt(numstud.range)[2] - sqrt(numstud.range)[1])
-                      temp <- slope * sqrt(schoolsize) - slope*sqrt(numstud.range)[2] + max.cex
+                      temp <- slope*sqrt(schoolsize) - slope*sqrt(numstud.range)[2] + max.cex
                       return(temp)
 }          
 
@@ -370,10 +374,10 @@ if (bubble_plot_configs.BUBBLE_TIPS) {
 
     if (!is.null(bubble_plot_data.BUBBLE_CENTER_LABEL)) {
             grid.text(x=bubble_plot_data.X, y=bubble_plot_data.Y, bubble_plot_data.BUBBLE_CENTER_LABEL, 
-                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=10*bubblesize(bubble_plot_data.SIZE, c(10,1000)), 
+                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=bubblesize(bubble_plot_data.SIZE, c(10,1000))/as.numeric(convertUnit(stringWidth(bubble_plot_data.BUBBLE_CENTER_LABEL), "inches")), 
                    alpha=bubblealpha(length(bubble_plot_data.X), bubble_plot_configs.BUBBLE_SUBSET_ALPHA$Transparent), font=2), default.units="native")
             grid.text(x=bubble_plot_data.X[bubble_plot_data.SUBSET], y=bubble_plot_data.Y[bubble_plot_data.SUBSET], bubble_plot_data.BUBBLE_CENTER_LABEL[bubble_plot_data.SUBSET], 
-                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=10*bubblesize(bubble_plot_data.SIZE[bubble_plot_data.SUBSET], c(10,1000)), 
+                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=bubblesize(bubble_plot_data.SIZE, c(10,1000))/as.numeric(convertUnit(stringWidth(bubble_plot_data.BUBBLE_CENTER_LABEL), "inches")), 
                    alpha=bubblealpha(length(bubble_plot_data.X[bubble_plot_data.SUBSET]), bubble_plot_configs.BUBBLE_SUBSET_ALPHA$Opaque), font=2), default.units="native")
     }
 
@@ -432,7 +436,7 @@ if (bubble_plot_configs.BUBBLE_TIPS) {
 
      if (!is.null(bubble_plot_data.BUBBLE_CENTER_LABEL)) {
             grid.text(x=bubble_plot_data.X, y=bubble_plot_data.Y, bubble_plot_data.BUBBLE_CENTER_LABEL, 
-                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=10*bubblesize(bubble_plot_data.SIZE, c(10,1000)), 
+                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=bubblesize(bubble_plot_data.SIZE, c(10,1000))/as.numeric(convertUnit(stringWidth(bubble_plot_data.BUBBLE_CENTER_LABEL), "inches")), 
                    alpha=bubblealpha(length(bubble_plot_data.X), bubble_plot_configs.BUBBLE_SUBSET_ALPHA$Opaque), font=2), default.units="native")
      }
 
@@ -497,16 +501,16 @@ else {
 
    if (!is.null(bubble_plot_data.BUBBLE_CENTER_LABEL)) {
             grid.text(x=bubble_plot_data.X, y=bubble_plot_data.Y, bubble_plot_data.BUBBLE_CENTER_LABEL, 
-                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=10*bubblesize(bubble_plot_data.SIZE, c(10,1000)), 
+                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=bubblesize(bubble_plot_data.SIZE, c(10,1000))/as.numeric(convertUnit(stringWidth(bubble_plot_data.BUBBLE_CENTER_LABEL), "inches")), 
                    alpha=bubblealpha(length(bubble_plot_data.X), bubble_plot_configs.BUBBLE_SUBSET_ALPHA$Opaque), font=2), default.units="native")
    }
 
    if (!is.null(bubble_plot_data.BUBBLE_CENTER_LABEL)) {
             grid.text(x=bubble_plot_data.X, y=bubble_plot_data.Y, bubble_plot_data.BUBBLE_CENTER_LABEL, 
-                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=10*bubblesize(bubble_plot_data.SIZE, c(10,1000)), 
+                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=bubblesize(bubble_plot_data.SIZE, c(10,1000))/as.numeric(convertUnit(stringWidth(bubble_plot_data.BUBBLE_CENTER_LABEL), "inches")), 
                    alpha=bubblealpha(length(bubble_plot_data.X), bubble_plot_configs.BUBBLE_SUBSET_ALPHA$Transparent), font=2), default.units="native")
             grid.text(x=bubble_plot_data.X[bubble_plot_data.SUBSET], y=bubble_plot_data.Y[bubble_plot_data.SUBSET], bubble_plot_data.BUBBLE_CENTER_LABEL[bubble_plot_data.SUBSET], 
-                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=10*bubblesize(bubble_plot_data.SIZE[bubble_plot_data.SUBSET], c(10,1000)), 
+                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=bubblesize(bubble_plot_data.SIZE, c(10,1000))/as.numeric(convertUnit(stringWidth(bubble_plot_data.BUBBLE_CENTER_LABEL), "inches")), 
                    alpha=bubblealpha(length(bubble_plot_data.X[bubble_plot_data.SUBSET]), bubble_plot_configs.BUBBLE_SUBSET_ALPHA$Opaque), font=2), default.units="native")
    }
 } else {  
@@ -542,13 +546,13 @@ else {
 
    if (!is.null(bubble_plot_data.BUBBLE_CENTER_LABEL)) {
             grid.text(x=bubble_plot_data.X, y=bubble_plot_data.Y, bubble_plot_data.BUBBLE_CENTER_LABEL, 
-                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=10*bubblesize(bubble_plot_data.SIZE, c(10,1000)), 
+                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=bubblesize(bubble_plot_data.SIZE, c(10,1000))/as.numeric(convertUnit(stringWidth(bubble_plot_data.BUBBLE_CENTER_LABEL), "inches")), 
                    alpha=bubblealpha(length(bubble_plot_data.X), bubble_plot_configs.BUBBLE_SUBSET_ALPHA$Opaque), font=2), default.units="native")
    }
 
    if (!is.null(bubble_plot_data.BUBBLE_CENTER_LABEL)) {
             grid.text(x=bubble_plot_data.X, y=bubble_plot_data.Y, bubble_plot_data.BUBBLE_CENTER_LABEL, 
-                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=10*bubblesize(bubble_plot_data.SIZE, c(10,1000)), 
+                   gp=gpar(col=rgb(0.4,0.4,0.4), cex=bubblesize(bubble_plot_data.SIZE, c(10,1000))/as.numeric(convertUnit(stringWidth(bubble_plot_data.BUBBLE_CENTER_LABEL), "inches")), 
                    alpha=bubblealpha(length(bubble_plot_data.X), bubble_plot_configs.BUBBLE_SUBSET_ALPHA$Opaque), font=2), default.units="native")
    }
 } ## End SUBSET else statement

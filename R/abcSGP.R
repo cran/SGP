@@ -1,10 +1,11 @@
 `abcSGP` <- 
 function(sgp_object,
-	state,
+	state=NULL,
 	steps=c("prepareSGP", "analyzeSGP", "combineSGP", "summarizeSGP", "visualizeSGP"),
-	years,
-	content_areas,
-	grades,
+	years=NULL,
+	content_areas=NULL,
+	grades=NULL,
+	prepareSGP.var.names=NULL,
 	sgp.percentiles=TRUE, 
 	sgp.projections=TRUE,
 	sgp.projections.lagged=TRUE,
@@ -40,44 +41,43 @@ function(sgp_object,
 	plot.types=c("bubblePlot", "studentGrowthPlot", "growthAchievementPlot")) {
 
         started.at <- proc.time()
-	message(paste("Started abcSGP", date()), "\n")
+	message(paste("\nStarted abcSGP", date()), "\n")
 
-	### Create state (if missing) from sgp_object (if possible)
+	### Create state (if NULL) from sgp_object (if possible)
 
-	if (missing(state)) {
+	if (is.null(state)) {
 		tmp.name <- gsub("_", " ", deparse(substitute(sgp_object)))
-		if (any(sapply(c(state.name, "Demonstration"), function(x) regexpr(x, tmp.name)))==1) {
-			state <- c(state.abb, "DEMO")[which(sapply(c(state.name, "Demonstration"), function(x) regexpr(x, tmp.name))==1)]
+		if (any(sapply(c(state.name, "Demonstration", "sgpData LONG"), function(x) regexpr(x, tmp.name)))==1) {
+			state <- c(state.abb, rep("DEMO", 2))[which(sapply(c(state.name, "Demonstration", "sgpData LONG"), function(x) regexpr(x, tmp.name))==1)]
 		}
 	}
 
-        ### Check for consistency between simulate.sgps and confidence.interval.groups ###
+        ### Check for consistency between simulate.sgps and existence of CSEMs ###
 
-	if ("summarizeSGP" %in% plot.types & !is.null(confidence.interval.groups) & !simulate.sgps) {
-                message("Simulated SGPs are required to compute confidence intervals. simulate.sgps will be set to true.")
-                simulate.sgps <- TRUE
+	if (simulate.sgps & is.null(SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
+                message("CSEMs are required in SGPstateData to simulate SGPs for confidence interval calculations. Confidence intervals will not be calculated.")
+                simulate.sgps <- FALSE
         }
 
 
 	### prepareSGP ###
 
 	if ("prepareSGP" %in% steps) {
-		sgp_object <- prepareSGP(sgp_object)
+		sgp_object <- prepareSGP(sgp_object, var.names=prepareSGP.var.names)
 	        if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}
 
 
         ### Calculate Relevant Quantities ###
 
-        if (missing(content_areas)) {
+        if (is.null(content_areas)) {
                 content_areas <- unique(sgp_object@Data["VALID_CASE"]$CONTENT_AREA)
         }
-        if (missing(years)) {
+        if (is.null(years)) {
                 for (i in content_areas) {
-                        years <- sort(tail(unique(sgp_object@Data[J("VALID_CASE", content_areas)]$YEAR), -2), decreasing=TRUE)
+                        years <- sort(tail(unique(sgp_object@Data[J("VALID_CASE", content_areas)]$YEAR), -2))
                 }
         }
-
 
 	### analyzeSGP ###
 
@@ -87,6 +87,7 @@ function(sgp_object,
 			state=state,
 			content_areas=content_areas,
 			years=years,
+			grades=grades,
 			sgp.percentiles=sgp.percentiles,
 			sgp.projections=sgp.projections,
 			sgp.projections.lagged=sgp.projections.lagged,

@@ -7,21 +7,24 @@
 
 \usage{
 analyzeSGP(sgp_object,
-         state,
-         years,
-         content_areas,
-         grades,
+         state=NULL,
+         years=NULL,
+         content_areas=NULL,
+         grades=NULL,
          sgp.percentiles=TRUE,
          sgp.projections=TRUE,
          sgp.projections.lagged=TRUE,
          sgp.percentiles.baseline=TRUE,
          sgp.projections.baseline=TRUE,
-         sgp.projections.lagged.baseline=TRUE, 
+         sgp.projections.lagged.baseline=TRUE,
+         sgp.percentiles.baseline.max.order=3,
+         sgp.projections.baseline.max.order=3,
+         sgp.projections.lagged.baseline.max.order=3,
          simulate.sgps=TRUE,
          goodness.of.fit.print=TRUE,
-         sgp.config,
-         sgp.baseline.config,
-         parallel.config,
+         sgp.config=NULL,
+         sgp.baseline.config=NULL,
+         parallel.config=NULL,
          ...)
 }
 
@@ -51,13 +54,24 @@ If left missing the function will use the data to infer all the grade progressio
   }
   \item{sgp.projections.lagged.baseline}{Boolean variable indicating whether to calculate lagged baseline student growth projections. Defaults to FALSE.
   }
-  \item{simulate.sgps}{Boolean variable indicating whether to simulate SGP values for students based on test-specific Conditional Standard Errors of Measurement (CSEM).  Test CSEM data must be available for simulation and included in \code{\link{stateData}}.  This argument must be set to TRUE for confidence interval construction. Defaults to TRUE.
+  \item{sgp.percentiles.baseline.max.order}{Integer indicating the maximum order to calculate baseline student growth percentiles (regardless of maximum coefficient matrix order). Default is 3.
+To utilize the maximum matrix order, set to NULL.
+  }
+  \item{sgp.projections.baseline.max.order}{Integer indicating the maximum order to calculate baseline student growth projections (regardless of maximum coefficient matrix order). Default is 3.
+To utilize the maximum matrix order, set to NULL.
+  }
+  \item{sgp.projections.lagged.baseline.max.order}{Integer indicating the maximum order to calculate lagged baseline student growth projections (regardless of maximum coefficient matrix order). 
+Default is 3.  To utilize the maximum matrix order, set to NULL.
+  }
+  \item{simulate.sgps}{Boolean variable indicating whether to simulate SGP values for students based on test-specific Conditional Standard Errors of Measurement (CSEM).  Test CSEM data must be available for simulation and included in \code{SGPstateData}.  This argument must be set to TRUE for confidence interval construction. Defaults to TRUE.
   }
   \item{goodness.of.fit.print}{Boolean variable indicating whether to print out Goodness of Fit figures as pdf into a directory labeled Goodness of Fit. Defaults to TRUE.
   }
   \item{sgp.config}{If \code{years}, \code{content_areas}, and \code{grades} are missing, user can directly specify a list containing three vectors: \code{baseline.content.areas}, \code{baseline.panel.years}, and \code{baseline.grade.sequences}. This advanced option is helpful for analysis of non-traditional grade progressions and other special cases. See examples for use cases.
   }
-  \item{sgp.baseline.config}{If \code{years}, \code{content_areas}, and \code{grades} are missing, user can directly specify a list containing four vectors: \code{sgp.content.areas}, \code{sgp.panel.years}, \code{sgp.grade.sequences}, and \code{baseline.max.order} (the maximum number of priors to use). This advanced option is helpful for analysis of non-traditional grade progressions and other special cases. See examples for use cases.
+  \item{sgp.baseline.config}{A list containing three vectors: \code{sgp.content.areas}, \code{sgp.panel.years}, \code{sgp.grade.sequences} indicating how baseline student growth percentile analyses
+ are to be conducted. In almost all cases this value is calculated by default within the function but can be specified directly for advanced use cases. See source code for more detail on this confi
+guration option.
   }
   \item{parallel.config}{A named list indicating, at a minimum, the TYPE of the back end to be used for parallel computation.  TYPE = one of \code{FOREACH}, \code{SNOW}, \code{MULTICORE}.  List may also contain WORKERS for the number of cores or nodes used in \code{foreach} or \code{multicore} packages, or the name of the CLUSTER.OBJECT created for use with \code{snow}.
   }

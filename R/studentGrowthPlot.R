@@ -18,16 +18,16 @@ require(colorspace)
 
 ### Create relevant variables
 
-content.area.label <- stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Content_Areas_Labels"]][[Report_Parameters$Content_Area]]
+content.area.label <- SGPstateData[[Report_Parameters$State]][["Student_Report_Information"]][["Content_Areas_Labels"]][[Report_Parameters$Content_Area]]
 CUTLEVEL <- level_1_curve <- NULL ## To prevent R CMD check warnings
-number.achievement.level.regions <- length(stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Achievement_Level_Labels"]])
-achievement.level.labels <- stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Achievement_Level_Labels"]]
-number.growth.levels <- length(stateData[[Report_Parameters$State]][["Growth"]][["Levels"]])
-growth.level.labels <- stateData[[Report_Parameters$State]][["Growth"]][["Levels"]]
-growth.level.cutscores <- stateData[[Report_Parameters$State]][["Growth"]][["Cutscores"]][["Cuts"]]
-growth.level.cutscores.text <- stateData[[Report_Parameters$State]][["Growth"]][["Cutscores"]][["Labels"]]
-grades.reported.in.state <- stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Grades_Reported"]]
-test.abbreviation <- stateData[[Report_Parameters$State]][["Assessment_Program_Information"]][["Assessment_Abbreviation"]]
+number.achievement.level.regions <- length(SGPstateData[[Report_Parameters$State]][["Student_Report_Information"]][["Achievement_Level_Labels"]])
+achievement.level.labels <- SGPstateData[[Report_Parameters$State]][["Student_Report_Information"]][["Achievement_Level_Labels"]]
+number.growth.levels <- length(SGPstateData[[Report_Parameters$State]][["Growth"]][["Levels"]])
+growth.level.labels <- SGPstateData[[Report_Parameters$State]][["Growth"]][["Levels"]]
+growth.level.cutscores <- SGPstateData[[Report_Parameters$State]][["Growth"]][["Cutscores"]][["Cuts"]]
+growth.level.cutscores.text <- SGPstateData[[Report_Parameters$State]][["Growth"]][["Cutscores"]][["Labels"]]
+grades.reported.in.state <- SGPstateData[[Report_Parameters$State]][["Student_Report_Information"]][["Grades_Reported"]][[Report_Parameters$Content_Area]]
+test.abbreviation <- SGPstateData[[Report_Parameters$State]][["Assessment_Program_Information"]][["Assessment_Abbreviation"]]
 
 achievement.level.region.colors <- paste("grey", round(seq(62, 91, length=number.achievement.level.regions)), sep="")
 border.color <- "grey25"
@@ -39,6 +39,7 @@ missing.data.symbol <- "--"
 
 ach.level.labels <- function(perlevel){
            tmp <- names(achievement.level.labels)[match(perlevel, achievement.level.labels)]
+           tmp[is.na(tmp) & !is.na(perlevel)] <- perlevel[is.na(tmp) & !is.na(perlevel)]
            tmp[is.na(tmp)] <- missing.data.symbol
            return(tmp)
 }
@@ -57,7 +58,7 @@ arrow.color <- function(sgp){
 }
 
 get.my.cutscore.year <- function(state, content_area, year) {
-        tmp.cutscore.years <- sapply(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]])[grep(content_area, names(stateData[[state]][["Achievement"]][["Cutscores"]]))], "[.]"),
+        tmp.cutscore.years <- sapply(strsplit(names(SGPstateData[[state]][["Achievement"]][["Cutscores"]])[grep(content_area, names(SGPstateData[[state]][["Achievement"]][["Cutscores"]]))], "[.]"),
                 function(x) x[2])
         if (year %in% tmp.cutscore.years) {
                 return(year)
@@ -65,7 +66,7 @@ get.my.cutscore.year <- function(state, content_area, year) {
                 if (year==sort(c(year, tmp.cutscore.years))[1]) {
                         return(NA)
                 } else {
-                        return(rev(sort(tmp.cutscore.years))[1])
+                        return(sort(tmp.cutscore.years)[which(year==sort(c(year, tmp.cutscore.years)))-1])
                 }
         }
 }
@@ -343,8 +344,8 @@ if (grade.values$year_span == 0) {
 
 current.year <- year.function(Report_Parameters$Current_Year, 0, 1)
 xscale.range <- range(low.year,high.year) + c(-0.075, 0.1)*diff(range(low.year,high.year))
-if (Report_Parameters$Content_Area %in% names(stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]])) {
-   tmp.range <- range(stateData[[Report_Parameters$State]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]][[Report_Parameters$Content_Area]], na.rm=TRUE)
+if (Report_Parameters$Content_Area %in% names(SGPstateData[[Report_Parameters$State]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]])) {
+   tmp.range <- range(SGPstateData[[Report_Parameters$State]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]][[Report_Parameters$Content_Area]], na.rm=TRUE)
    low.score <- min(cuts.ny1.text,
                     Plotting_Scale_Scores,
                     tmp.range,
