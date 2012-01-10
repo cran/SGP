@@ -1,19 +1,20 @@
 \name{abcSGP}
 \alias{abcSGP}
-\title{Perform 4 step sequence: prepareSGP, analyzeSGP, combineSGP, and summarizeSGP}
+\title{Perform 5 step sequence: prepareSGP, analyzeSGP, combineSGP, summarizeSGP, and visualizeSGP}
 \description{
-  Utility function to perform sequence of steps going from data preparation, \code{\link{prepareSGP}}, SGP data analysis, \code{\link{analyzeSGP}},
-  data combining, \code{\link{combineSGP}}, and data summarization, \code{\link{summarizeSGP}}. Calculating and using
+  Utility function to perform sequence of 5 steps going from data preparation, \code{\link{prepareSGP}}, SGP data analysis, \code{\link{analyzeSGP}},
+  data combining, \code{\link{combineSGP}}, data summarization, \code{\link{summarizeSGP}}, and data visualization \code{\link{visualizeSGP}}. Calculating and using
   student growth percentiles is as easy as ABC.
 }
 
 \usage{
 abcSGP(sgp_object,
-	state,
+	state=NULL,
 	steps=c("prepareSGP", "analyzeSGP", "combineSGP", "summarizeSGP", "visualizeSGP"),
-	years,
-	content_areas,
-	grades,
+	years=NULL,
+	content_areas=NULL,
+	grades=NULL,
+	prepareSGP.var.names=NULL,
 	sgp.percentiles=TRUE,
 	sgp.projections=TRUE,
 	sgp.projections.lagged=TRUE,
@@ -49,7 +50,7 @@ abcSGP(sgp_object,
 }
 
 \arguments{
-  \item{sgp_object}{A list containing LONG formatted data. See \code{\link{sgpData_LONG}} for an exemplar.
+  \item{sgp_object}{A list containing LONG formatted data. See \code{\link{sgpData_LONG}} for an exemplar. NOTE: Data preparation must be meticulous to utilize this enhanced functionality.
   }
   \item{state}{Acronym indicating state associated with the data for access to embedded knot and boundaries,  cutscores, CSEMs, and other relevant state level data.
   }
@@ -64,6 +65,8 @@ If missing the function will use the data to infer the content area(s) available
   }
   \item{grades}{A vector indicating grades for which to calculate student growth percentiles and/or student growth projections/trajectories. 
 If missing the function will use the data to infer all the grade progressions for student growth percentile and student growth projections/trajectories analyses.
+  }
+  \item{prepareSGP.var.names}{list supplied to prepareSGP mapping provided variable names to variable names required as part of the SGP package. See \code{\link{prepareSGP}} for more details. Defaults to NULL.
   }
   \item{sgp.percentiles}{Boolean variable indicating whether to calculate student growth percentiles. Defaults to TRUE.
   }
@@ -103,7 +106,7 @@ Summary slot.
 
 \author{Damian W. Betebenner \email{dbetebenner@nciea.org}}
 
-\seealso{\code{\link{sgpData_LONG}}, \code{\link{prepareSGP}}, \code{\link{analyzeSGP}}, \code{\link{combineSGP}}, \code{\link{summarizeSGP}},  \cr
+\seealso{\code{\link{prepareSGP}}, \code{\link{analyzeSGP}}, \code{\link{combineSGP}}, \code{\link{summarizeSGP}},  \cr
 \code{\link{studentGrowthPercentiles}}, and \code{\link{studentGrowthProjections}}}
 
 \examples{

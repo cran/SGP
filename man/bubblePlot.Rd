@@ -61,10 +61,10 @@ bubblePlot(
 
 \arguments{
 	\item{bubble_plot_data.X}{
-	A vector of X coordinates for the bubbles to be plotted. Default value is \code{bubble_plot_data.X=MEDIAN_SGP}.
+	A vector of X coordinates for the bubbles to be plotted.
 	}
 	\item{bubble_plot_data.Y}{
-	A vector of Y coordinates for the bubbles to be plotted. Default value is \code{bubble_plot_data.Y=PERCENT_AT_ABOVE_PROFICIENT}.
+	A vector of Y coordinates for the bubbles to be plotted.
 	}
 	\item{bubble_plot_data.SUBSET}{
 	A boolean vector indicating a subset of the bubbles to be highlighted and plotted. When BUBBLE_TIPS are indicated, only subsetted bubbles will show bubble tips.
@@ -72,7 +72,7 @@ bubblePlot(
 	Default value is \code{bubble_plot_data.SUBSET=NULL}.
 	}
 	\item{bubble_plot_data.INDICATE}{
-	A boolean vector indicating a subset (usually a single) bubble) to attached a label to to further highlight in a manner suitable for printing.
+	A boolean vector indicating whether to attached a label to to further highlight in a manner suitable for printing. Usually done for few bubbles.
 	Default value is \code{bubble_plot_data.INDICATE=NULL}.
 	}
 	\item{bubble_plot_data.BUBBLE_CENTER_LABEL}{
@@ -80,7 +80,7 @@ bubblePlot(
 	Default value is \code{bubble_plot_data.BUBBLE_CENTER_LABEL=NULL}.
 	}
 	\item{bubble_plot_data.SIZE}{
-	A vector indicating the size of each of the bubbles plotted. Default value is \code{bubble_plot_data.SIZE=MEDIAN_SGP_COUNT}.
+	A vector indicating the size of each of the bubbles plotted.
 	}
 	\item{bubble_plot_data.LEVELS}{
 	A vector (usually a factor) indicating categories to which the bubbles belong. Default value is \code{bubble_plot_data.LEVELS=NULL}.

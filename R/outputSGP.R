@@ -37,7 +37,7 @@ if ("SchoolView_WIDE" %in% output.type) {
 	}
 
         get.my.cutscore.year <- function(state, content_area, year) {
-                tmp.cutscore.years <- sapply(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]])[grep(content_area, names(stateData[[state]][["Achievement"]][["Cutscores"]]))], "[.]"),
+                tmp.cutscore.years <- sapply(strsplit(names(SGPstateData[[state]][["Achievement"]][["Cutscores"]])[grep(content_area, names(SGPstateData[[state]][["Achievement"]][["Cutscores"]]))], "[.]"),
                         function(x) x[2])
                 if (any(!is.na(tmp.cutscore.years))) {
                 if (year %in% tmp.cutscore.years) {
@@ -46,7 +46,7 @@ if ("SchoolView_WIDE" %in% output.type) {
                   if (year==sort(c(year, tmp.cutscore.years))[1]) {
                      return(content_area)
                   } else {
-                     return(paste(content_area, rev(sort(tmp.cutscore.years))[1], sep="."))
+                     return(paste(content_area, sort(tmp.cutscore.years)[which(year==sort(c(year, tmp.cutscore.years)))-1], sep="."))
                   }
                }
              } else {
@@ -55,15 +55,15 @@ if ("SchoolView_WIDE" %in% output.type) {
         }
 
 	piecewise.transform <- function(scale_score, state, content_area, year, grade, output.digits=1) {
-		if (content_area %in% names(stateData[[state]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]]) &
-			grade %in% as.numeric(matrix(unlist(strsplit(names(stateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area]]), "_")), 
+		if (content_area %in% names(SGPstateData[[state]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]]) &
+			grade %in% as.numeric(matrix(unlist(strsplit(names(SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area]]), "_")), 
 				ncol=2, byrow=TRUE)[,2])) {
 
-			tmp.loss.hoss <- stateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area]][[paste("loss.hoss_", grade, sep="")]]
+			tmp.loss.hoss <- SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area]][[paste("loss.hoss_", grade, sep="")]]
 			my.content_area <- get.my.cutscore.year(state, content_area, year)
-			tmp.old.cuts <- c(tmp.loss.hoss[1], stateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE_", grade, sep="")]], 
+			tmp.old.cuts <- c(tmp.loss.hoss[1], SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE_", grade, sep="")]], 
 				tmp.loss.hoss[2])
-			tmp.new.cuts <- stateData[[state]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]][[content_area]]
+			tmp.new.cuts <- SGPstateData[[state]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]][[content_area]]
 			tmp.index <- findInterval(scale_score, tmp.old.cuts, rightmost.closed=TRUE)
 			tmp.diff <- diff(tmp.new.cuts)/diff(tmp.old.cuts)
 			round(tmp.new.cuts[tmp.index] + (scale_score - tmp.old.cuts[tmp.index]) * (diff(tmp.new.cuts)/diff(tmp.old.cuts))[tmp.index], digits=output.digits)

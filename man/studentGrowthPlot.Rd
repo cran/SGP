@@ -2,7 +2,7 @@
 \alias{studentGrowthPlot}
 \title{Create a student growth and achievement chart}
 \description{Function used to produce individual student growth and achievement timelines/plots for based upon output from student growth percentile
-analyses. Function is integrated with \code{\link{stateData}} to accommodate state specific scales and nomenclature including performance
+analyses. Function is integrated with \code{SGPstateData} to accommodate state specific scales and nomenclature including performance
 level names.}
 \usage{
 studentGrowthPlot(Scale_Scores,

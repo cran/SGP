@@ -13,7 +13,8 @@ studentGrowthPercentiles(panel.data,
                          sgp.labels,                                          
                          panel.data.vnames,                                 
                          grade.progression,                               
-                         num.prior,                                         
+                         num.prior,
+                         max.order.for.percentile=NULL,
                          subset.grade,                                     
                          percentile.cuts,
                          growth.levels,
@@ -25,6 +26,7 @@ studentGrowthPercentiles(panel.data,
                          calculate.sgps=TRUE,                                       
                          rq.method="br",                                           
                          knot.cut.percentiles=c(0.2,0.4,0.6,0.8),
+                         knots.boundaries.by.panel=FALSE,
                          exact.grade.progression.sequence=FALSE,
                          drop.nonsequential.grade.progression.variables=TRUE, 
                          convert.0and100=TRUE,                                   
@@ -60,6 +62,8 @@ studentGrowthPercentiles(panel.data,
   if \code{num.prior=3}, 1st, 2nd, and 3rd ... NOTE: specifying \code{num.prior} is necessary in some situations (in early grades for example)
   where the number of prior data points is small compared to the number of panels of data. 
   }
+  \item{max.order.for.percentile}{A positive integer indicating the maximum order for percentiles desired. Similar limiting of number of priors used can be accomplished using the \code{grade.progression} argument.
+  }
   \item{subset.grade}{Student grade level for sub-setting. If the data fed into the function contains multiple
   grades, setting \code{subset.grade=5} selects out those students in grade five in the most recent year of the data. If no sub-setting is desired,
   argument do not include the \code{subset.grade} argument. If \code{grade.progression} is supplied, then a subset grade is implicitly specified.
@@ -69,22 +73,22 @@ studentGrowthPercentiles(panel.data,
   }
   \item{growth.levels}{A two letter state acronym or a list of the form \code{list(my.cuts= , my.levels= )} specifying a vector of cuts between 1 and 99 (e.g., 35, 65)
    and the associated qualitative levels associated with the cuts (e.g., low, typical, and high). Note that the length of my.levels should be one more than the
-   length of my.cuts. To add your growth levels to the \code{stateData} data set, please contact the package administrator.
+   length of my.cuts. To add your growth levels to the \code{SGPstateData} data set, please contact the package administrator.
   }
   \item{use.my.knots.boundaries}{A list of the form  \code{list(my.year= , my.subject= )} specifying a set of pre-calculated
    knots and boundaries for B-spline calculations. Most often used to utilize knots and boundaries calculated from a previous analysis. Knots and boundaries are stored
-   (and must be made available) with  \code{panel.data} supplied as a list in \code{panel.data$Knots_Boundaries$my.year.my.subject}. As of SGP_0.0-6 user can also supply 
-   a two letter state acronym to utilize knots and boundaries within the \code{stateData} data set supplied with the SGP package. To add your knots and boundaries to the
-   \code{stateData} data set, please contact the package administrator. If missing, function automatically calculates knots, boundaries, and loss.hoss values and stores them 
+   (and must be made available) with  \code{panel.data} supplied as a list in \code{panel.data$Knots_Boundaries$my.subject.my.year}. As of SGP_0.0-6 user can also supply 
+   a two letter state acronym to utilize knots and boundaries within the \code{SGPstateData} data set supplied with the SGP package. To add your knots and boundaries to the
+   \code{SGPstateData} data set, please contact the package administrator. If missing, function automatically calculates knots, boundaries, and loss.hoss values and stores them 
    in \code{panel.data$Knots_Boundaries} \cr
-   \code{$my.year.my.subject} where \code{my.year} and \code{my.subject} are provided by \code{sgp.labels}.  
+   \code{$my.subject.my.year} where \code{my.subject} and \code{my.year} are provided by \code{sgp.labels}.  
   }
   \item{use.my.coefficient.matrices}{A list of the form  \code{list(my.year= , my.subject= )} specifying a set of pre-calculated
    coefficient matrices to use for student growth percentile calculations. Can be used to calculate baseline referenced student growth percentiles or to calculate student growth percentiles for small groups of excluded students without recalculating an entire set of data. If missing, coefficient matrices are calculated based upon the provided data and stores them in \cr
- \code{panel.data$Coefficient_Matrices$my.year.my.subject} where \code{my.year} and \code{my.subject} are provided by \code{sgp.labels}.
+ \code{panel.data$Coefficient_Matrices$my.subject.my.year} where \code{my.subject} and \code{my.year} are provided by \code{sgp.labels}.
   }
  \item{calculate.confidence.intervals}{A character vector providing either a state acronym or a variable name from the supplied panel data. If a state acronym, CSEM tables from the embedded 
-   \code{\link{stateData}} (note: CSEM data must be embedded in the \code{stateData} set. To have your state CSEMs embedd in the \code{stateData} set, please contact the package
+   \code{\link{SGPstateData}} (note: CSEM data must be embedded in the \code{SGPstateData} set. To have your state CSEMs embedd in the \code{SGPstateData} set, please contact the package
    administrator) will be used. If a variable name, the supplied panel data must contain a variable providing student level CSEMs (e.g., with adaptive testing). NOTE: If a variable
    name is supplied, the user must also use the argument \code{panel.data.vnames} indicating what variables in the supplied \code{panel.data} will be used for the \code{studentGrowthPercentile} 
    analysis. For greater control, the user can also supply a list of the form \code{list(state= , confidence.quantiles= , simulation.iterations= , distribution= , round= )} or 
@@ -102,6 +106,8 @@ studentGrowthPercentiles(panel.data,
   \item{rq.method}{Argument to define the estimation method used in the quantile regression calculations. The default is the the \code{"br"} method referring to the Barrodale and Robert's L1 estimation detailed in Koenker (2005) and in the help for the quantile regression package.
   }
   \item{knot.cut.percentiles}{Argument that specifies the quantiles to be used for calculation of B-spline knots. Default is to place knots at the 0.2, 0.4, 0.6, and 0.8 quantiles. 
+  }
+  \item{knots.boundaries.by.panel}{Boolean argument (defaults to FALSE) indicating whether knots and boundaries should be calculated by panel in supplied panel data instead of aggregating across panel. If panels are on different scales, then different knots and boundaries may be required to accomodate quantile regression analyses.
   }
   \item{exact.grade.progression.sequence}{Boolean argument indicating whether the grade.progression supplied is used exactly (TRUE) as supplied or whether lower order analyses are run as part of the whole analysis (FALSE--the default). 
   }
@@ -122,7 +128,7 @@ studentGrowthPercentiles(panel.data,
   }
   \item{goodness.of.fit}{Boolean argument (defaults to TRUE) indicating whether to produce goodness of fit results associated with produced student growth percentiles.
    Goodness of fit results are grid.grobs stored in \code{panel.data$Goodness_of_Fit} \cr   
-   \code{$my.year.my.subject} where \code{my.year} and \code{my.subject} are provided by \code{sgp.labels}.
+   \code{$my.subject.my.year} where \code{my.subject} and \code{my.year} are provided by \code{sgp.labels}.
   }
   \item{print.time.taken}{Boolean argument (defaults to TRUE) indicating whether to print message indicating information on studentGrowthPercentile analysis and time taken.
   }
@@ -152,10 +158,11 @@ Koenker, R. (2005). \emph{Quantile regression}. Cambridge: Cambridge University 
 
 \author{Damian W. Betebenner \email{dbetebenner@nciea.org}}
 
-\seealso{\code{\link{studentGrowthProjections}}, \code{\link{sgpData}}, \code{\link{sgpData_LONG}}, \code{\link{stateData}}}
+\seealso{\code{\link{studentGrowthProjections}}, \code{\link{sgpData}}, \code{\link{sgpData_LONG}}, \code{\link{SGPstateData}}}
 
 
 \examples{
+\dontrun{
 ## Calculate 4th grade student growth percentiles using included sgpData
 
 sgp_g4 <- studentGrowthPercentiles(panel.data=sgpData,
@@ -173,7 +180,7 @@ sgp_g4_v2 <- studentGrowthPercentiles(panel.data=sgpData,
 
 identical(sgp_g4$SGPercentiles, sgp_g4_v2$SGPercentiles)
 
-## Established state Knots and Boundaries are available in the supplied stateData
+## Established state Knots and Boundaries are available in the supplied SGPstateData
 ## file and used by supplying the appropriate two letter state acronym.
  
 sgp_g4_DEMO <- studentGrowthPercentiles(panel.data=sgpData,
@@ -189,7 +196,7 @@ sgp_g8_DEMO <- studentGrowthPercentiles(panel.data=sgpData,
                    use.my.knots.boundaries="DEMO",
                    grade.progression=c(5,6,8))
 
-\dontrun{
+
 ## NOTE: Goodness of Fit results are stored as a graphical object in the
 ## Goodness_of_Fit slot. To view or save (using any R output device) try:
 

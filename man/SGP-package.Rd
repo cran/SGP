@@ -4,11 +4,11 @@
 \docType{package}
 \title{SGP: An R Package for the Calculation and Visualization of Student Growth Percentiles & Percentile Growth Trajectories.}
 \description{
-SGP contains functions to calculate student growth percentiles and percentile growth projections/trajectories following methodology found in Betebenner (2008, 2009).
+SGP contains classes and functions to calculate student growth percentiles and percentile growth projections/trajectories following methodology found in Betebenner (2008, 2009).
 The package contains two primary functions, \code{\link{studentGrowthPercentiles}} and \code{\link{studentGrowthProjections}}, and numerous higher level functions
 that make use of them including: \code{prepareSGP}, \code{\link{analyzeSGP}}, \code{\link{combineSGP}}, \code{\link{summarizeSGP}}, and \code{\link{visualizeSGP}}. These 
 functions are used to calculate and visualize student growth percentiles and percentile growth projections/trajectories for students using large scale, longitudinal assessment data. 
-These norm referenced growth values are currently used in a number of state testing and accountability systems. The functions employ quantile 
+These norm- and criterion-referenced growth values are currently used in a number of states for many puropses including diagnositic and accountability. The functions employ quantile 
 regression (using the \code{quantreg} package) to estimate the conditional density for current achievement using each student's achievement history. 
 Percentile growth projections/trajectories are calculated using the coefficient matrices derived from the student growth percentile analyses. These quantities
 are summarized in a variety of ways to describe student growth. As of the 0.2-0.0 release, the package also includes the graphics functions 
@@ -20,8 +20,8 @@ growth percentile analyses.
 \tabular{ll}{
 Package: \tab SGP\cr
 Type: \tab Package\cr
-Version: \tab 0.7-1.0\cr
-Date: \tab 2011-10-11\cr
+Version: \tab 0.8-0.0\cr
+Date: \tab 2012-1-9\cr
 License: \tab CC BY-SA 3.0 US | CC BY-NC-SA 3.0 + file LICENSE\cr
 LazyLoad: \tab yes\cr
 }
@@ -30,7 +30,7 @@ calculation must be specifically formatted.  See \code{\link{sgpData}} for an ex
 provided in the examples of the \code{\link{studentGrowthPercentiles}} and \code{\link{studentGrowthProjections}} using the higher level functions 
 \code{\link{prepareSGP}}, \code{\link{analyzeSGP}}, \code{\link{combineSGP}}, \code{\link{summarizeSGP}}, and \code{visualizeSGP}.} 
 
-\author{Damian W. Betebenner \email{dbetebenner@nciea.org} and Adam Van Iwaarden \email{Vaniwaarden@colorado.edu}} 
+\author{Damian W. Betebenner \email{dbetebenner@nciea.org}, Adam Van Iwaarden \email{Vaniwaarden@colorado.edu} and Ben Domingue \email{ben.domingue@gmail.com}} 
 
 \references{ 
 Betebenner, D. W. (2009). Norm- and criterion-referenced student growth. 

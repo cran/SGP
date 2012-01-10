@@ -43,10 +43,13 @@ visualizeSGP(
            sgPlot.demo.report=FALSE,
            sgPlot.produce.plots=TRUE,
            sgPlot.parallel.config=list(TYPE="FOREACH", OPTIONS=list(preschedule=FALSE)),
+           sgPlot.baseline=NULL,
            gaPlot.years=NULL,
            gaPlot.content_areas=NULL,
            gaPlot.students=NULL,
            gaPlot.format="print",
+           gaPlot.baseline=NULL,
+           gaPlot.max.order.for.progression=NULL,
            gaPlot.folder="Visualizations/growthAchievementPlots") 
 }
 
@@ -57,7 +60,7 @@ and achievement plots and system growth and achievement plots, summary data from
   \item{plot.types}{A character vector indicating what types of plots to construct. Currently available plots include \code{\link{bubblePlot}}, 
 \code{\link{studentGrowthPlot}}, and \code{\link{growthAchievementPlot}}.
   }
-  \item{state}{Acronym indicating state associated with the summaries for access to assessment program information embedded in \code{\link{stateData}}.
+  \item{state}{Acronym indicating state associated with the summaries for access to assessment program information embedded in \code{SGPstateData}.
   }
   \item{bPlot.years}{A vector indicating year(s) in which to produce \code{\link{bubblePlot}}s using data available in \code{sgp_object}. If missing the 
 function will use the last year available in the data to produce \code{\link{bubblePlot}}s.
@@ -145,6 +148,8 @@ wide formatted data without the actual student growth plots.
   \item{sgPlot.parallel.config}{A list indicating the \code{TYPE} of back end used for the parallel computation and \code{OPTIONS} that apply to that parallel back end. Default is to use 
 \code{FOREACH} for the back end with \code{OPTIONS=list(preschedule=FALSE)}
   }
+  \item{sgPlot.baseline}{Argument (defaults to NULL) indicating whether to use baseline referenced SGPs for student growth plot construction.  If not set by user, argument will be set using \code{SGPstateData} which contains information on whether state is a cohort or baseline referenced system.
+  }
   \item{gaPlot.years}{A vector indicating year for which to produce \code{\link{growthAchievementPlot}}s. If missing the function will use the last year available 
 in the data to produce \code{\link{growthAchievementPlot}}s.
   }
@@ -156,6 +161,9 @@ use \emph{all} available students in the data to produce \code{\link{growthAchie
   }
   \item{gaPlot.format}{Either "print" or "presentation" indicating whether to optimize the plot for print form (light background) or presentation form (dark background). 
   }
+  \item{gaPlot.baseline}{Argument (defaults to NULL) indicating whether to calculate growth and achievement plots using percentile trajectories derived from baseline referenced coefficient matrices. If not set by user, argument will be set using \code{SGPstateData} which contains information on whether state is a cohort or baseline referenced system.
+  }
+  \item{gaPlot.max.order.for.progression}{The maximum coefficient matrix order to use for each progression. Default is NULL which utilizes the maximum order available with the coefficient matrices.}
   \item{gaPlot.folder}{Character vector indicating where \code{\link{growthAchievementPlot}}s should be placed. Default folder is "Visualizations/growthAchievementPlots".  
   }
 }

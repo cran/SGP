@@ -14,7 +14,8 @@
            sgPlot.front.page,
            sgPlot.header.footer.color,
            sgPlot.fan,
-           sgPlot.cleanup) {
+           sgPlot.cleanup,
+           sgPlot.baseline) {
 
 	CUTLEVEL <- ID <- CONTENT_AREA <- NULL ## To prevent R CMD check warnings
 
@@ -25,15 +26,15 @@
 	pretty_year <- function(x) sub("_", "-", x)
 
 	create.long.cutscores.sgPlot <- function(state, content_area) {
-		number.achievement.level.regions <- length(stateData[[state]][["Student_Report_Information"]][["Achievement_Level_Labels"]])
-		if (!content_area %in% names(stateData[[state]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]])) {
+		number.achievement.level.regions <- length(SGPstateData[[state]][["Student_Report_Information"]][["Achievement_Level_Labels"]])
+		if (!content_area %in% names(SGPstateData[[state]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]])) {
 		tmp.list <- list()
-		for (i in grep(content_area, names(stateData[[state]][["Achievement"]][["Cutscores"]]))) {
-			tmp.grades <- as.numeric(matrix(unlist(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]][[i]]), "_")),
+		for (i in grep(content_area, names(SGPstateData[[state]][["Achievement"]][["Cutscores"]]))) {
+			tmp.grades <- as.numeric(matrix(unlist(strsplit(names(SGPstateData[[state]][["Achievement"]][["Cutscores"]][[i]]), "_")),
 				ncol=2, byrow=TRUE)[,2])
-			tmp.cutscores <- matrix(unlist(stateData[[state]][["Achievement"]][["Cutscores"]][[i]]),
+			tmp.cutscores <- matrix(unlist(SGPstateData[[state]][["Achievement"]][["Cutscores"]][[i]]),
 				ncol=number.achievement.level.regions-1, byrow=TRUE)
-			tmp.year <- unlist(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]])[i], "[.]"))[2]
+			tmp.year <- unlist(strsplit(names(SGPstateData[[state]][["Achievement"]][["Cutscores"]])[i], "[.]"))[2]
 			for (j in seq(number.achievement.level.regions-1)) {
 				tmp.list[[paste(i, j, sep="_")]] <- data.frame(GRADE=c(min(tmp.grades,na.rm=TRUE)-1, tmp.grades, max(tmp.grades,na.rm=TRUE)+1),
 					CUTLEVEL=rep(j, length(tmp.grades)+2),
@@ -43,13 +44,13 @@
 		}
 		subset(do.call(rbind, tmp.list), CUTLEVEL %in% 1:(number.achievement.level.regions-1))
 		} else {
-			tmp.grades <- as.numeric(matrix(unlist(strsplit(names(stateData[[state]][["Achievement"]][["Cutscores"]][[content_area]]), "_")),
+			tmp.grades <- as.numeric(matrix(unlist(strsplit(names(SGPstateData[[state]][["Achievement"]][["Cutscores"]][[content_area]]), "_")),
 				ncol=2, byrow=TRUE)[,2])
 			tmp.list <- list()
 			for (i in seq(number.achievement.level.regions-1)) {
 				tmp.list[[i]] <- data.frame(GRADE=c(min(tmp.grades,na.rm=TRUE)-1, tmp.grades, max(tmp.grades,na.rm=TRUE)+1),
 					CUTLEVEL=rep(i, length(tmp.grades)+2),
-					CUTSCORES=rep(stateData[[state]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]][[content_area]][i+1],
+					CUTSCORES=rep(SGPstateData[[state]][["Student_Report_Information"]][["Transformed_Achievement_Level_Cutscores"]][[content_area]][i+1],
 						length(tmp.grades)+2))
 			}
 			do.call(rbind, tmp.list)
@@ -59,20 +60,30 @@
 
 	### Define quantities/variables related to state
 
-	if (state %in% names(stateData)) {
-		tmp.abbreviation <- stateData[[state]][["Assessment_Program_Information"]][["Assessment_Abbreviation"]]
+	if (state %in% names(SGPstateData)) {
+		tmp.abbreviation <- SGPstateData[[state]][["Assessment_Program_Information"]][["Assessment_Abbreviation"]]
 		tmp.state <- paste(state.name[state==state.abb], tmp.abbreviation)
-		tmp.organization <- stateData[[state]][["Assessment_Program_Information"]][["Organization"]]
-		number.achievement.level.regions <- length(stateData[[state]][["Student_Report_Information"]][["Achievement_Level_Labels"]])
+		tmp.organization <- SGPstateData[[state]][["Assessment_Program_Information"]][["Organization"]]
+		number.achievement.level.regions <- length(SGPstateData[[state]][["Student_Report_Information"]][["Achievement_Level_Labels"]])
 		Cutscores <- list()
 		for (i in content_areas) {
 			Cutscores[[i]] <- create.long.cutscores.sgPlot(state, as.character(i))
 		}
 	} else {
-		stop("Construction of student growth plots requires state meta-data to be included in the embedded stateData set.\nPlease augment the stateData set with your data or contact the SGP package maintainer to have your data added to the SGP package.")
+		stop("Construction of student growth plots requires state meta-data to be included in the embedded SGPstateData set.\nPlease augment the SGPstateData set with your data or contact the SGP package maintainer to have your data added to the SGP package.")
 	}	
 
 	year_folder <- as.character(last.year) 
+
+	## To Baseline or not to Baseline
+
+        if (sgPlot.baseline) {
+                 my.sgp <- "SGP_BASELINE"
+                 my.sgp.level <- "SGP_LEVEL_BASELINE"
+        } else {
+                 my.sgp <- "SGP"
+                 my.sgp.level <- "SGP_LEVEL"
+        }
 
 	### Loop over unique DISTRICTS, SCHOOLS, GRADES and then STUDENTS
 
@@ -174,8 +185,8 @@
 
 	for (n in unique(tmp_grade_data[["ID"]])) {
 		tmp_student_data <- tmp_grade_data[ID==n]
-		FIRST_NAME <- gsub(" |/", "-", tmp_student_data[[tmp.keys[5]]][1]) 
-		LAST_NAME <- gsub(" |/", "-", tmp_student_data[[tmp.keys[4]]][1])
+		FIRST_NAME <- gsub(" |/", "-", sort(tmp_student_data[[tmp.keys[5]]])[1]) 
+		LAST_NAME <- gsub(" |/", "-", sort(tmp_student_data[[tmp.keys[4]]])[1])
 		if (sgPlot.anonymize) {
 			student_number <- 1234567890
 		} else {
@@ -274,8 +285,8 @@
                                   Scale_Scores=as.numeric(subset(tmp_student_data, select=paste("SCALE_SCORE", rev(sgPlot.years), sep="."))),
                                   Plotting_Scale_Scores=as.numeric(subset(tmp_student_data, select=paste("TRANSFORMED_SCALE_SCORE", rev(sgPlot.years), sep="."))),
                                   Achievement_Levels=as.character(unlist(subset(tmp_student_data, select=paste("ACHIEVEMENT_LEVEL", rev(sgPlot.years), sep=".")))),
-                                  SGP=as.numeric(subset(tmp_student_data, select=paste("SGP", rev(sgPlot.years), sep="."))),
-                                  SGP_Level=as.character(unlist(subset(tmp_student_data, select=paste("SGP_LEVEL", rev(sgPlot.years), sep=".")))),
+                                  SGP=as.numeric(subset(tmp_student_data, select=paste(my.sgp, rev(sgPlot.years), sep="."))),
+                                  SGP_Level=as.character(unlist(subset(tmp_student_data, select=paste(my.sgp.level, rev(sgPlot.years), sep=".")))),
                                   Grades=as.numeric(subset(tmp_student_data, select=paste("GRADE", rev(sgPlot.years), sep="."))),
                                   Cuts_NY1=as.numeric(subset(tmp_student_data, select=grep("PROJ", names(tmp_student_data)))),
                                   Cutscores=Cutscores[[content_areas[vp]]],

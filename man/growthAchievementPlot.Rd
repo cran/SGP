@@ -14,10 +14,12 @@ growthAchievementPlot(
         gaPlot.achievement_percentiles=c(.01, seq(.05, .95, by=.05), .99),
         gaPlot.show.scale.transformations=TRUE,
         gaPlot.grade_range,
+        gaPlot.max.order.for.progression=NULL,
         state,
         content_area,
         year,
         format="print",
+        baseline=FALSE,
         pdf.folder,
         assessment.name)
 }
@@ -43,6 +45,9 @@ growthAchievementPlot(
 	\item{gaPlot.grade_range}{
 	The grade range for which to demonstrate plot. If missing, function uses supplied state to derive grade range.	
 	}
+	\item{gaPlot.max.order.for.progression}{
+	The maximum coefficient matrix order to use for each progression. Default is NULL which utilizes the maximum order available with the coefficient matrices.
+	}
         \item{state}{
         A two letter acronym for the state associated with the supplied data.
         }
@@ -55,6 +60,9 @@ growthAchievementPlot(
 	}
 	\item{format}{
 	Either "print" (the default) for light background or "presentation" for dark background slides.
+	}
+	\item{baseline}{
+	Boolean variable (defaults to FALSE) indicating whether to create percentile trajectories using baseline referenced coefficient matrices. 
 	}
 	\item{pdf.folder}{
 	A character vector indicating where to put the produced growth and achievement plot.

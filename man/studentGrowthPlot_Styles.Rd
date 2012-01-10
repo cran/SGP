@@ -24,14 +24,15 @@ studentGrowthPlot_Styles(
            sgPlot.front.page,
            sgPlot.header.footer.color,
            sgPlot.fan,
-           sgPlot.cleanup)
+           sgPlot.cleanup,
+           sgPlot.baseline)
 }
 
 \arguments{
   \item{sgPlot.data}{Wide formatted individual student report data used to produce student growth plots. To view structure of wide formatted data, utilize the 
 \code{sgPlot.save.sgPlot.data} option with \code{\link{visualizeSGP}} to save wide formatted student growth plot data.
   }
-  \item{state}{Acronym indicating state associated with the summaries for access to assessment program information embedded in \code{\link{stateData}}.
+  \item{state}{Acronym indicating state associated with the summaries for access to assessment program information embedded in \code{SGPstateData}.
   }
   \item{last.year}{Argument indicating the final year represented in the student growth plots.
   }
@@ -60,7 +61,9 @@ and a summary catalog containing those reports will be produced.
   }
   \item{sgPlot.fan}{A boolean argument indicating whether the projection fan indicating growth rates necessary to reach 1 years targets be displayed.
   }
-  \item{sgPlot.cleanup}{A boolean argument indicating whether to cleanup/remove file produced as part of pdfLaTeX build.
+  \item{sgPlot.cleanup}{A boolean argument indicating whether to cleanup/remove files produced as part of pdfLaTeX build.
+  }
+  \item{sgPlot.baseline}{A boolean argument indicating whether to use baseline referenced student growth percentiles in student growth plots.
   }
 }
 

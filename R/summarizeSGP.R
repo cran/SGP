@@ -26,7 +26,7 @@
                institution_inclusion=list(STATE=NULL, DISTRICT_NUMBER=NULL, SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS")))) {
 
     started.at <- proc.time()
-    message(paste("Started summarizeSGP", date()))
+    message(paste("\nStarted summarizeSGP", date()))
 
     if (missing(sgp_object)) {
       stop("User must supply a list containing a Student slot with long data. See documentation for details.")
@@ -49,7 +49,7 @@
     }
     if (missing(years)) {
       for (i in content_areas) {
-        years <- sort(tail(unique(sgp_object@Data[J("VALID_CASE", content_areas)]$YEAR), 3), decreasing=TRUE)
+        years <- sort(tail(unique(sgp_object@Data[J("VALID_CASE", content_areas)]$YEAR), 3))
       }
     }
 
@@ -143,7 +143,7 @@
         tmp <- data.table(merge.data.frame(tmp, tmp.sim, by = unlist(strsplit(as.character(sgp.groups.to.summarize), ", ")),all=TRUE))
       }
       names(tmp)[-seq(length(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))))] <- sgp.summaries.names
-      message(paste("Finished with", sgp.groups.to.summarize))
+      message(paste("\tFinished with", sgp.groups.to.summarize))
       return(tmp)
     }
 
@@ -162,7 +162,7 @@
     
     ## Prepare data
 
-    tmp.dt <- data.table(STATE=state, sgp_object@Data[CJ("VALID_CASE", content_areas, years), mult="all"], key="VALID_CASE, ID, CONTENT_AREA, YEAR")
+    tmp.dt <- data.table(STATE=state, sgp_object@Data[CJ("VALID_CASE", content_areas, years)], key="VALID_CASE, ID, CONTENT_AREA, YEAR")
 
     if (!is.null(confidence.interval.groups) & "CSEM" %in% confidence.interval.groups$TYPE) {
       tmp.simulation.dt <- combineSims(sgp_object); gc()

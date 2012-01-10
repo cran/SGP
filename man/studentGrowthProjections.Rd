@@ -16,11 +16,13 @@ studentGrowthProjections(panel.data,
                          use.my.coefficient.matrices,  
                          panel.data.vnames,         
                          performance.level.cutscores, 
-                         chunk.size=5000,          
+                         chunk.size=100000,
+                         calculate.sgps=TRUE,
                          convert.0and100=TRUE,    
                          projection.unit="YEAR",       
                          percentile.trajectory.values=NULL, 
-                         isotonize=TRUE,     
+                         isotonize=TRUE,
+                         lag.increment=0,
                          projcuts.digits=0,
                          print.time.taken=TRUE)
 }
@@ -50,7 +52,7 @@ studentGrowthProjections(panel.data,
   \item{use.my.knots.boundaries}{A list of the form  \code{list(my.year= , my.subject= )} specifying the set of pre-calculated
    knots and boundaries for B-spline calculations. Knot and boundaries are stored (and must be made available) with \code{panel.data} supplied as a 
   list in \code{panel.data$Knots_Boundaries$my.year.my.subject}. As of SGP_0.0-6.9 user can also supply a two letter state acronym to utilize knots and boundaries 
-  within the \code{stateData} data set supplied with the SGP package. If missing, function tries to retrieve knots and boundaries from \cr
+  within the \code{SGPstateData} data set supplied with the SGP package. If missing, function tries to retrieve knots and boundaries from \cr
    \code{panel.data$Knots_Boundaries$my.year.my.subject} where \cr \code{my.year} and \code{my.subject} are provided by \code{sgp.labels}.  
   }
   \item{use.my.coefficient.matrices}{A list of the form \code{list(my.year= , my.subject= )} specifying the set of pre-calculated
@@ -74,10 +76,12 @@ studentGrowthProjections(panel.data,
                       GRADE_7=c(cut1, cut2, cut3),
                       GRADE_8=c(cut1, cut2, cut3)))}
   Note that the subject name must match that provided by \code{sgp.labels}. If cuts are not desired leave the cutscore unspecified, which is the default. 
-  If your state's cutscores are not included in the \code{\link{stateData}} data set or are incorrect, please contact 
+  If your state's cutscores are not included in the \code{SGPstateData} data set or are incorrect, please contact 
   \email{dbetebenner@nciea.org} to have them added or corrected!
   }
-  \item{chunk.size}{An integer (default of 5,000) indicating the number of rows in the block of data to process separately (so that the program doesn't overwhelm memory). 
+  \item{chunk.size}{An integer (default of 100,000) indicating the number of rows in the block of data to process separately (so that the program doesn't overwhelm memory). 
+  }
+  \item{calculate.sgps}{Boolean argument (defaults to TRUE) indicating whether to calculate student growth projections. Currently used to bypass calculations in \code{\link{analyzeSGP}} when scale changes occur.
   }
   \item{convert.0and100}{Boolean argument (defaults to TRUE) indicating whether conversion of growth percentiles of 0 and 100 to growth percentiles
     of 1 and 99, respectively, occurs. The default produces growth percentiles ranging from 1 to 99.
@@ -91,6 +95,8 @@ studentGrowthProjections(panel.data,
   }
   \item{isotonize}{Boolean argument (defaults to TRUE) indicating whether quantile regression results are isotonized to prevent quantile crossing following 
   the methods derived by Dette & Volgushev (2008).
+  }
+  \item{lag.increment}{A non-negative integer (defaults to 0) indicating the lag assocated with the data supplied for projections. Only relevant if Cutscores or Knots and Boundares are year dependent. 
   }
   \item{projcuts.digits}{The number of digits (defaults to 0) percentile trajectories (if requested) are formatted.
   }
@@ -118,10 +124,10 @@ Dette, H. & Volgushev, S. (2008). Non-crossing non-parametric estimates of quant
 
 \note{Use of this function assumes prior calculation of student growth percentiles, making the coefficient matrices available within the  \code{panel.data$Coefficient_Matrices} 
   list object.  Additionally, if cutscores are desired they must be supplied explicitly by the user (as detailed above in
-  \code{performance.level.cutscores}) or included in the \code{\link{stateData}} data set.  If your state's cutscores are not included or are incorrect, please contact \email{dbetebenner@nciea.org} to have cutscores added or corrected!
+  \code{performance.level.cutscores}) or included in the \code{SGPstateData} data set.  If your state's cutscores are not included or are incorrect, please contact \email{dbetebenner@nciea.org} to have cutscores added or corrected!
 }
 
-\seealso{\code{\link{studentGrowthPercentiles}}, \code{\link{sgpData}}, \code{\link{stateData}}}
+\seealso{\code{\link{studentGrowthPercentiles}}, \code{\link{sgpData}}}
 
 \examples{
 \dontrun{

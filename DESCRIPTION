@@ -2,32 +2,35 @@ Package: SGP
 Type: Package
 Title: An R Package for the Calculation and Visualization of Student
         Growth Percentiles & Percentile Growth Trajectories.
-Version: 0.7-1.0
-Date: 2011-10-11
+Version: 0.8-0.0
+Date: 2012-1-9
 Authors@R: c(person("Damian", "Betebenner",
         email="dbetebenner@nciea.org", role=c("aut", "cre")),
         person("Adam", "Van Iwaarden",
-        email="Vaniwaarden@colorado.edu", role="aut"))
-Author: Damian W. Betebenner <dbetebenner@nciea.org> and Adam Van
-        Iwaarden <Vaniwaarden@colorado.edu> with contributions from Ben
-        Domingue, Jonathan Weeks, John Stewart, Jinnie Choi, Xin Wei,
-        and Hi Shin Shim. With special thanks to State Department of
-        Education analysts: Rebecca Gau (Arizona), Marie Huchton
-        (Colorado), Dr. Carissa Miller (Idaho), Dr. Wes Bruce
-        (Indiana), Robert Hochsegang (Indiana), Xuewen Sheng (Kansas),
-        Robert Lee (Massachusetts), Ken Thompson (Mississippi), Soo
-        Yeon Cho (Missouri), Jeff Halsell (Nevada), Selcuk Ozdemir
-        (Nevada), Deb Wiswell (New Hampshire), Katya Levitan-Reiner
-        (New Haven Public Schools), Ana Karantonis (Rhode Island), Dr.
-        Deborah Jonas (Virginia), Juan D'Brot (West Virginia), Nate
-        Hixson (West Virginia), Justin Meyer (Wisconsin), Joseph Newton
-        (Wisconsin), Dr. Philip Olsen (Wisconsin), Nick Stroud
-        (Wisconsin).
+        email="Vaniwaarden@colorado.edu", role="aut"), person("Ben",
+        "Domingue", email="ben.domingue@gmail.com", role="aut"))
+Author: Damian W. Betebenner <dbetebenner@nciea.org>, Adam Van Iwaarden
+        <Vaniwaarden@colorado.edu> and Ben Domingue
+        <ben.domingue@gmail.com> with contributions from Jonathan
+        Weeks, John Stewart, Jinnie Choi, Xin Wei, and Hi Shin Shim.
+        With special thanks to State Department of Education analysts:
+        Dr. Sarah Polasky (Arizona), Rebecca Gau (Arizona), Marie
+        Huchton (Colorado), Ayaka Nukui (Idaho), Dr. Carissa Miller
+        (Idaho), Dr. Wes Bruce (Indiana), Robert Hochsegang (Indiana),
+        Xuewen Sheng (Kansas), Robert Lee (Massachusetts), Ken Thompson
+        (Mississippi), Soo Yeon Cho (Missouri), Jeff Halsell (Nevada),
+        Selcuk Ozdemir (Nevada), Deb Wiswell (New Hampshire), Katya
+        Levitan-Reiner (New Haven Public Schools), Jessica Brown (Rhode
+        Island), Ana Karantonis (Rhode Island), Dr. Deborah Jonas
+        (Virginia), Juan D'Brot (West Virginia), Nate Hixson (West
+        Virginia), Justin Meyer (Wisconsin), Joseph Newton (Wisconsin),
+        Dr. Philip Olsen (Wisconsin), Nick Stroud (Wisconsin).
 Maintainer: Damian W. Betebenner <dbetebenner@nciea.org>
-Depends: R (>= 2.12), boot, colorspace, data.table (>= 1.6.4), foreach,
-        grid, gridBase, methods, plyr, randomNames (>= 0.0-3),
-        quantreg, splines
-Suggests: multicore, pdf2, sn, snow
+Depends: R (>= 2.12), boot, colorspace, data.table (>= 1.7.5), foreach,
+        grid, gridBase, methods, plyr, randomNames (>= 0.0-4),
+        quantreg, splines, SGPdata
+Suggests: doMC, doMPI, doSMP, doSNOW, doRedis, multicore, pdf2, sn,
+        snow
 Description: Functions to calculate student growth percentiles and
         percentile growth projections/trajectories for students using
         large scale, longitudinal assessment data.  Functions use
@@ -45,6 +48,6 @@ URL: http://cran.r-project.org/web/packages/SGP/,
 LazyLoad: Yes
 LazyData: Yes
 License: CC BY-SA 3.0 US | CC BY-NC-SA 3.0 + file LICENSE
+Packaged: 2012-01-09 13:29:49 UTC; damian
 Repository: CRAN
-Packaged: 2011-10-11 22:25:23 UTC; damian
-Date/Publication: 2011-10-12 07:55:45
+Date/Publication: 2012-01-10 07:25:55
