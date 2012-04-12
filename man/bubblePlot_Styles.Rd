@@ -15,13 +15,16 @@ bubblePlot_Styles(
 		bPlot.content_areas=NULL,
 		bPlot.districts=NULL,
 		bPlot.schools=NULL,
+		bPlot.instructors=NULL,
 		bPlot.styles=c(1),
-		bPlot.levels=NULL, 
+		bPlot.levels=NULL,
+		bPlot.level.cuts=NULL, 
 		bPlot.full.academic.year=TRUE,
 		bPlot.minimum.n=10,
 		bPlot.anonymize=FALSE,
 		bPlot.prior.achievement=TRUE, 
 		bPlot.draft=FALSE,
+		bPlot.demo=FALSE,
 		bPlot.format="print",
 		bPlot.folder="Visualizations/bubblePlots")
 }
@@ -44,11 +47,16 @@ function will produce plots for all available districts provided in the data whe
   \item{bPlot.schools}{A vector indicating schools to produce \code{\link{bubblePlot}}s using data available in \code{sgp_object}. If missing the 
 function will produce plots for all available schools provided in the data where districts represent a relevant unit to be represented by the specific \code{bubblePlot} style. 
   }
+  \item{bPlot.instructors}{A vector indicating instructors to produce \code{\link{bubblePlot}}s using data available in \code{sgp_object}. If missing the 
+function will produce plots for all available instructors provided in the data where schools and districts represent relevant units to be represented by the specific \code{bubblePlot} style. 
+  }
   \item{bPlot.styles}{A vector of positive integers indicating the types of \code{\link{bubblePlot}}s to produce using data available in \code{sgp_object}. See 
 associated documentation for example plots.  
   }
   \item{bPlot.levels}{A character vector of levels to be used to color bubbles in the \code{\link{bubblePlot}}. See  associated documentation for example plots.  
   }
+  \item{bPlot.level.cuts}{A vector of cuts to be used to distinguish levels used to color bubbles in the \code{\link{bubblePlot}}. See associated documentation for example plots.
+  } 
   \item{bPlot.full.academic.year}{A boolean argument (defaults to TRUE) indicating whether \code{\link{bubblePlot}}s should use full academic year results if available. 
   }
   \item{bPlot.minimum.n}{A positive integer (defaults to 10) indicating the minimum size for summary values to be displayed in the \code{\link{bubblePlot}}s. 
@@ -61,6 +69,8 @@ upon gender and ethnicity codes available in \code{sgp_object@Data}.
 achievement as the vertical dimension of the \code{\link{bubblePlot}}. 
   }
   \item{bPlot.draft}{A boolean argument (defaults to FALSE) indicating whether to put an indicator on the chart noting that the results are draft and to not distribute. 
+  }
+  \item{bPlot.demo}{A boolean argument (defaults to FALSE) indicating whether to produce demo student level plots (styles 150 and/or 153) for instructors. 
   }
   \item{bPlot.format}{Either "print" or "presentation" indicating whether to optimize the plot for print form (light background) or presentation form (dark background).
   }

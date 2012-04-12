@@ -14,7 +14,8 @@ studentGrowthProjections(panel.data,
                          max.order.for.progression,  
                          use.my.knots.boundaries,   
                          use.my.coefficient.matrices,  
-                         panel.data.vnames,         
+                         panel.data.vnames,
+                         achievement.level.prior.vname=NULL,
                          performance.level.cutscores, 
                          chunk.size=100000,
                          calculate.sgps=TRUE,
@@ -23,7 +24,7 @@ studentGrowthProjections(panel.data,
                          percentile.trajectory.values=NULL, 
                          isotonize=TRUE,
                          lag.increment=0,
-                         projcuts.digits=0,
+                         projcuts.digits=NULL,
                          print.time.taken=TRUE)
 }
 
@@ -64,6 +65,9 @@ studentGrowthProjections(panel.data,
   \item{panel.data.vnames}{Vector of variables to use in percentile growth projection/trajectory calculations. If not specified, function attempts to use all available 
    variables.
   }
+  \item{achievement.level.prior.vname}{Character vector indicating variable is supplied panel data corresponding to the prior achievement level to be added to the output. Used
+   in the production of growth to standard analyses.
+  }
   \item{performance.level.cutscores}{Argument for supplying performance level cutscores to be used for determining growth-to-standard percentile growth trajectory calculations. Argument accepts a two letter state acronym (e.g., "CO") that retrieves cutscores that are automatically embedded in a data set contained in the SGP package. Argument also accepts a subject specific list of the form:
   \preformatted{
   performance.level.cutscores <- list(
@@ -98,7 +102,7 @@ studentGrowthProjections(panel.data,
   }
   \item{lag.increment}{A non-negative integer (defaults to 0) indicating the lag assocated with the data supplied for projections. Only relevant if Cutscores or Knots and Boundares are year dependent. 
   }
-  \item{projcuts.digits}{The number of digits (defaults to 0) percentile trajectories (if requested) are formatted.
+  \item{projcuts.digits}{The number of digits (defaults to NULL/0) percentile trajectories (if requested) are formatted.
   }
   \item{print.time.taken}{Boolean argument (defaults to TRUE) indicating whether to print message indicating information on studentGrowthPercentile analysis and time taken.
   }
@@ -110,6 +114,10 @@ The data frame contains projections/trajectories for each performance level cut-
 }
 
 \references{
+Betebenner, D. W. (2012). Growth, standards, and accountability. In G. J. Cizek,
+\emph{Setting Performance Standards: Foundations, Methods & Innovations. 2nd Edition} (pp. 439-450).
+New York: Routledge.
+
 Betebenner, D. W. (2009). Norm- and criterion-referenced student growth. 
 Educational Measurement: Issues and Practice, 28(4):42-51.
 
