@@ -15,8 +15,7 @@ combineSGP(sgp_object,
         sgp.percentiles.baseline=TRUE,
 	sgp.projections.lagged=TRUE,
         sgp.projections.lagged.baseline=TRUE,
-	max.lagged.sgp.target.years.forward=4,
-	sgp.target.to.NA=TRUE)
+	max.lagged.sgp.target.years.forward=4)
 }
 
 \arguments{
@@ -39,8 +38,6 @@ student growth percentile results.
   }
   \item{max.lagged.sgp.target.years.forward}{A integer indicating the number of years forward from the lagged (last year's) score to project forward for growth to standard calculations. Default is 4 years from last year or 3 years from present, which is the standard in most growth to standard calculations used by state departments of education.
   }
-  \item{sgp.target.to.NA}{A boolean variable (defaults to TRUE) indicating whether to change SGP_TARGET and SGP_TARGET_BASELINE to NA in instances where a target has been calculated but no SGP is calculated (for example, with retained students). It is generally recommended to change such values to NA so that summary comparisions of median SGP to median SGP_TARGET are based upon the same students.
-  }
 }
 
 \value{Function returns a list containing the input long data set in the \code{Student} slot as a \code{data.table} keyed using \code{VALID_CASE}, \code{CONTENT_AREA}, 
@@ -54,10 +51,10 @@ student growth percentile results.
 \examples{
 \dontrun{
 ## combineSGP is Step 3 of 5 of abcSGP
-Demonstration_Data <- sgpData_LONG
-Demonstration_Data <- prepareSGP(Demonstration_Data)
-Demonstration_Data <- analyzeSGP(Demonstration_Data)
-Demonstration_Data <- combineSGP(Demonstration_Data)
+Demonstration_SGP <- sgpData_LONG
+Demonstration_SGP <- prepareSGP(Demonstration_SGP)
+Demonstration_SGP <- analyzeSGP(Demonstration_SGP)
+Demonstration_SGP <- combineSGP(Demonstration_SGP)
 }  
 }
 

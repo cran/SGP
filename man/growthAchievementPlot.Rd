@@ -2,9 +2,9 @@
 \alias{growthAchievementPlot}
 \title{growthAchievementPlot for SGP}
 \description{
-Function to create growth and achievement plots depicting system level results associated with student growth percentile results. The charts show, simultaneously, norm- and criterion-referneced
-student achievement (i.e., status) as well as norm- and criterion referenced student growth. These charts are those shown on the cover of \emph{Educational Measurement: Issues and Practice} 
-as part of Betebenner (2009).
+Function to create growth and achievement plots depicting system level results associated with student growth percentile results. The charts show, simultaneously, 
+norm- and criterion-referneced student achievement (i.e., status) as well as norm- and criterion-referenced student growth. These charts are those shown on the 
+cover of the December 2009 Issue of \emph{Educational Measurement: Issues and Practice}. See Betebenner (2009) and Betebenner (2012) for more details
 }
 \usage{
 growthAchievementPlot(
@@ -79,6 +79,10 @@ growthAchievementPlot(
 \value{Function creates a growth and achievement chart and writes the result as a PDF to \code{pdf.folder}.} 
 
 \references{
+Betebenner, D. W. (2012). Growth, standards, and accountability. In G. J. Cizek,
+\emph{Setting Performance Standards: Foundations, Methods & Innovations. 2nd Edition} (pp. 439-450).
+New York: Routledge.
+
 Betebenner, D. W. (2009). Norm- and criterion-referenced student growth.
 Educational Measurement: Issues and Practice, 28(4):42-51.
 }

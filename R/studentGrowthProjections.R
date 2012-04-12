@@ -8,6 +8,7 @@ function(panel.data,	## REQUIRED
 	use.my.knots.boundaries,
 	use.my.coefficient.matrices,
 	panel.data.vnames,
+	achievement.level.prior.vname=NULL,
 	performance.level.cutscores,
 	chunk.size=100000,
         calculate.sgps=TRUE,
@@ -16,7 +17,7 @@ function(panel.data,	## REQUIRED
 	percentile.trajectory.values=NULL,
 	isotonize=TRUE,
 	lag.increment=0,
-	projcuts.digits=0,
+	projcuts.digits=NULL,
 	print.time.taken=TRUE) {
 
 	started.at=proc.time()
@@ -96,10 +97,10 @@ function(panel.data,	## REQUIRED
 			for (i in 2:num.prior.scores) {
 				str1 <- paste(str1, " & !is.na(", rev(SS)[i], ")", sep="")
 				str2 <- paste(str2, " & ", rev(GD)[i], "==", rev(grade.progression)[i], sep="")
-				str3 <- paste(rev(SS)[i], ", ", str3, sep="")
+				str3 <- c(rev(SS)[i], str3)
 		}}
 		if (by.grade) {
-			tmp.data <- eval(parse(text=paste("subset(data,", str1, str2, ", select=c(ID, ", str3 ,"))", sep="")))
+			tmp.data <- data[eval(parse(text=paste(str1, str2, sep="")))][, c("ID", str3), with=FALSE]
 			for (i in seq(dim(tmp.data)[2]-1)) {
 				bnd <- eval(parse(text=paste("panel.data[['Knots_Boundaries']]", get.my.knots.boundaries.path(sgp.labels$my.subject, as.character(sgp.labels$my.year)), 
 					"[['loss.hoss_", tmp.gp[i], "']]", sep="")))
@@ -108,7 +109,7 @@ function(panel.data,	## REQUIRED
 			}
 			tmp.data
 		} else {
-			eval(parse(text=paste("subset(data,", str1, ", select=c(ID, ", str3 ,"))", sep="")))
+			data[eval(parse(text=str1))][, c("ID", str3), with=FALSE]
 		}
 	}
 
@@ -120,8 +121,15 @@ function(panel.data,	## REQUIRED
 	}
 
 	.unget.data.table <- function(my.data, my.lookup) {
-		key(my.data) <- "ID"; ORIGINAL.ID <- NULL
+		setkey(my.data, ID); ORIGINAL.ID <- NULL
 		my.data[["ID"]] <- my.lookup[my.data[["ID"]], ORIGINAL.ID]
+		if (!is.null(achievement.level.prior.vname)) {
+			panel.data[["Panel_Data"]] <- as.data.table(panel.data[["Panel_Data"]])
+			setkey(panel.data[["Panel_Data"]], ID)
+			invisible(setkeyv(my.data, NULL)); setkey(my.data, ID)
+			my.data <- panel.data[["Panel_Data"]][,c("ID", achievement.level.prior.vname), with=FALSE][my.data]
+			setnames(my.data, 2, "ACHIEVEMENT_LEVEL_PRIOR")
+		}
 		return(as.data.frame(my.data))
 	}
 
@@ -242,17 +250,16 @@ function(panel.data,	## REQUIRED
 		if (trajectories.tf) {
 			tmp.traj <- round(percentile.trajectories[seq(dim(percentile.trajectories)[1]) %% 100 %in% ((percentile.trajectory.values+1) %% 100), 
 					colnames(percentile.trajectories)], digits=projcuts.digits)
-			tmp.traj <- reshape(data.table(tmp.traj, CUT=rep(percentile.trajectory.values, dim(tmp.traj)[1]/length(percentile.trajectory.values))), 
-				idvar="ID", timevar="CUT", direction="wide")
+			trajectories <- data.table(reshape(data.table(tmp.traj, CUT=rep(percentile.trajectory.values, dim(tmp.traj)[1]/length(percentile.trajectory.values))), 
+				idvar="ID", timevar="CUT", direction="wide"), key="ID")
 			if (projection.unit=="GRADE") {
 				tmp.vec <- expand.grid("P", percentile.trajectory.values, "_PROJ_GRADE_", grade.projection.sequence)
 			} else {
 				tmp.vec <- expand.grid("P", percentile.trajectory.values, "_PROJ_YEAR_", seq_along(grade.projection.sequence))
 			}
 			tmp.vec <- tmp.vec[order(tmp.vec$Var2),]
-			names(tmp.traj) <- c("ID", do.call(paste, c(tmp.vec, sep="")))
-			key(tmp.traj) <- "ID"
-			if (!cuts.tf) return(tmp.traj)
+			setnames(trajectories, c("ID", do.call(paste, c(tmp.vec, sep=""))))
+			if (!cuts.tf) return(trajectories)
 		}
 		if (cuts.tf) {
 			percentile.trajectories[["ID"]] <- as.integer(percentile.trajectories[["ID"]]) 
@@ -279,12 +286,12 @@ function(panel.data,	## REQUIRED
 			}
 			arg <- paste("list(", paste(cuts.arg, collapse=", "), ")", sep="")
 			tmp.cuts <- eval(parse(text=paste("percentile.trajectories[,", arg, ", by=ID]", sep="")))
-			names(tmp.cuts) <- c("ID", names.arg)
-			key(tmp.cuts) <- "ID"
+			setnames(tmp.cuts, c("ID", names.arg))
+			setkey(tmp.cuts, ID)
 			if (!trajectories.tf) {
 				return(tmp.cuts)
 			} else {
-				return(merge(tmp.cuts, tmp.traj))
+				return(merge(tmp.cuts, trajectories))
 			}
 		}
 	}
@@ -295,8 +302,10 @@ function(panel.data,	## REQUIRED
 	###
 	############################################################################
 
+	ID <- tmp.messages <- NULL
+
         if (!calculate.sgps) {
-                message(paste("\tNOTE: Student growth projections not calculated for", sgp.labels$my.year, sgp.labels$my.subject, "due to argument calculate.sgps=FALSE.\n"))
+                tmp.messages <- c(tmp.messages, paste("\tNOTE: Student growth projections not calculated for", sgp.labels$my.year, sgp.labels$my.subject, "due to argument calculate.sgps=FALSE.\n"))
                 return(panel.data)
         }
 
@@ -378,11 +387,11 @@ function(panel.data,	## REQUIRED
 	if (!missing(performance.level.cutscores)) {
 		if (is.character(performance.level.cutscores)) {
 			if (!(performance.level.cutscores %in% names(SGPstateData))) {
-				message("\nTo use state cutscores, supply an appropriate two letter state abbreviation. \nRequested state may not be included. See help page for details.\n\n")
+				tmp.messages <- c(tmp.messages, "\tNOTE: To use state cutscores, supply an appropriate two letter state abbreviation. \nRequested state may not be included. See help page for details.\n")
 				tf.cutscores <- FALSE
 			}
 			if (is.null(names(SGPstateData[[performance.level.cutscores]][["Achievement"]][["Cutscores"]]))) {
-				message("\nCutscores are currently not implemented for the state indicated. \nPlease contact the SGP package administrator to have your cutscores included in the package.\n\n")
+				tmp.messages <- c(tmp.messages, "\tNOTE: Cutscores are currently not implemented for the state indicated. \nPlease contact the SGP package administrator to have your cutscores included in the package.\n")
 				tf.cutscores <- FALSE
 			}
 			if (!sgp.labels$my.subject %in% names(SGPstateData[[performance.level.cutscores]][["Achievement"]][["Cutscores"]])) {
@@ -410,6 +419,17 @@ function(panel.data,	## REQUIRED
 		stop("Either percentile trajectories and/or performance level cutscores must be supplied for the analyses.")
 	}
 
+	if (missing(max.order.for.progression)) {
+		max.order.for.progression <- NULL
+	}
+
+	if (!is.null(achievement.level.prior.vname)) {
+		if (!achievement.level.prior.vname %in% names(panel.data[["Panel_Data"]])) {
+			tmp.messages <- c(tmp.messages, "\tNOTE: Supplied achievement.level.prior.vname is not in supplied panel.data. No ACHIEVEMENT_LEVEL_PRIOR variable will be produced.\n")
+			achievement.level.prior.vname <- NULL
+		}
+	}
+
 
 	########################################################
 	###
@@ -431,10 +451,14 @@ function(panel.data,	## REQUIRED
 		Cutscores <- tmp.cutscores
 	}
 
+	if (is.null(projcuts.digits)) {
+		projcuts.digits <- 0
+	}
+
 	### Create ss.data from Panel_Data and rename variables in based upon grade.progression
 
 	if (!missing(panel.data.vnames)) {
-		ss.data <- subset(panel.data[["Panel_Data"]], select=panel.data.vnames)
+		ss.data <- panel.data[["Panel_Data"]][,panel.data.vnames]
 	} else {
 		ss.data <- panel.data[["Panel_Data"]]
 	}
@@ -455,10 +479,27 @@ function(panel.data,	## REQUIRED
 	GD <- paste("GD", grade.progression, sep="")
 	SS <- paste("SS", grade.progression, sep="")
 	ss.data <- .get.data.table(ss.data)
+	if (dim(.get.panel.data(ss.data, 1, by.grade, tmp.gp=grade.progression))[1] == 0) {
+                tmp.messages <- c(tmp.messages, "\tNOTE: Supplied data together with grade progression contains no data. Check data, function arguments and see help page for details.\n")
+                message(paste("\tStarted studentGrowthProjections", started.date))
+                message(paste("\tSubject: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(grade.progression, collapse=", "), " ", sgp.labels$my.extra.label, sep=""))
+                message(paste(tmp.messages, "\tFinished studentGrowthProjections: SGP Percentile Growth Trajectory/Projection Analysis", date(), "in", timetaken(started.at), "\n"))
+
+                return(
+                list(Coefficient_Matrices=panel.data[["Coefficient_Matrices"]],
+                        Cutscores=panel.data[["Cutscores"]],
+                        Goodness_of_Fit=panel.data[["Goodness_of_Fit"]],
+                        Knots_Boundaries=panel.data[["Knots_Bounadries"]],
+                        Panel_Data=NULL,
+                        SGPercentiles=panel.data[["SGPercentiles"]],
+                        SGProjections=panel.data[["SGProjections"]],
+                        Simulated_SGPs=panel.data[["Simulated_SGPs"]]))
+        } 
 
 	### Get Coefficient_Matrices names
 
 	matrix.names <- names(panel.data[["Coefficient_Matrices"]][[tmp.path.coefficient.matrices]])
+	matrix.names <- matrix.names[sapply(strsplit(matrix.names, "_"), function(x) is.na(x[4]))] ## REMOVE names that have the grade.progression.label for now
 
 	### Calculate growth projections/trajectories 
 
@@ -477,13 +518,12 @@ function(panel.data,	## REQUIRED
 		grade.projection.sequence <- grade.projection.sequence[grade.projection.sequence %in% as.numeric(unique(sapply(strsplit(matrix.names, "_"), function(x) x[2])))]
 	}
 
-	max.order.tf <- TRUE  ## Calculate max order coefficient matrices unless:
-	if (!missing(max.order.for.progression)) {
+	if (is.null(max.order.for.progression)) {
+		max.order.tf <- TRUE ## Use maximum order coefficient matrices by default
+	} else {
 		max.order.tf <- FALSE
-		if (is.null(max.order.for.progression)) {
-			max.order.tf <- TRUE
-		}	
 	}
+	
 	grade.projection.sequence.priors <- .get.grade.projection.sequence.priors(grade.progression, grade.projection.sequence, max.order.tf=max.order.tf) 
 
 	percentile.trajectories <- .get.percentile.trajectories(ss.data)
@@ -494,7 +534,7 @@ function(panel.data,	## REQUIRED
 	if (tf.cutscores) {
 		tmp.cutscore.grades <- as.numeric(sapply(strsplit(names(tmp.cutscores[[sgp.labels$my.subject]]), "_"), function(x) x[2]))
 		if (!all(grade.projection.sequence %in% tmp.cutscore.grades)) {
-			message("\tNOTE: Cutscores provided do not include cutscores for all grades in projection. Projections to grades without cutscores will be missing.")
+			tmp.messages <- c(tmp.messages, "\tNOTE: Cutscores provided do not include cutscores for all grades in projection. Projections to grades without cutscores will be missing.\n")
 	}} 
 
 	trajectories.and.cuts <- .get.trajectories.and.cuts(percentile.trajectories, !is.null(percentile.trajectory.values), tf.cutscores, toupper(projection.unit))
@@ -506,8 +546,8 @@ function(panel.data,	## REQUIRED
 
 	if (print.time.taken) {
 	        message(paste("\tStarted studentGrowthProjections", started.date))
-		message(paste("\tSubject: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(grade.progression, collapse=", "), " ", sgp.labels$my.extra.label, sep="")) 
-		message(paste("\tFinished studentGrowthProjections", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tContent Area: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(grade.progression, collapse=", "), " ", sgp.labels$my.extra.label, sep="")) 
+		message(paste(tmp.messages, "\tFinished studentGrowthProjections", date(), "in", timetaken(started.at), "\n"))
 	} 
 
 	list(Coefficient_Matrices=panel.data[["Coefficient_Matrices"]],
