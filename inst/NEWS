@@ -1,3 +1,77 @@
+Changes in version: SGP_0.9-9.0
+
+  NEW FEATURES:
+
+  USER VISIBLE CHANGES:
+
+	  o Updated URLs in package to github site that hosts SGP code development.
+	  o Added timing to outputSGP and sqliteSGP and integrated outputSGP into abcSGP.
+	  o Baseline SGP tables embedded in SGP object have variable names appended with '_BASELINE'.
+	  o Streamlined growthAchievementPlot production by removing growthAchievementPlot_Styles and integrating its functionality elsewhere.
+	  o outputSGP now exports contents of @Data by default to 'Data' directory.
+	  o Updated SGPstateData with Georgia variable name lookup table.
+	  o studentGrowthPercentiles deals better with holes in data structures where certain grade progressions yield empty data sets.
+	  o baselineSGP analyses from analyzeSGP now accept arguments supplied to content_areas, years, and grades if one wants to filter those for baseline SGP analyses or coefficient matrix generation.
+	  o summarizeSGP does not produces by default, all possible summary tables (controlled by the arugment 'produce.all.summary.tables'). A subset of about 70 summary tables are produced.
+	  o Added baseline coefficient matrices for Georgia to SGPstateData.
+	  o Fixed prepareSGP to better update @Names slot.
+	  o Added Archdiocese of Baltimore to SGPstateData.
+	  o Integrated achievement_level_recode function into prepareSGP.
+	  o Added ability to print studentGrowthPlots for one, four and five content areas.
+	  o Added timing output to outputSGP LONG file production.
+	  o If grade.progression supplied to studentGrowthPercentiles exceeds number of panels available, function now uses the tail of the grade progression up to the number of panels supplied.
+	  o Added 'WIDE_Data' output.type to outputSGP.
+	  o Added variable name lookup table for Maine.
+	  o Updated summarizeSGP to create relevant tables based upon state provided institution levels.
+	  o Added 'use.cohort.for.baseline.when.missing' argument to combineSGP that allows for the use of cohort reference SGPs in place of baseline referenced SGPs when no baseline SGPs exist.
+	  o Added Variable_Name_Lookup for New Jersey to SGPstateData.
+	  o Updated list of contributors.
+	  o Added testSGP function to package to faciliate development and testing of package. 
+	  o Added argument 'create.additional.variables' to prepareSGP indicating whether additional variables should be added to @Data (defaults to TRUE). 
+	  o prepareSGP now adds variable HIGH_NEED_STATUS to @Data by default indicating students in top and bottom quartile by school, grade, content area and year.
+	  o Changed naming convention between from TESTING_YEAR to CURRENT to apply to all states going forward.
+	  o Tidied up title for goodness of fit plots and modified plots to deal with edge cases where there are not 10 prior score deciles.
+	  o Added variable name lookup for Massachusetts.
+	  o Refined summarizeSGP to better detect ENROLLMENT_STATUS variable in supplied @Data.
+	  o Added argument 'sgp.loss.hoss.adjustment' to studentGrowthPercentiles to adjust SGP calculation for hoss values where ceiling effect impacts SGP calculation.
+	  o Updated loss/hoss values for Hawaii based upon apparent scale change in 2011.
+	  o Modified .year.increment in studentGrowthPercentiles to accomodate baseline SGP analyses.
+	  o Added Washington data to SGPstateData including basseline coefficient matrices.
+	  o growthAchievementPlot not accomodates gaps in years tested if coefficient matrices are available across that gap.
+	  o Updated Idaho knots and boundaries to accomodate 2011 scale scores.
+	  o Added West Virginia variable name lookup table.
+	  o Changed implementation of VALID_CASE to character from factor to better coincide with data.table 1.8.2 requirements.
+	  o Added argument return.prior.scale.score to studentGrowthPercentiles to incorporate the return of the prior scale score for the student.
+          o studentGrowthPercentiles now accomodates multiple priors from the same year. See examples in 'analyzeSGP' details.
+          o Updated Kansas metadata in SGPstateData.
+          o Fixed bug in get.panel.data and get.panel.data.vnames that didn't accomodate missing grades in state testing programs correctly.
+          o Added function (internal) checkSGP to externalize checks on SGP object confirming it is up to date.
+          o Added Colorado variable name lookup table to SGPstateData.
+          o Changed default of outputSGP to export LONG and WIDE data.
+          o Added CO baseline matrices based upon 5 years of panel data from 2005 to 2009.
+
+
+  BUG FIXES:
+
+	  o Added PERCENT_CATCHING_UP_KEEPING_UP to summarizeSGP if SGP_TARGET is present.
+	  o Corrected issues with conversion of factors to characters in summarizeSGP.
+	  o Corrected names.type error in RI and NH lookup tables.
+	  o Corrected incorrect timing in visualizeSGP due to over writing time.started in function.
+	  o Rewrote merge in combineSGP that adds data to @Data.
+	  o Made correction to cutscore year lookup code in growthAchievementPlot and prepareSGP.
+	  o studentGrowthPercentiles checks for CSEMs and ensures availability by content area.
+	  o Fixed bug in way state name is detected in argument supplied as part of data name.
+	  o Removed redundant years, content_areas specification in abcSGP.
+	  o analyzeSGP not checks for content area specific coefficient matrices and only calculates baseline referenced results for those content areas.
+	  o Supplied panel.data.vnames now subsets only those names in supplied panel data.
+	  o Refined of merge of sgp targets in combineSGP to avoid memory copy of sgp_object.
+	  o studentGrowthPlot function now detects year dependent loss/hoss values.
+	  o summarizeSGP now checks for existence of ACHIEVEMENT_LEVEL_PRIOR before attempting to calculate it.
+	  o summarizeSGP better checks for inclusion variables.
+	  o Corrected various bugs in bubblePlot Style 100 introduced with @Names data.frame.
+	  o Modified analyzeSGP to work with data.table changes in 1.8.2.
+
+
 Changes in version: SGP_0.9-0.0
 
   NEW FEATURES:

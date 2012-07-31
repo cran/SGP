@@ -72,7 +72,7 @@
 		number.achievement.level.regions <- length(SGPstateData[[state]][["Student_Report_Information"]][["Achievement_Level_Labels"]])
 		Cutscores <- list()
 		for (i in content_areas) {
-			Cutscores[[i]] <- create.long.cutscores.sgPlot(state, as.character(i))
+			Cutscores[[i]] <- create.long.cutscores.sgPlot(state, i)
 		}
 	} else {
 		stop("Construction of student growth plots requires state meta-data to be included in the embedded SGPstateData set.\nPlease augment the SGPstateData set with your data or contact the SGP package maintainer to have your data added to the SGP package.")
@@ -100,7 +100,7 @@
 
 	for (i in districts) {
 		if (reports.by.student) {
-			tmp_district_name <- as.character(sgPlot.data[J(i)][[paste("DISTRICT_NAME", last.year, sep=".")]][1])
+			tmp_district_name <- as.character(sgPlot.data[i][[paste("DISTRICT_NAME", last.year, sep=".")]][1])
 			district_folder <- "Uncollated_Student_Reports"
 		} else {
 			if (sgPlot.demo.report) {
@@ -108,15 +108,15 @@
 				district_folder <- "Sample_District"
 			} else {
 				if (sgPlot.folder.names=="name") {
-					tmp_district_name <- as.character(sgPlot.data[J(i)][[paste("DISTRICT_NAME", last.year, sep=".")]][1])
+					tmp_district_name <- as.character(sgPlot.data[i][[paste("DISTRICT_NAME", last.year, sep=".")]][1])
 						district_folder <- gsub(" ", "_", paste(tmp_district_name, " (", i, ")", sep=""))
 				} else {
-					tmp_district_name <- as.character(sgPlot.data[J(i)][[paste("DISTRICT_NAME", last.year, sep=".")]][1])
+					tmp_district_name <- as.character(sgPlot.data[i][[paste("DISTRICT_NAME", last.year, sep=".")]][1])
 						district_folder <- as.character(i)
 				}
 			}
 		}
-		tmp_district_ids <- unique(sgPlot.data[J(i)]$ID)
+		tmp_district_ids <- unique(sgPlot.data[SJ(i)]$ID) ## NOTE: SJ needed because i is possibly an integer
 		tmp_district_data <- subset(sgPlot.data, ID %in% tmp_district_ids)
 
 	## Schools
@@ -129,7 +129,7 @@
 		started.date <- date()
 
 		if (reports.by.student) {
-			tmp_school_name <- as.character(tmp_district_data[J(j)][[paste("SCHOOL_NAME", last.year, sep=".")]][1])
+			tmp_school_name <- as.character(tmp_district_data[j][[paste("SCHOOL_NAME", last.year, sep=".")]][1])
 			school_folder <- NULL
 		} else {
 			if (sgPlot.demo.report) {
@@ -137,10 +137,10 @@
 				school_folder <- "Sample_School"
 			} else {
 				if (sgPlot.folder.names=="name") {
-					tmp_school_name <- as.character(tmp_district_data[J(j)][[paste("SCHOOL_NAME", last.year, sep=".")]][1])
+					tmp_school_name <- as.character(tmp_district_data[j][[paste("SCHOOL_NAME", last.year, sep=".")]][1])
 					school_folder <- gsub(" ", "_", paste(tmp_school_name, " (", j, ")", sep=""))
 				} else {
-					tmp_school_name <- as.character(tmp_district_data[J(j)][[paste("SCHOOL_NAME", last.year, sep=".")]][1])
+					tmp_school_name <- as.character(tmp_district_data[j][[paste("SCHOOL_NAME", last.year, sep=".")]][1])
 					school_folder <- as.character(j)
 				}
 			}
@@ -156,13 +156,13 @@
 			cat(paste("\\pdfbookmark[0]{", tmp_school_name, "}{", j, "}\n", sep=""), file=paste("school_catalog_", j, ".tex", sep=""), append=TRUE)
 			##############################################################################################################################################
 		}
-		tmp_school_ids <- unique(tmp_district_data[J(j)]$ID)
+		tmp_school_ids <- unique(tmp_district_data[SJ(j)]$ID) ## NOTE: SJ needed because j is a possibly an integer
 		tmp_school_data <- subset(tmp_district_data, ID %in% tmp_school_ids)
 
 	## Grades
 
 	setkeyv(tmp_school_data, tmp.keys[2])
-	grades <- sort(unique(unlist(tmp_school_data[J(j), tmp.keys[3], with=FALSE]))) %w/o% NA
+	grades <- sort(unique(unlist(tmp_school_data[SJ(j), tmp.keys[3], with=FALSE]))) %w/o% NA
 	setkeyv(tmp_school_data, tmp.keys[3])
 
 	for (k in grades) {
@@ -180,7 +180,7 @@
 				file=paste("school_catalog_", j, ".tex", sep=""), append=TRUE) ## NOTE: j, k included in anchor for uniqueness
 			###########################################################################################################################
 		}
-		tmp_grade_ids <- unique(tmp_school_data[J(k)]$ID)
+		tmp_grade_ids <- unique(tmp_school_data[SJ(k)]$ID) ## NOTE: SJ needed because k is an integer
 		tmp_grade_data <- subset(tmp_school_data, ID %in% tmp_grade_ids)
 
 	### Create path to pdf files
@@ -239,7 +239,7 @@
 
 	## Start pdf device
               
-              if (length(content_areas)==2) {
+              if (length(content_areas) %in% c(1,2)) {
                 report.width=11
                 report.height=8.5
               }
@@ -247,8 +247,16 @@
                 report.width=8.5
                 report.height=11
               }
-              if (!length(content_areas) %in% c(2,3)) {
-                stop("Individual Student Report Templates currently only available for situations with 2 or 3 content areas.")
+              if (length(content_areas)==4) {
+                report.width=17
+                report.height=11
+              }
+              if (length(content_areas)==5) {
+                report.width=11
+                report.height=17
+              }
+              if (!length(content_areas) %in% 1:5) {
+                stop("Individual Student Report Templates currently only available for situations with 1, 2, 3, 4 or 5 content areas.")
               }
 
               pdf(paste(path.to.pdfs, "/", file_name, sep=""), 
@@ -260,6 +268,16 @@
               ### Overall Report viewport creation
               ###
               ########################################################################################################
+
+              if (length(content_areas)==1) {
+                report.vp <- viewport(layout = grid.layout(5, 4, widths = unit(c(2.5, 0.1, 8.3, 0.1), rep("inches", 4)), 
+                                        heights = unit(c(0.55, 0.2, 7, 0.25, 0.5), rep("inches", 5))))
+
+                content_area_1.vp <- viewport(layout.pos.row=3, layout.pos.col=3)
+                top.border.vp <- viewport(layout.pos.row=1, layout.pos.col=1:4)
+                bottom.border.vp <- viewport(layout.pos.row=5, layout.pos.col=1:4)
+                left.legend.vp <- viewport(layout.pos.row=2:4, layout.pos.col=1)
+              }
 
               if (length(content_areas)==2) {
                 report.vp <- viewport(layout = grid.layout(7, 4, widths = unit(c(2.5, 0.1, 8.3, 0.1), rep("inches", 4)), 
@@ -283,6 +301,33 @@
                 bottom.border.vp <- viewport(layout.pos.row=9, layout.pos.col=1:3)
               }
 
+              if (length(content_areas)==4) {
+                report.vp <- viewport(layout = grid.layout(7, 6, widths = unit(c(2.5, 0.15, 7, 0.2, 7, 0.15), rep("inches", 6)), 
+                                        heights = unit((11/8.5)*c(0.35, 0.2, 3.55, 0.25, 3.55, 0.2, 0.4), rep("inches", 7))))
+
+                content_area_1.vp <- viewport(layout.pos.row=3, layout.pos.col=3)
+                content_area_2.vp <- viewport(layout.pos.row=3, layout.pos.col=5)
+                content_area_3.vp <- viewport(layout.pos.row=5, layout.pos.col=3)
+                content_area_4.vp <- viewport(layout.pos.row=5, layout.pos.col=5)
+                top.border.vp <- viewport(layout.pos.row=1, layout.pos.col=1:6)
+                bottom.border.vp <- viewport(layout.pos.row=7, layout.pos.col=1:6)
+                left.legend.vp <- viewport(layout.pos.row=2:6, layout.pos.col=1)
+              }
+
+              if (length(content_areas)==5) {
+                report.vp <- viewport(layout = grid.layout(13, 3, widths = unit((11/8.5)*c(0.125, 8.3, 0.075), rep("inches", 3)), 
+                                        heights = unit(c(0.3, 0.10, 3.25, 0.15, 3.25, 0.15, 3.35, 0.15, 3.25, 0.15, 3.25, 0.10, 0.3), rep("inches", 9))))
+
+                content_area_1.vp <- viewport(layout.pos.row=3, layout.pos.col=2)
+                content_area_2.vp <- viewport(layout.pos.row=5, layout.pos.col=2)
+                content_area_3.vp <- viewport(layout.pos.row=7, layout.pos.col=2)
+                content_area_4.vp <- viewport(layout.pos.row=9, layout.pos.col=2)
+                content_area_5.vp <- viewport(layout.pos.row=11, layout.pos.col=2)
+                top.border.vp <- viewport(layout.pos.row=1, layout.pos.col=1:3)
+                bottom.border.vp <- viewport(layout.pos.row=13, layout.pos.col=1:3)
+              }
+
+
               pushViewport(report.vp)
 
               for (vp in seq_along(content_areas)) {
@@ -297,8 +342,8 @@
                                   SGP_Levels=as.character(unlist(subset(tmp_student_data, select=paste(my.sgp.level, rev(sgPlot.years), sep=".")))),
                                   Grades=as.numeric(subset(tmp_student_data, select=paste("GRADE", rev(sgPlot.years), sep="."))),
                                   Cuts_NY1=as.numeric(subset(tmp_student_data, select=grep("PROJ", names(tmp_student_data)))),
-                                  Cutscores=Cutscores[[as.character(content_areas[vp])]],
-                                  Report_Parameters=list(Current_Year=last.year, Content_Area=as.character(content_areas[vp]), State=state))
+                                  Cutscores=Cutscores[[content_areas[vp]]],
+                                  Report_Parameters=list(Current_Year=last.year, Content_Area=content_areas[vp], State=state))
 
 		popViewport()
 
@@ -331,9 +376,9 @@
               popViewport()
 
 
-              ## Left Legend (Only with two content areas depicted)
+              ## Left Legend (Only with one or two content areas depicted)
 
-              if (length(content_areas)==2) {
+              if (length(content_areas) %in% c(1,2,4)) {
 
 		pushViewport(left.legend.vp)
 
@@ -436,4 +481,7 @@
         } ## END for loop for SCHOOLS (j)
         #system(paste("zip -r ", pdf.folder, "/", year_folder, "/", district_folder, "_", last.year, ".zip ", pdf.folder, year_folder, district_folder, sep=""))
       } ## END for loop for DISTRICTS (i)
+
+	return("DONE")
+
 } ## END studentGrowthPlot_Styles function

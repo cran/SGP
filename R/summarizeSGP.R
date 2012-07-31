@@ -6,6 +6,8 @@ function(sgp_object,
          sgp.summaries=NULL,
          summary.groups=NULL,
          confidence.interval.groups=NULL,
+         produce.all.summary.tables=FALSE,
+         summarizeSGP.baseline=NULL,
          parallel.config=NULL) {
 
 	started.at <- proc.time()
@@ -13,7 +15,36 @@ function(sgp_object,
 
 	### Set variables to NULL to prevent R CMD check warnings
 
-	tmp.simulation.dt <- variable <- WEIGHT <- ENROLLMENT_STATUS <- NULL
+	tmp.simulation.dt <- variable <- WEIGHT <- ENROLLMENT_STATUS <- STATE <- names.type <- names.sgp <- names.output <- BY_GROWTH_ONLY <- NULL
+
+	
+	### Create state (if NULL) from sgp_object (if possible)
+
+	if (is.null(state)) {
+		tmp.name <- gsub("_", " ", deparse(substitute(sgp_object)))
+		if (any(sapply(c(state.name, "Demonstration", "AOB"), function(x) regexpr(x, tmp.name))==1)) {
+			state <- c(state.abb, "DEMO", "AOB")[which(sapply(c(state.name, "Demonstration", "AOB"), function(x) regexpr(x, tmp.name))==1)]
+		}
+	}
+
+	### define summarizeSGP.baseline
+
+	if (is.null(summarizeSGP.baseline)) {
+		summarizeSGP.baseline <- FALSE ## Default to cohort referenced is not set by user
+		if (SGPstateData[[state]][["Growth"]][["System_Type"]] == "Cohort Referenced") summarizeSGP.baseline <- FALSE
+		if (SGPstateData[[state]][["Growth"]][["System_Type"]] == "Baseline Referenced") summarizeSGP.baseline <- TRUE
+		if (SGPstateData[[state]][["Growth"]][["System_Type"]] == "Cohort and Baseline Referenced") summarizeSGP.baseline <- FALSE
+	}
+
+	if (summarizeSGP.baseline) {
+		my.sgp <- "SGP_BASELINE"
+		my.sgp.level <- "SGP_LEVEL_BASELINE"
+		my.sgp.target <- "SGP_TARGET_BASELINE"
+	} else {
+		my.sgp <- "SGP"
+		my.sgp.level <- "SGP_LEVEL"
+		my.sgp.target <- "SGP_TARGET"
+	}
 
 	if (missing(sgp_object)) {
 		stop("User must supply a list containing a Student slot with long data. See documentation for details.")
@@ -22,19 +53,10 @@ function(sgp_object,
 	if (!identical(key(sgp_object@Data), c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))) setkeyv(sgp_object@Data, c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))
 
 
-	### Create state (if NULL) from sgp_object (if possible)
-
-	if (is.null(state)) {
-		tmp.name <- gsub("_", " ", deparse(substitute(sgp_object)))
-		if (any(sapply(c(state.name, "Demonstration"), function(x) regexpr(x, tmp.name)))==1) {
-			state <- c(state.abb, "DEMO")[which(sapply(c(state.name, "Demonstration"), function(x) regexpr(x, tmp.name))==1)]
-		}
-	}
-
 	## Set up parallel.config if NULL
 
 	if (is.null(parallel.config)) {
-		 parallel.config=list(BACKEND="FOREACH", TYPE=NA, WORKERS=list(SUMMARY=1))
+		 parallel.config=list(BACKEND="FOREACH", TYPE="NA", WORKERS=list(SUMMARY=1))
 	}
 
 	## Utility Functions
@@ -46,16 +68,18 @@ function(sgp_object,
 		return(tmp.names[tmp.names$names.type==x, "names.sgp"])
 	}
 
-	rbind.all <- function(.list, ...){
-		if(length(.list)==1) return(.list[[1]])
-		Recall(c(list(rbind(.list[[1]], .list[[2]], ...)), .list[-(1:2)]), ...)
-	}
-
-	group.format <- function(my.group) {
-		if (is.null(my.group)) {
-			c("")
-		} else {
-			c("", unlist(lapply(my.group, function(x) paste(", ", x, sep=""))))
+	group.format <- function(my.group, add.missing=TRUE) {
+		if (is.null(my.group) & add.missing) {
+			return(c(""))
+		}
+		if (is.null(my.group) & !add.missing) {
+			return(NULL)
+		}
+		if (!is.null(my.group) & add.missing) {
+			return(c("", unlist(lapply(my.group, function(x) paste(", ", x, sep="")))))
+		}
+		if (!is.null(my.group) & !add.missing) {
+			return(unlist(lapply(my.group, function(x) paste(", ", x, sep=""))))
 		}
 	}
 
@@ -63,7 +87,7 @@ function(sgp_object,
 	boot.median <- function(x,i) median(x[i], na.rm=TRUE)
 	mean_na <- function(x, result.digits=1) round(mean(as.numeric(x), na.rm=TRUE), digits=result.digits)
 	num_non_missing <- function(x) sum(!is.na(as.numeric(x)))
-	median_sgp_standard_error <- function(x) 1.25*sd(x, na.rm=TRUE)/sqrt(sum(!is.na(as.numeric(x))))
+	sgp_standard_error <- function(x,y=1) round(y*sd(x, na.rm=TRUE)/sqrt(sum(!is.na(as.numeric(x)))), digits=2)
 
 	percent_in_category <- function(x, in.categories, of.categories, result.digits=1) { ## NOTE: x must be a factor and categories levels
 		if (!is.list(in.categories)) in.categories <- list(in.categories)
@@ -89,7 +113,7 @@ function(sgp_object,
 				foo <- sample(dat,length(dat), replace=TRUE)
 				out[j] <- boot.median(foo)
 			}
-			CI <- as.numeric(quantile(out, conf.quantiles, na.rm=TRUE))
+			CI <- round(as.numeric(quantile(out, conf.quantiles, na.rm=TRUE)), digits=1)
 		}
 		CI
 	}
@@ -143,7 +167,7 @@ function(sgp_object,
 				YEAR=type.convert(unlist(strsplit(i, "[.]"))[2]))
 		}
  
-		data.table(rbind.all(tmp.list), VALID_CASE=factor(1, levels=1:2, labels=c("VALID_CASE", "INVALID_CASE")), key=key(data))
+		data.table(rbind.fill(tmp.list), VALID_CASE="VALID_CASE", key=key(data))
 	}
 
 	summarizeSGP.config <- function(sgp_object, config.type) {
@@ -162,18 +186,31 @@ function(sgp_object,
 			}
 
 			tmp.sgp.summaries <- list(
-				MEDIAN_SGP="median_na(SGP)",
-				MEDIAN_SGP_COUNT="num_non_missing(SGP)",
+				MEAN_SGP=paste("mean_na(", my.sgp, ")", sep=""),
+				MEDIAN_SGP=paste("median_na(", my.sgp, ")", sep=""),
+				MEDIAN_SGP_COUNT=paste("num_non_missing(", my.sgp, ")", sep=""),
 				PERCENT_AT_ABOVE_PROFICIENT=paste("percent_in_category(ACHIEVEMENT_LEVEL, ", 
 					get.expression(proficient.achievement.levels), ", ", get.expression(all.achievement.levels), ")",sep=""),
 				PERCENT_AT_ABOVE_PROFICIENT_COUNT="num_non_missing(ACHIEVEMENT_LEVEL)",
-				PERCENT_AT_ABOVE_PROFICIENT_PRIOR=paste("percent_in_category(ACHIEVEMENT_LEVEL_PRIOR, ", 
-					get.expression(proficient.achievement.levels), ", ", get.expression(all.achievement.levels), ")",sep=""),
-				PERCENT_AT_ABOVE_PROFICIENT_COUNT_PRIOR="num_non_missing(ACHIEVEMENT_LEVEL_PRIOR)",
-				MEDIAN_SGP_STANDARD_ERROR="median_sgp_standard_error(SGP)")
+				MEAN_SGP_STANDARD_ERROR=paste("sgp_standard_error(", my.sgp, ")", sep=""),
+				MEDIAN_SGP_STANDARD_ERROR=paste("sgp_standard_error(", my.sgp, ",1.25)", sep=""))
+
+				if ("ACHIEVEMENT_LEVEL_PRIOR" %in% names(sgp_object@Data)) {
+					tmp.sgp.summaries <- c(
+						tmp.sgp.summaries,
+						PERCENT_AT_ABOVE_PROFICIENT_PRIOR=paste("percent_in_category(ACHIEVEMENT_LEVEL_PRIOR, ", 
+							get.expression(proficient.achievement.levels), ", ", get.expression(all.achievement.levels), ")",sep=""),
+						PERCENT_AT_ABOVE_PROFICIENT_PRIOR_COUNT="num_non_missing(ACHIEVEMENT_LEVEL_PRIOR)"
+					)
+				}
 
 				if ("SGP_TARGET" %in% names(sgp_object@Data)) {
-					tmp.sgp.summaries <- c(tmp.sgp.summaries, MEDIAN_SGP_TARGET="median_na(SGP_TARGET)",  MEDIAN_SGP_TARGET_COUNT="num_non_missing(SGP_TARGET)")
+					tmp.sgp.summaries <- c(
+						tmp.sgp.summaries, 
+						MEDIAN_SGP_TARGET="median_na(SGP_TARGET)",  
+						MEDIAN_SGP_TARGET_COUNT="num_non_missing(SGP_TARGET)",
+						PERCENT_CATCHING_UP_KEEPING_UP="percent_in_category(CATCH_UP_KEEP_UP_STATUS, list(c('Catch Up: Yes', 'Keep Up: Yes')), list(c('Catch Up: Yes', 'Catch Up: No', 'Keep Up: Yes', 'Keep Up: No')))"
+					)
 				}
 
 			return(tmp.sgp.summaries)
@@ -182,16 +219,16 @@ function(sgp_object,
 		if (config.type=="summary.groups") {
 			tmp.summary.groups <- list(
 				institution=c("STATE", getFromNames("institution")),
+				institution_type=getFromNames("institution_type"),
 				content=getFromNames("content"),
 				time=getFromNames("time"),
-				institution_type=getFromNames("institution_type"),
 				institution_level=getFromNames("institution_level"),
-				institution_multiple_membership=get.multiple.membership(sgp_object@Names[!is.na(sgp_object@Names$names.sgp),]),
-				demographic=c(getFromNames("demographic"), "CATCH_UP_KEEP_UP_STATUS", "ACHIEVEMENT_LEVEL_PRIOR"))
+				demographic=intersect(c(getFromNames("demographic"), "CATCH_UP_KEEP_UP_STATUS", "ACHIEVEMENT_LEVEL_PRIOR", "HIGH_NEED_STATUS"), names(sgp_object@Data)),
+				institution_multiple_membership=get.multiple.membership(sgp_object@Names[!is.na(sgp_object@Names$names.sgp),]))
 
 				for (i in tmp.summary.groups[["institution"]]) {
-					tmp.summary.groups[["institution_inclusion"]][[i]] <- getFromNames("institution_inclusion")[
-						grep(strsplit(i, "_")[[1]][1], getFromNames("institution_inclusion"))]
+					tmp.split <- paste(c(unlist(strsplit(i, "_"))[!unlist(strsplit(i, "_"))=="NUMBER"], "ENROLLMENT_STATUS"), collapse="_")
+					tmp.summary.groups[["institution_inclusion"]][[i]] <- intersect(tmp.split, getFromNames("institution_inclusion"))
 					tmp.summary.groups[["growth_only_summary"]][[i]] <- "BY_GROWTH_ONLY"
 				}
 				tmp.summary.groups[["institution_inclusion"]] <- as.list(tmp.summary.groups[["institution_inclusion"]])
@@ -203,13 +240,13 @@ function(sgp_object,
 		if (config.type=="confidence.interval.groups") {
 			tmp.confidence.interval.groups <- list(
 				TYPE="Bootstrap",
-				VARIABLES="SGP",
+				VARIABLES=my.sgp,
 				QUANTILES=c(0.025, 0.975),
 				GROUPS=list(
 					institution="SCHOOL_NUMBER",
+					institution_type="EMH_LEVEL",
 					content="CONTENT_AREA",
 					time="YEAR",
-					institution_type="EMH_LEVEL",
 					institution_level=NULL,
 					demographic=NULL,
 					institution_inclusion=list(STATE=NULL, DISTRICT_NUMBER=NULL, SCHOOL_NUMBER="SCHOOL_ENROLLMENT_STATUS"),
@@ -270,23 +307,30 @@ function(sgp_object,
 		### Create summary tables
 		
 		sgp.groups <- do.call(paste, c(expand.grid(i,
+			group.format(summary.groups[["institution_type"]]),
 			group.format(summary.groups[["content"]]),
 			group.format(summary.groups[["time"]]),
-			group.format(summary.groups[["institution_type"]]),
 			group.format(summary.groups[["institution_level"]]),
-			group.format(summary.groups[["institution_inclusion"]][[i]]),
 			group.format(summary.groups[["demographic"]]),
+			group.format(summary.groups[["institution_inclusion"]][[i]]),
 			group.format(summary.groups[["growth_only_summary"]][[i]])), sep=""))
+
+		if (!produce.all.summary.tables) {
+			sgp.groups <- intersect(sgp.groups, selected.summary.tables)
+			if (length(sgp.groups)==0) return(NULL)
+		}
 
 		if (!is.null(confidence.interval.groups[["GROUPS"]]) & i %in% confidence.interval.groups[["GROUPS"]][["institution"]]) {
 			ci.groups <- do.call(paste, c(expand.grid(i,
+				group.format(confidence.interval.groups[["GROUPS"]][["institution_type"]]),
 				group.format(confidence.interval.groups[["GROUPS"]][["content"]]),
 				group.format(confidence.interval.groups[["GROUPS"]][["time"]]),
-				group.format(confidence.interval.groups[["GROUPS"]][["institution_type"]]),
 				group.format(confidence.interval.groups[["GROUPS"]][["institution_level"]]),
-				group.format(confidence.interval.groups[["GROUPS"]][["institution_inclusion"]][[i]]),
 				group.format(confidence.interval.groups[["GROUPS"]][["demographic"]]),
+				group.format(confidence.interval.groups[["GROUPS"]][["institution_inclusion"]][[i]]),
 				group.format(confidence.interval.groups[["GROUPS"]][["growth_only_summary"]][[i]])), sep=""))
+
+			if (!produce.all.summary.tables) ci.groups <- intersect(ci.groups, selected.summary.tables)
 		}
 
 		if(par.start$par.type=="FOREACH") {
@@ -311,13 +355,13 @@ function(sgp_object,
 			if (!is.null(confidence.interval.groups[["GROUPS"]]) & i %in% confidence.interval.groups[["GROUPS"]][["institution"]]) {
 	  			j <- k <- NULL ## To prevent R CMD check warnings
 	  			summary.iter <- lapply(1:length(sgp.groups), function(x) c(sgp.groups[x], sgp.groups[x] %in% ci.groups))
-	  			tmp.summary <- clusterApplyLB(par.start$internal.cl, summary.iter, 
+	  			tmp.summary <- parLapply(par.start$internal.cl, summary.iter, 
 	  				function(iter) sgpSummary(data, iter[1], eval(parse(text=iter[2]))))
 				names(tmp.summary) <- gsub(", ", "__", sgp.groups)
 			} else {
 				j <- k <- NULL ## To prevent R CMD check warnings
 				summary.iter <- lapply(1:length(sgp.groups), function(x) c(sgp.groups[x], FALSE))
-	  			tmp.summary <- clusterApplyLB(par.start$internal.cl, summary.iter, 
+	  			tmp.summary <- parLapply(par.start$internal.cl, summary.iter, 
 	  				function(iter) sgpSummary(data, iter[1], eval(parse(text=iter[2]))))
 				names(tmp.summary) <- gsub(", ", "__", sgp.groups)
 			}
@@ -362,12 +406,13 @@ function(sgp_object,
 	tmp.years <- list()
 	if (is.null(years)) {
 		for (i in content_areas) {
-			tmp.years[[i]] <- sort(tail(unique(sgp_object@Data[J("VALID_CASE", i)]$YEAR), state.multiple.year.summary))
+			tmp.years[[i]] <- tail(sort(unique(sgp_object@Data[SJ("VALID_CASE", i)]$YEAR)), state.multiple.year.summary)
 		}
 	} else {
 		if (!is.list(years)) {
 			for (i in content_areas) {
-				tmp.years[[i]] <- years 
+				tmp.years[[i]] <- tail(sort(unique(sgp_object@Data[SJ("VALID_CASE", i)]$YEAR))[
+					seq(which(sort(unique(sgp_object@Data[SJ("VALID_CASE", i)]$YEAR))==tail(sort(years), 1)))], state.multiple.year.summary)
 			}
 		} else {
 			if (!all(content_areas %in% names(years))) {
@@ -379,21 +424,75 @@ function(sgp_object,
 	}
 
 	for (i in names(tmp.years)) {
-		tmp.years[[i]] <- data.table(i, tmp.years[[i]])
+		tmp.years[[i]] <- data.table(CONTENT_AREA=i, YEAR=tmp.years[[i]])
 	}
-	content_areas.by.years <- rbind.all(tmp.years)
+	content_areas.by.years <- as.data.table(rbind.fill(tmp.years))
 
 	if (is.null(sgp.summaries)) sgp.summaries <- summarizeSGP.config(sgp_object, "sgp.summaries")
 	if (is.null(summary.groups)) summary.groups <- summarizeSGP.config(sgp_object, "summary.groups")
 	if (is.null(confidence.interval.groups)) confidence.interval.groups <- summarizeSGP.config(sgp_object, "confidence.interval.groups")
 
 	if (any(!sapply(summary.groups[["growth_only_summary"]], is.null))) {
+#		sgp_object@Data[,BY_GROWTH_ONLY := factor(is.na(sgp_object@Data$SGP), levels=c(FALSE, TRUE), labels=c("Students without SGP", "Students with SGP"))]
 		sgp_object@Data[["BY_GROWTH_ONLY"]] <- factor(is.na(sgp_object@Data$SGP), levels=c(FALSE, TRUE), labels=c("Students without SGP", "Students with SGP"))
 	}
 
-	variables.for.summaries <- intersect(c("SGP", "SGP_TARGET", "ACHIEVEMENT_LEVEL", "ACHIEVEMENT_LEVEL_PRIOR", unique(as.character(unlist(summary.groups)))),
+	variables.for.summaries <- intersect(c(my.sgp, my.sgp.target, "ACHIEVEMENT_LEVEL", "ACHIEVEMENT_LEVEL_PRIOR", unique(as.character(unlist(summary.groups)))),
 					names(sgp_object@Data)) 
 
+
+	### Define demographic subgroups and tables that will be calculated from all possible created by expand.grid
+
+	selected.demographic.subgroups <- intersect(c(getFromNames("demographic"), "CATCH_UP_KEEP_UP_STATUS", "ACHIEVEMENT_LEVEL_PRIOR", "HIGH_NEED_STATUS"), names(sgp_object@Data))
+	if (is.null(SGPstateData[[state]][["Variable_Name_Lookup"]])) {
+		selected.institution.types <- c("STATE", "DISTRICT_NUMBER", "SCHOOL_NUMBER")
+	} else {
+		selected.institution.types <- c("STATE", getFromNames("institution"))
+	}
+	selected.institution.types <- c(selected.institution.types, paste(selected.institution.types[grep("CURRENT", selected.institution.types, invert=TRUE)], "INSTRUCTOR_NUMBER", sep=", "))
+	selected.summary.tables <- list()
+	for (k in selected.institution.types) {
+		if (length(grep("INSTRUCTOR_NUMBER", k)) > 0 | length(grep("CURRENT", k)) > 0) {
+			if (length(grep("CURRENT", k)) > 0 | length(grep("INSTRUCTOR", grep("ENROLLMENT_STATUS", names(sgp_object@Data), value=TRUE)))==0) {
+				ENROLLMENT_STATUS_ARGUMENT <- NULL; ADD_MISSING_ARGUMENT <- TRUE
+			} 
+			if (length(grep("INSTRUCTOR", grep("ENROLLMENT_STATUS", names(sgp_object@Data), value=TRUE))) > 0) {
+				ENROLLMENT_STATUS_ARGUMENT <- "INSTRUCTOR_ENROLLMENT_STATUS"; ADD_MISSING_ARGUMENT <- FALSE
+			}
+
+			selected.summary.tables[[k]] <- do.call(paste, c(expand.grid(k,
+					group.format("CONTENT_AREA"),
+					group.format("YEAR"),
+					group.format("GRADE"),
+					group.format(ENROLLMENT_STATUS_ARGUMENT, ADD_MISSING_ARGUMENT)), sep=""))
+		} else {
+			if (!paste(c(unlist(strsplit(k, "_"))[!unlist(strsplit(k, "_"))=="NUMBER"], "ENROLLMENT_STATUS"), collapse="_") %in% names(sgp_object@Data)) {
+				ENROLLMENT_STATUS_ARGUMENT <- NULL
+				ADD_MISSING_ARGUMENT <- TRUE
+			} else {
+				ENROLLMENT_STATUS_ARGUMENT <- paste(c(unlist(strsplit(k, "_"))[!unlist(strsplit(k, "_"))=="NUMBER"], "ENROLLMENT_STATUS"), collapse="_")
+				ADD_MISSING_ARGUMENT <- FALSE
+			}
+
+			if (length(grep("SCHOOL", k)) > 0 & paste(c(unlist(strsplit(k, "_"))[!unlist(strsplit(k, "_"))=="NUMBER"], "ENROLLMENT_STATUS"), collapse="_") %in% names(sgp_object@Data)) {
+				selected.summary.tables[[k]] <- do.call(paste, c(expand.grid(k,
+					group.format("EMH_LEVEL"),
+					group.format("CONTENT_AREA"),
+					group.format("YEAR"),
+					group.format("GRADE"),
+					group.format(selected.demographic.subgroups),
+					group.format(ENROLLMENT_STATUS_ARGUMENT, ADD_MISSING_ARGUMENT)), sep=""))
+			} else {
+				selected.summary.tables[[k]] <-  do.call(paste, c(expand.grid(k,
+					group.format("CONTENT_AREA"),
+					group.format("YEAR"),
+					group.format("GRADE"),
+					group.format(selected.demographic.subgroups),
+					group.format(ENROLLMENT_STATUS_ARGUMENT, ADD_MISSING_ARGUMENT)), sep=""))
+			}
+		}
+	} ### End for k
+	selected.summary.tables <- unlist(selected.summary.tables, use.names=FALSE)
 
 	##############################################################
 	###
@@ -403,7 +502,7 @@ function(sgp_object,
 
 	### Loop and send to summarizeSGP_INTERNAL
 
-	tmp.dt <- data.table(STATE=state, sgp_object@Data[J("VALID_CASE", content_areas.by.years)])[, variables.for.summaries[!is.na(variables.for.summaries)], with=FALSE]
+	tmp.dt <- sgp_object@Data[data.table("VALID_CASE", content_areas.by.years), nomatch=0][, variables.for.summaries, with=FALSE][, STATE:=as.factor(state)]
 
 	par.start <- startParallel(parallel.config, 'SUMMARY')
 
@@ -416,15 +515,15 @@ function(sgp_object,
 
 				### Create variable name to be used
 
-				multiple.membership.variable.name <- 
-					paste(head(unlist(strsplit(summary.groups[["institution_multiple_membership"]][[j-1]][["VARIABLE.NAMES"]][1], "_")), -1), 
+				multiple.membership.variable.name <- paste(head(unlist(strsplit(summary.groups[["institution_multiple_membership"]][[j-1]][["VARIABLE.NAMES"]][1], "_")), -1), 
 						collapse="_")
 
 				### Aggregations will occur by this new institution_level variable
 
 				if (!is.null(summary.groups[["institution_multiple_membership"]][[j-1]][["ENROLLMENT_STATUS"]])) {
-					tmp.inst <- paste(i, multiple.membership.variable.name, "ENROLLMENT_STATUS", sep=", ")
-				} else tmp.inst <- paste(i, multiple.membership.variable.name, sep=", ")
+					enrollment.status.name <- paste(paste(paste(head(unlist(strsplit(multiple.membership.variable.name, "_")), -1), collapse="_")), "ENROLLMENT_STATUS", sep="_")
+				}
+				tmp.inst <- paste(i, multiple.membership.variable.name, sep=", ")
 				
 
 				### Reshape data using melt
@@ -442,9 +541,11 @@ function(sgp_object,
 					invisible(tmp.dt.long[, ENROLLMENT_STATUS := melt(as.data.frame(tmp.dt[, 
 						summary.groups[["institution_multiple_membership"]][[j-1]][["ENROLLMENT_STATUS"]], with=FALSE]), 
 						measure.vars=summary.groups[["institution_multiple_membership"]][[j-1]][["ENROLLMENT_STATUS"]])[,2]])
-					summary.groups[["institution_inclusion"]][[tmp.inst]] <- "ENROLLMENT_STATUS"
+					setnames(tmp.dt.long, "ENROLLMENT_STATUS", enrollment.status.name)
+					summary.groups[["institution_inclusion"]][[tmp.inst]] <- enrollment.status.name
+				} else {
+					summary.groups[["institution_inclusion"]][[tmp.inst]] <- paste(i, "ENROLLMENT_STATUS", sep="_")
 				}
-				# if (par.start$par.type=="SNOW") clusterExport(par.start$internal.cl, "tmp.dt.long") # Don't think we need this...
 				summary.groups[["growth_only_summary"]][[tmp.inst]] <- "BY_GROWTH_ONLY" # Do we have an option to NOT include "BY_GROWTH_ONLY"? (would we want this?)
 				sgp_object@Summary[[i]] <- c(sgp_object@Summary[[i]], summarizeSGP_INTERNAL(tmp.dt.long, tmp.inst))
 			} 

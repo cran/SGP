@@ -20,10 +20,12 @@ analyzeSGP(sgp_object,
          sgp.percentiles.baseline.max.order=3,
          sgp.projections.baseline.max.order=3,
          sgp.projections.lagged.baseline.max.order=3,
+         sgp.use.my.coefficient.matrices=NULL,
          simulate.sgps=TRUE,
          goodness.of.fit.print=TRUE,
          sgp.config=NULL,
          sgp.config.drop.nonsequential.grade.progression.variables=TRUE,
+         sgp.baseline.panel.years=NULL,
          sgp.baseline.config=NULL,
          parallel.config=NULL,
          ...)
@@ -64,6 +66,9 @@ To utilize the maximum matrix order, set to NULL.
   \item{sgp.projections.lagged.baseline.max.order}{Integer indicating the maximum order to calculate lagged baseline student growth projections (regardless of maximum coefficient matrix order). 
 Default is 3.  To utilize the maximum matrix order, set to NULL.
   }
+  \item{sgp.use.my.coefficient.matrices}{Arugment, defaults to NULL indicating whether to use coefficient matrices to calcualte student growth percentiles embedded in provided object of 
+  same name as those provided by the sgp.labels argument.
+  }
   \item{simulate.sgps}{Boolean variable indicating whether to simulate SGP values for students based on test-specific Conditional Standard Errors of Measurement (CSEM).  Test CSEM data must be available for simulation and included in \code{SGPstateData}.  This argument must be set to TRUE for confidence interval construction. Defaults to TRUE.
   }
   \item{goodness.of.fit.print}{Boolean variable indicating whether to print out Goodness of Fit figures as pdf into a directory labeled Goodness of Fit. Defaults to TRUE.
@@ -72,6 +77,7 @@ Default is 3.  To utilize the maximum matrix order, set to NULL.
   }
   \item{sgp.config.drop.nonsequential.grade.progression.variables}{Boolean variable (defaults to TRUE) indicating whether non-sequential grade progression variables should be dropped when sgp.config is processed. For example, if a grade progression of c(3,4,6) is provided, the data configuration will assume (default is TRUE) that data for a missing year needs to be dropped prior to applying \code{\link{studentGrowthPercentiles}} or \code{\link{studentGrowthProjections}} to the data. 
   }
+  \item{sgp.baseline.panel.years}{A vector of years to be used for baseline coefficient matrix calculation. Default is to use most recent five years of data.}
   \item{sgp.baseline.config}{A list containing three vectors: \code{sgp.content.areas}, \code{sgp.panel.years}, \code{sgp.grade.sequences} indicating how baseline student growth percentile analyses
  are to be conducted. In almost all cases this value is calculated by default within the function but can be specified directly for advanced use cases. See source code for more detail on this configuration option.
   }
@@ -112,16 +118,16 @@ Demonstration_SGP <- analyzeSGP(Demonstration_SGP, state="DEMO")
 ###
 
 #  Use only 3 years of Data, for grades 3 to 6
-#  and only perform analyses for most recent year (2011)
+#  and only perform analyses for most recent year (2012)
 
 my.custom.config <- list(
-MATHEMATICS.2010_2011 = list(
+MATHEMATICS.2011_2012 = list(
 	sgp.content.areas=rep("MATHEMATICS", 3), # Note, must be same length as sgp.panel.years
-	sgp.panel.years=c('2008_2009', '2009_2010', '2010_2011'),
+	sgp.panel.years=c('2009_2010', '2010_2011', '2011_2012'),
 	sgp.grade.sequences=list(3:4, 3:5, 4:6)),
-READING.2010_2011 = list(
+READING.2011_2012 = list(
 	sgp.content.areas=rep("READING", 3),
-	sgp.panel.years=c('2008_2009', '2009_2010', '2010_2011'),
+	sgp.panel.years=c('2009_2010', '2010_2011', '2011_2012'),
 	sgp.grade.sequences=list(3:4, 3:5, 4:6)))
 
 Demonstration_SGP <- prepareSGP(sgpData_LONG)
@@ -137,14 +143,38 @@ Demonstration_SGP <- analyzeSGP(Demonstration_SGP,
 
 #  Use different CONTENT_AREA priors, and only 1 year of prior data
 my.custom.config <- list(
-MATHEMATICS.2010_2011.READ_PRIOR = list(
+MATHEMATICS.2011_2012.READ_PRIOR = list(
 	sgp.content.areas=c("READING", "MATHEMATICS"),
-	sgp.panel.years=c('2009_2010', '2010_2011'),
+	sgp.panel.years=c('2010_2011', '2011_2012'),
 	sgp.grade.sequences=list(3:4, 4:5, 5:6)),
-READING.2010_2011.MATH_PRIOR = list(
+READING.2011_2012.MATH_PRIOR = list(
 	sgp.content.areas=c("MATHEMATICS", "READING"),
-	sgp.panel.years=c('2009_2010', '2010_2011'),
+	sgp.panel.years=c('2010_2011', '2011_2012'),
 	sgp.grade.sequences=list(3:4, 4:5, 5:6)))
+
+
+## An example showing multiple priors within a single year
+
+Demonstration_SGP <- prepareSGP(sgpData_LONG)
+ 
+DEMO.config <- list(
+READING.2010_2011 = list(
+	sgp.content.areas=c("MATHEMATICS", "READING", "MATHEMATICS", "READING", "READING"),
+	sgp.panel.years=c('2008_2009', '2008_2009', '2009_2010', '2009_2010', '2010_2011'),
+	sgp.grade.sequences=list(c(3,3,4,4,5), c(4,4,5,5,6), c(5,5,6,6,7), c(6,6,7,7,8))),
+MATHEMATICS.2010_2011 = list(
+	sgp.content.areas=c("READING", "MATHEMATICS", "READING", "MATHEMATICS", "MATHEMATICS"),
+	sgp.panel.years=c('2008_2009', '2008_2009', '2009_2010', '2009_2010', '2010_2011'),
+	sgp.grade.sequences=list(c(3,3,4,4,5), c(4,4,5,5,6), c(5,5,6,6,7), c(6,6,7,7,8))))
+
+Demonstration_SGP <- analyzeSGP(Demonstration_SGP,
+                                          sgp.config=DEMO.config,
+                                          sgp.projections=FALSE,
+                                          sgp.projections.lagged=FALSE,
+                                          sgp.percentiles.baseline=FALSE,
+                                          sgp.projections.baseline=FALSE,
+                                          sgp.projections.lagged.baseline=FALSE,
+                                          sgp.config.drop.nonsequential.grade.progression.variables=FALSE)
 
 
 ###

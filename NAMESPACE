@@ -16,7 +16,6 @@ export(
 	"bubblePlot_Styles",
 	"combineSGP",
 	"growthAchievementPlot",
-	"growthAchievementPlot_Styles",
 	"is.splineMatrix",
 	"is.SGP",
 	"outputSGP",
@@ -26,6 +25,7 @@ export(
 	"studentGrowthPlot_Styles",
 	"studentGrowthProjections",
 	"summarizeSGP",
+	"testSGP",
 	"viewSummaryGroups",
 	"visualizeSGP"
 )

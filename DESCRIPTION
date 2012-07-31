@@ -2,8 +2,8 @@ Package: SGP
 Type: Package
 Title: An R Package for the Calculation and Visualization of Student
         Growth Percentiles & Percentile Growth Trajectories.
-Version: 0.9-0.0
-Date: 2012-4-12
+Version: 0.9-9.0
+Date: 2012-8-1
 Authors@R: c(person("Damian", "Betebenner",
         email="dbetebenner@nciea.org", role=c("aut", "cre")),
         person("Adam", "Van Iwaarden",
@@ -11,30 +11,33 @@ Authors@R: c(person("Damian", "Betebenner",
         "Domingue", email="ben.domingue@gmail.com", role="aut"))
 Author: Damian W. Betebenner <dbetebenner@nciea.org>, Adam Van Iwaarden
         <Vaniwaarden@colorado.edu> and Ben Domingue
-        <ben.domingue@gmail.com> with contributions from Jonathan
-        Weeks, John Stewart, Jinnie Choi, Xin Wei, and Hi Shin Shim.
-        With special thanks to State Department of Education analysts:
-        Dr. Sarah Polasky (Arizona), Rebecca Gau (Arizona), Dr. Bill
-        Bonk (Colorado), Marie Huchton (Colorado), Glenn Hirata
+        <ben.domingue@gmail.com> with contributions from Dr. Jonathan
+        Weeks, John Stewart, Dr. Jinnie Choi, Dr. Xin Wei, and Hi Shin
+        Shim. With special thanks to State Department of Education
+        analysts: Dr. Sarah Polasky (Arizona), Rebecca Gau (Arizona),
+        Dr. Bill Bonk (Colorado), Marie Huchton (Colorado), Dr. Allison
+        Timberlake (Georgia), Dr. Melissa Fincher (Georgia), Kiran
+        Athota (Georgia), Travis Allen (Georgia), Glenn Hirata
         (Hawaii), Glenn Nochi (Hawaii), Ayaka Nukui (Idaho), Dr.
-        Carissa Miller (Idaho), Dr. Wes Bruce (Indiana), Robert
-        Hochsegang (Indiana), Xuewen Sheng (Kansas), Robert Lee
+        Carissa Miller (Idaho), Dr . Wes Bruce (Indiana), Robert
+        Hochsegang (Indiana), Tony Moss (Kansas), Dr. Xuewen Sheng
+        (Kansas), Dr. Kathy Flanagan (Massachusetts), Robert Lee
         (Massachusetts), Joe DeCastra (Mississippi), Ken Thompson
         (Mississippi), Soo Yeon Cho (Missouri), Jeff Halsell (Nevada),
-        Selcuk Ozdemir (Nevada), Roger Silva (Nevada), Deb Wiswell (New
-        Hampshire), Katya Levitan-Reiner (New Haven Public Schools),
-        Jason Becker (Rhode Island), Jessica Brown (Rhode Island), Ana
-        Karantonis (Rhode Island), Dr. Deborah Jonas (Virginia), Juan
-        D'Brot (West Virginia), Nate Hixson (West Virginia), Daniel
-        Bush (Wisconsin), Justin Meyer (Wisconsin), Joseph Newton
-        (Wisconsin), Dr. Philip Olsen (Wisconsin), Nick Stroud
-        (Wisconsin).
+        Dr. Selcuk Ozdemir (Nevada), Roger Silva (Nevada), Deb Wiswell
+        (New Hampshire), Katya Levitan-Reiner (New Haven Public
+        Schools), Jason Becker (Rhode Island), Dr. Jessica Brown (Rhode
+        Island), Ana Karantonis (Rhode Island), Dr. Deborah Jonas
+        (Virginia), Juan D'Brot (West Virginia), Nate Hixson (West
+        Virginia), Daniel Bush (Wisconsin), Justin Meyer (Wisconsin),
+        Joseph Newton (Wisconsin), Dr. Philip Olsen (Wisconsin), Nick
+        Stroud (Wisconsin).
 Maintainer: Damian W. Betebenner <dbetebenner@nciea.org>
-Depends: R (>= 2.12), boot, colorspace, data.table (>= 1.7.9), foreach,
+Depends: R (>= 2.12), boot, colorspace, data.table (>= 1.8.0), foreach,
         grid, gridBase, methods, plyr, reshape2, randomNames (>=
-        0.0-5), quantreg, splines, SGPdata
-Suggests: doMC, doMPI, doParallel, doRedis, doSNOW, multicore,
-        parallel, pdf2, RSQLite, sn, snow
+        0.0-5), quantreg, splines, SGPdata (>= 2.0-0)
+Suggests: doMC, doMPI, doParallel, doRedis, doSNOW, iterators,
+        multicore, parallel, pdf2, RSQLite, sn, snow
 Description: Functions to calculate student growth percentiles and
         percentile growth projections/trajectories for students using
         large scale, longitudinal assessment data.  Functions use
@@ -47,11 +50,12 @@ Description: Functions to calculate student growth percentiles and
 SystemRequirements: (PDF)LaTeX (http://www.latex-project.org/) with
         pdfpages package for studentGrowthPlot option in visualizeSGP
         to bind together student growth plots into school catalogs.
-URL: http://cran.r-project.org/web/packages/SGP/,
-        https://r-forge.r-project.org/projects/sgp/
+URL: https://github.com/StudentGrowthPercentiles/SGP,
+        http://studentgrowthpercentiles.github.com/SGP/,
+        http://cran.r-project.org/web/packages/SGP/
 LazyLoad: Yes
 LazyData: Yes
 License: CC BY-SA 3.0 US | CC BY-NC-SA 3.0 + file LICENSE
-Packaged: 2012-04-12 13:57:02 UTC; damian
+Packaged: 2012-07-31 11:07:47 UTC; damian
 Repository: CRAN
-Date/Publication: 2012-04-12 14:02:39
+Date/Publication: 2012-07-31 12:39:01

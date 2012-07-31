@@ -35,8 +35,8 @@ function(
 	###  Basic configuration
 	
 	if (toupper(parallel.config[['BACKEND']]) == 'FOREACH') {
-		require(foreach)
-		if (!is.na(parallel.config[['TYPE']]) | parallel.config[['TYPE']]!="NA") {
+		require(foreach); require(iterators) # Have to load iterators for sequential uses
+		if (!is.na(parallel.config[['TYPE']]) & !identical(parallel.config[['TYPE']], "NA")) {
 			eval(parse(text=paste("require(", parallel.config[['TYPE']], ")")))
 		} else parallel.config[['TYPE']] <- "NA"
 
@@ -71,7 +71,7 @@ function(
 
 	if (toupper(parallel.config[['BACKEND']]) == 'PARALLEL') {
 		# Weird error for MPI stopCluster(...) 'Error in NextMethod() : 'NextMethod' called from an anonymous function'  load snow first removes it.
-		if (!is.null(parallel.config[['TYPE']]) && parallel.config[['TYPE']] == 'MPI') require(snow) 
+		# if (!is.null(parallel.config[['TYPE']]) && parallel.config[['TYPE']] == 'MPI') require(snow) 
 		require(parallel)
 		if (!is.null(parallel.config[['TYPE']])) {
 			if (!parallel.config[['TYPE']] %in% c('SOCK', 'MPI')) {
@@ -101,7 +101,10 @@ function(
 	
 	if (toupper(parallel.config[['BACKEND']]) == 'FOREACH') {
 		par.type='FOREACH'
-		if (parallel.config[['TYPE']]=="NA") return(list(foreach.options=foreach.options, par.type=par.type))
+		if (parallel.config[['TYPE']]=="NA") {
+			registerDoSEQ() # prevents warning message
+			return(list(foreach.options=foreach.options, par.type=par.type))
+		}
 		if (parallel.config[['TYPE']]=="doMC") {
 			registerDoMC(workers)
 			return(list(foreach.options=foreach.options, par.type=par.type))
