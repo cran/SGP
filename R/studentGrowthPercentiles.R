@@ -10,7 +10,7 @@ function(panel.data,         ## REQUIRED
          percentile.cuts,
          growth.levels, 
          use.my.knots.boundaries,
-         use.my.coefficient.matrices,
+         use.my.coefficient.matrices=NULL,
          calculate.confidence.intervals,
          print.other.gp=FALSE,
          print.sgp.order=FALSE, 
@@ -22,10 +22,12 @@ function(panel.data,         ## REQUIRED
          drop.nonsequential.grade.progression.variables=TRUE,
          convert.0and100=TRUE,
          sgp.quantiles="Percentiles",
+         sgp.loss.hoss.adjustment=NULL,
          percuts.digits=0,
          isotonize=TRUE,
          convert.using.loss.hoss=TRUE,
          goodness.of.fit=TRUE,
+         return.prior.scale.score=TRUE,
          print.time.taken=TRUE) {
 
 	started.at <- proc.time()
@@ -61,6 +63,8 @@ function(panel.data,         ## REQUIRED
                 s <- strsplit(s, split="-")[[1]]
                 paste(toupper(substring(s, 1,1)), substring(s, 2), sep="", collapse="-")
         }
+
+	pretty_year <- function(x) sub("_", "-", x)
 
 	.create.knots.boundaries <- function(data, by.grade) {
 		tmp.list <- list()
@@ -121,7 +125,7 @@ function(panel.data,         ## REQUIRED
 		str3 <- tail(SS, 1)
 		for (i in 2:(k+1)) {
 			str1 <- paste(str1, " & !is.na(", rev(SS)[i], ")", sep="")
-			str2 <- paste(str2, " & ", rev(GD)[i], "=='", rev(tmp.gp)[i], "'", sep="")
+			str2 <- paste(str2, " & ", rev(GD)[i], "=='", strsplit(rev(as.character(tmp.gp))[i], "[.]")[[1]][1], "'", sep="") # AVI change to deal with repeat grades
 			str3 <- c(rev(SS)[i], str3)
 		}
 		if (by.grade) {
@@ -132,7 +136,11 @@ function(panel.data,         ## REQUIRED
 	}
 
         .year.increment <- function(year, increment) {
-                sapply(increment, function(x) paste(as.numeric(unlist(strsplit(as.character(year), "_")))+x, collapse="_"))
+		if (identical(year, "BASELINE")) {
+			return("BASELINE")
+		} else {
+			sapply(increment, function(x) paste(as.numeric(unlist(strsplit(as.character(year), "_")))+x, collapse="_"))
+		}
         }
 
         get.my.knots.boundaries.path <- function(content_area, year) {
@@ -159,6 +167,7 @@ function(panel.data,         ## REQUIRED
         
 	.create.coefficient.matrices <- function(data, k, by.grade) {
 		tmp.data <- .get.panel.data(data, k, by.grade)
+		if (dim(tmp.data)[1]==0) return(NULL)
 		mod <- character()
 		s4Ks <- "Knots=list("
 		s4Bs <- "Boundaries=list("
@@ -181,17 +190,27 @@ function(panel.data,         ## REQUIRED
 		tmp <- do.call(rbind, strsplit(names, "_"))
 		if (!grade %in% tmp[tmp[,1]=="knots", 2]) stop(paste("knots_", grade, " not found in Knots_Boundaries.", sep=""))
 		if (!grade %in% tmp[tmp[,1]=="boundaries", 2]) stop(paste("boundaries_", grade, " not found in Knots_Boundaries.", sep=""))                           
-		}
+	}
 
 	.check.my.coefficient.matrices <- function(names, grade, order) {
-		tmp <- do.call(rbind, strsplit(names, "_"))
+		tmp <- do.call(rbind.fill, lapply(strsplit(names, "_"), function(x) as.data.frame(matrix(x, nrow=1))))
 		if (!grade %in% tmp[,2]) stop(paste("Coefficient matrix associated with grade ", grade, " not found.", sep=""))
-		if (!order %in% tmp[tmp[,2]==grade,3]) stop(paste("Coefficient matrix associated with grade ", grade, " order ", order, " not found.", sep=""))
+		if (grade.progression.label) {
+			if (!order %in% tmp[tmp[,2]==grade & tmp[,4]==paste(grade.progression, collapse="."),3]) {
+				stop(paste("Coefficient matrix associated with grade ", grade, " order ", order, " not found.", sep=""))
+			}
+		} else {
+			if (!order %in% tmp[tmp[,2]==grade,3]) stop(paste("Coefficient matrix associated with grade ", grade, " order ", order, " not found.", sep=""))
+		}
 	}
 
 	.get.max.matrix.order <- function(names, grade) {
-		tmp <- do.call(rbind, strsplit(names, "_"))
-		max(as.numeric(tmp[tmp[,2]==grade,3]), na.rm=TRUE)
+		tmp <- do.call(rbind.fill, lapply(strsplit(names, "_"), function(x) as.data.frame(matrix(x, nrow=1))))
+		if (grade.progression.label) {
+			max(as.numeric(tmp[tmp[,2]==grade & tmp[,4]==paste(grade.progression, collapse="."),3]), na.rm=TRUE)
+		} else {
+			max(as.numeric(tmp[tmp[,2]==grade,3]), na.rm=TRUE)
+		}
 	}
 
 	.create_taus <- function(sgp.quantiles) {
@@ -234,6 +253,14 @@ function(panel.data,         ## REQUIRED
 
 	.get.quantiles <- function(data1, data2) {
 		tmp <- apply(cbind(data1 < data2, FALSE), 1, function(x) which.min(x)-1)
+		if (!is.null(sgp.loss.hoss.adjustment)) {
+			my.path.knots.boundaries <- get.my.knots.boundaries.path(sgp.labels$my.subject, as.character(sgp.labels$my.year))
+			my.hoss <- eval(parse(text=paste("Knots_Boundaries", my.path.knots.boundaries, "[['loss.hoss_", tmp.last, "']][2]", sep="")))
+			tmp.index <- which(data2==my.hoss)
+			if (length(tmp.index) > 0) {
+				tmp[tmp.index] <- apply(cbind(data1 > data2, TRUE)[tmp.index,,drop=FALSE], 1, function(x) which.max(x)-1)
+			}
+		}
 		if (convert.0and100) {
 			tmp[tmp==0] <- 1
 			tmp[tmp==100] <- 99
@@ -242,7 +269,7 @@ function(panel.data,         ## REQUIRED
 	}
 
 	.get.percentile.cuts <- function(data1) {
-		tmp <- round(data1[ , percentile.cuts+1], digits=percuts.digits)
+		tmp <- round(data1[ , percentile.cuts+1, drop=FALSE], digits=percuts.digits)
 		if (convert.using.loss.hoss) {
 			my.path.knots.boundaries <- get.my.knots.boundaries.path(sgp.labels$my.subject, as.character(sgp.labels$my.year))
 			bnd <- eval(parse(text=paste("Knots_Boundaries", my.path.knots.boundaries, "[['loss.hoss_", tmp.last, "']]", sep="")))
@@ -251,7 +278,7 @@ function(panel.data,         ## REQUIRED
 		}
 		colnames(tmp) <- paste("PERCENTILE_CUT_", percentile.cuts, sep="")
 		return(tmp)
-} 
+	} 
 
 	.goodness.of.fit <- function(data1) {
 		.cell.color <- function(x){
@@ -310,15 +337,15 @@ function(panel.data,         ## REQUIRED
 		setnames(data1, c("PRIOR_SS", "SGP")); PRIOR_SS <- SGP <- NULL
 		tmp.table <- .sgp.fit(data1[,PRIOR_SS], data1[,SGP])
 		tmp.cuts <- .quantcut(data1[,PRIOR_SS], 0:10/10, right=FALSE)
+		tmp.cuts.percentages <- round(100*table(tmp.cuts)/sum(table(tmp.cuts)), digits=1)
 		tmp.colors <- .cell.color(as.vector(tmp.table))
 		tmp.list <- list()
 
 		for (i in levels(tmp.cuts)) {
 			tmp.list[[i]] <- quantile(data1$SGP[tmp.cuts==i], probs=ppoints(1:500))
 		}
-#		tmp.ppoints <- unlist(tmp.list)
 
-		layout.vp <- viewport(layout = grid.layout(2, 2, widths = unit(c(4.75, 3.5), rep("inches", 2)),
+		layout.vp <- viewport(layout = grid.layout(2, 2, widths = unit(c(5.0, 3.5), rep("inches", 2)),
 		heights = unit(c(0.75, 3.5), rep("inches", 2))), name="layout")
 		components <- vpList(viewport(layout.pos.row=1, layout.pos.col=1:2, name="title"),
 		viewport(layout.pos.row=2, layout.pos.col=1, xscale=c(-3,12), yscale=c(0,13), name="table"),
@@ -332,18 +359,24 @@ function(panel.data,         ## REQUIRED
 				children=gList(
 					rectGrob(gp=gpar(fill="grey95"), vp="title"),
 					textGrob(x=0.5, y=0.65, "Student Growth Percentile Goodness-of-Fit Descriptives", gp=gpar(cex=1.25), vp="title"),
-					textGrob(x=0.5, y=0.4, paste(capwords(sgp.labels$my.year), " ", capwords(sgp.labels$my.subject), ", Grade Progression ", 
-						paste(tmp.gp, collapse="-"), " (N = ", format(dim(data1)[1], bigmark=","), ")", sep=""), vp="title"),
+					textGrob(x=0.5, y=0.4, paste(pretty_year(sgp.labels$my.year), " ", sub(' +$', '', capwords(paste(sgp.labels$my.subject, sgp.labels$my.extra.label))),
+						", Grade Progression ", paste(tmp.gp, collapse="-"), " (N = ", format(dim(data1)[1], big.mark=","), ")", sep=""), vp="title"),
 					rectGrob(vp="table"),
-					rectGrob(x=rep(1:10,each=10), y=rep(10:1,10), width=1, height=1, default.units="native", 
+					rectGrob(x=rep(1:10, each=dim(tmp.table)[1]), y=rep(10:(10-dim(tmp.table)[1]+1),10), width=1, height=1, default.units="native", 
 						gp=gpar(col="black", fill=tmp.colors), vp="table"),
-					textGrob(x=0.35, y=10:1, paste(c("1st", "2nd", "3rd", paste(4:10, "th", sep="")), dimnames(tmp.table)[[1]], sep="/"), just="right", 
-						gp=gpar(cex=0.7), default.units="native", vp="table"),
+					textGrob(x=0.35, y=10:(10-dim(tmp.table)[1]+1), paste(c("1st", "2nd", "3rd", paste(4:dim(tmp.table)[1], "th", sep="")), 
+						dimnames(tmp.table)[[1]], sep="/"), just="right", gp=gpar(cex=0.7), default.units="native", vp="table"),
+					textGrob(x=10.65, y=10:(10-dim(tmp.table)[1]+1), paste("(", tmp.cuts.percentages, "%)", sep=""), just="left", gp=gpar(cex=0.7), 
+						default.units="native", vp="table"),
 					textGrob(x=-2.5, y=5.5, "Prior Scale Score Decile/Range", gp=gpar(cex=0.8), default.units="native", rot=90, vp="table"),
 					textGrob(x=1:10, y=10.8, dimnames(tmp.table)[[2]], gp=gpar(cex=0.7), default.units="native", rot=45, just="left", vp="table"),
 					textGrob(x=5.75, y=12.5, "Student Growth Percentile Range", gp=gpar(cex=0.8), default.units="native", vp="table"),
-					textGrob(x=rep(1:10,each=10), y=rep(10:1,10), formatC(as.vector(tmp.table), format="f", digits=2), default.units="native", 
-						gp=gpar(cex=0.7), vp="table"),
+					textGrob(x=rep(1:10,each=dim(tmp.table)[1]), y=rep(10:(10-dim(tmp.table)[1]+1),10), 
+						formatC(as.vector(tmp.table), format="f", digits=2), default.units="native", gp=gpar(cex=0.7), vp="table"),
+					textGrob(x=-2.55, y=9.2, "*", default.units="native", rot=90, gp=gpar(cex=0.7), vp="table"),
+					textGrob(x=-2.05, y=0.3, "*", default.units="native", gp=gpar(cex=0.7), vp="table"),
+					textGrob(x=-2.0, y=0.25, "Prior score deciles can be uneven depending upon the prior score distribution", just="left", default.units="native",
+						gp=gpar(cex=0.5), vp="table"),
 
 					rectGrob(vp="qq"),
 					polylineGrob(unlist(tmp.list), rep(ppoints(1:500)*100, length(levels(tmp.cuts))), 
@@ -388,7 +421,7 @@ function(panel.data,         ## REQUIRED
 			tmp.score[tmp.score < min.max[1]] <- min.max[1]
 			tmp.score[tmp.score > min.max[2]] <- min.max[2]
 			return(tmp.score)
-		}
+	}
 
 
 	############################################################################
@@ -468,7 +501,7 @@ function(panel.data,         ## REQUIRED
 				!identical(names(use.my.knots.boundaries), c("my.year", "my.subject", "my.extra.label"))) {
 					stop("Please specify an appropriate list for use.my.knots.boundaries. See help page for details.")
 			}
-			tmp.path.knots.boundaries <- .create.path(sgp.labels, pieces=c("my.subject", "my.year"))
+			tmp.path.knots.boundaries <- .create.path(use.my.knots.boundaries, pieces=c("my.subject", "my.year"))
 			if (is.null(panel.data[["Knots_Boundaries"]]) | is.null(panel.data[["Knots_Boundaries"]][[tmp.path.knots.boundaries]])) {
 				stop("Knots and Boundaries indicated by use.my.knots.boundaries are not included.")
 			}
@@ -477,13 +510,13 @@ function(panel.data,         ## REQUIRED
 			if (is.null(SGPstateData[[use.my.knots.boundaries]][["Achievement"]][["Knots_Boundaries"]])) { 
 				tmp.messages <- c(tmp.messages, paste("\tNOTE: Knots and Boundaries are currently not implemented for the state indicated (", use.my.knots.boundaries, "). Knots and boundaries will be calculated from the data. Please contact the SGP package administrator to have your Knots and Boundaries included in the package\n", sep=""))
 			}
-     		tmp.path.knots.boundaries <- .create.path(sgp.labels, pieces=c("my.subject", "my.year"))    
+    	 		tmp.path.knots.boundaries <- .create.path(sgp.labels, pieces=c("my.subject", "my.year"))
 		}
 	} else {
      		tmp.path.knots.boundaries <- .create.path(sgp.labels, pieces=c("my.subject", "my.year"))
 	}
 
-	if (!missing(use.my.coefficient.matrices)) {
+	if (!is.null(use.my.coefficient.matrices) & !identical(use.my.coefficient.matrices, TRUE)) {
 		if (!identical(class(panel.data), "list")) {
 			stop("use.my.coefficient.matrices is only appropriate when panel data is of class list. See help page for details.")
 		}
@@ -551,6 +584,10 @@ function(panel.data,         ## REQUIRED
 						csem.tf <- FALSE
 					} 
 				}
+				if (!sgp.labels$my.subject %in% unique(SGPstateData[[calculate.confidence.intervals]][["Assessment_Program_Information"]][["CSEM"]][["CONTENT_AREA"]])) {
+					tmp.messages <- c(tmp.messages, paste("\tNOTE: SGPstateData does not contain content area CSEMs for requested content area '", sgp.labels$my.subject, "'. Simulated SGPs and confidence intervals will not be calculated.\n", sep=""))
+					csem.tf <- FALSE
+				}
 				calculate.confidence.intervals <- list(state=calculate.confidence.intervals)
 			}
 			if (calculate.confidence.intervals %in% names(panel.data)) {
@@ -568,7 +605,7 @@ function(panel.data,         ## REQUIRED
 	### Create object to store the studentGrowthPercentiles objects
 
 	tmp.objects <- c("Coefficient_Matrices", "Cutscores", "Goodness_of_Fit", "Knots_Boundaries", "Panel_Data", "SGPercentiles", "SGProjections", "Simulated_SGPs") 
-	Coefficient_Matrices <- Cutscores <- Goodness_of_Fit <- Knots_Boundaries <- Panel_Data <- SGPercentiles <- SGProjections <- Simulated_SGPs <- NULL
+	Coefficient_Matrices <- Cutscores <- Goodness_of_Fit <- Knots_Boundaries <- Panel_Data <- SGPercentiles <- SGProjections <- Simulated_SGPs <- SGP_STANDARD_ERROR <- NULL
 
 	if (identical(class(panel.data), "list")) {
 		for (i in tmp.objects) {
@@ -598,7 +635,10 @@ function(panel.data,         ## REQUIRED
 	### Create ss.data from Panel_Data
 
 	if (!missing(panel.data.vnames)) {
-		ss.data <- Panel_Data[,panel.data.vnames]
+		if (!all(panel.data.vnames %in% names(Panel_Data))) {
+			tmp.messages <- c(tmp.messages, "\tNOTE: Supplied 'panel.data.vnames' are not all in the supplied Panel_Data. Analyses will continue with the intersection names contain in Panel_Data.\n")
+		}
+		ss.data <- Panel_Data[,intersect(panel.data.vnames, names(Panel_Data))]
 	} else {
 		ss.data <- Panel_Data
 	}
@@ -614,7 +654,8 @@ function(panel.data,         ## REQUIRED
 		tmp.gp <- grade.progression
 		by.grade <- TRUE
 		if (length(grade.progression) > num.panels) {
-			stop(paste("Supplied grade progression, grade.progress=c(", paste(grade.progression, collapse=","), "), exceeds number of panels (", num.panels, ") in provided data.", sep=""))
+			tmp.messages <- c(tmp.messages, paste("\tNOTE: Supplied grade progression, grade.progress=c(", paste(grade.progression, collapse=","), "), exceeds number of panels (", num.panels, ") in provided data.\n\t\t Analyses will utilize maximum number of priors supplied by the data.\n", sep=""))
+		tmp.gp <- tail(grade.progression, num.panels)
 	}}
 	if (!missing(subset.grade) & missing(grade.progression)) {
 		tmp.gp <- (subset.grade-num.panels+1):subset.grade
@@ -630,10 +671,18 @@ function(panel.data,         ## REQUIRED
 		}
 		if (num.prior > length(tmp.gp)-1) {
 			tmp.messages <- c(tmp.messages, paste("\tNOTE: Specified argument num.prior (", num.prior, ") exceeds number of panels of data supplied. Analyses will utilize maximum number of priors possible.\n", sep=""))
+			num.prior <- length(tmp.gp)-1
 		} else {
 			tmp.gp <- tail(tmp.gp, num.prior+1)
+			
 	}} else {
 		num.prior <- length(tmp.gp)-1
+	}
+	if (any(duplicated(tmp.gp[1:num.prior]))) {  #  Check for repeat grades - either held back, multiple grade/subject priors, etc.  Add .1, .2 , etc.
+		while(any(duplicated(tmp.gp[1:num.prior]))) {
+			tmp.gp[which(duplicated(tmp.gp[1:num.prior]))] <- tmp.gp[which(duplicated(tmp.gp[1:num.prior]))] + 0.1
+		}
+		tmp.gp[1:num.prior] <- tmp.gp[1:num.prior]+0.1
 	}
 
 	if (!is.null(max.order.for.percentile)) {
@@ -694,7 +743,7 @@ function(panel.data,         ## REQUIRED
 
 	### QR Calculations: coefficient matrices are saved/read into/from panel.data[["Coefficient_Matrices"]]
 
-	if (missing(use.my.coefficient.matrices)) {
+	if (is.null(use.my.coefficient.matrices)) {
 		taus <- .create_taus(sgp.quantiles)
 		if (exact.grade.progression.sequence) {
 			coefficient.matrix.priors <- num.prior
@@ -713,7 +762,7 @@ function(panel.data,         ## REQUIRED
 	if (calculate.sgps) {
 		max.order <- .get.max.matrix.order(matrix.names, tmp.last)
 		if (max.order < num.prior) {
-			stop("Number of priors requested exceeds maximum order of supplied coefficient matrices")
+			tmp.messages <- c(tmp.messages, paste("\tNOTE: Requested number of prior scores (num.prior=", num.prior, ") exceeds maximum matrix order (max.order=", max.order, "). Only matrices of order up to max.order=", max.order, " will be used.\n", sep=""))
 		}
 		if (max.order > num.prior) {
 			tmp.messages <- c(tmp.messages, paste("\tNOTE: Maximum coefficient matrix order (max.order=", max.order, ") exceeds that of specified number of priors, (num.prior=", num.prior, "). Only matrices of order up to num.prior=", num.prior, " will be used.\n", sep=""))
@@ -785,12 +834,12 @@ function(panel.data,         ## REQUIRED
 
 		if (print.other.gp) {
 			quantile.data <- data.table(reshape(quantile.data, idvar="ID", timevar="ORDER", direction="wide"),
-				SGP=quantile.data[c(which(!duplicated(quantile.data))[-1]-1, nrow(quantile.data))][["SGP"]])
+				SGP=quantile.data[c(which(!duplicated(quantile.data))[-1]-1L, nrow(quantile.data))][["SGP"]])
 		} else {
 			if (print.sgp.order) {
-				quantile.data <- quantile.data[c(which(!duplicated(quantile.data))[-1]-1, nrow(quantile.data))]
+				quantile.data <- quantile.data[c(which(!duplicated(quantile.data))[-1]-1L, nrow(quantile.data))]
 			} else {
-				quantile.data <- quantile.data[c(which(!duplicated(quantile.data))[-1]-1, nrow(quantile.data)), c("ID", "SGP"), with=FALSE]
+				quantile.data <- quantile.data[c(which(!duplicated(quantile.data))[-1]-1L, nrow(quantile.data)), c("ID", "SGP"), with=FALSE]
 			}
 		}
 
@@ -798,17 +847,26 @@ function(panel.data,         ## REQUIRED
 			quantile.data <- data.table(quantile.data, SGP_LEVEL=factor(findInterval(quantile.data[["SGP"]], tmp.growth.levels[["my.cuts"]]), 
 				levels=seq(length(tmp.growth.levels[["my.levels"]]))-1, ## Necessary in case the full range of SGPs isn't present
 				labels=tmp.growth.levels[["my.levels"]]))
+		
 		}
 
 		if (csem.tf) {
 			simulation.data <- data.table(rbind.all(tmp.csem.quantiles), key="ID")
 			simulation.data <- simulation.data[c(which(!duplicated(simulation.data))[-1]-1, nrow(simulation.data))]
 
-			if (is.character(calculate.confidence.intervals) | 
-				(is.list(calculate.confidence.intervals) & !("confidence.quantiles" %in% names(calculate.confidence.intervals)))) {
-				tmp.cq <- round(t(apply(simulation.data[, -1, with=FALSE], 1, quantile, probs = c(0.16, 0.84))))
-					colnames(tmp.cq) <- paste("SGP_", c(0.16, 0.84), "_CONFIDENCE_BOUND", sep="")
-					quantile.data <- cbind(quantile.data, tmp.cq)
+			if (is.character(calculate.confidence.intervals) | is.list(calculate.confidence.intervals)) {
+				if (is.null(calculate.confidence.intervals$confidence.quantiles) | identical(toupper(calculate.confidence.intervals$confidence.quantiles), "STANDARD_ERROR")) {
+					tmp.cq <- round(apply(simulation.data[, -1, with=FALSE], 1, sd, na.rm=TRUE))
+						invisible(quantile.data[,SGP_STANDARD_ERROR := tmp.cq])
+				} else {
+					if (!(is.numeric(calculate.confidence.intervals$confidence.quantiles) & all(calculate.confidence.intervals$confidence.quantiles < 1) & 
+						all(calculate.confidence.intervals$confidence.quantiles > 0)))  {
+						stop("Argument to 'calculate.confidence.intervals$confidence.quantiles' must be numeric and consist of quantiles.")
+					}
+					tmp.cq <- round(t(apply(simulation.data[, -1, with=FALSE], 1, quantile, probs = calculate.confidence.intervals$confidence.quantiles)))
+						colnames(tmp.cq) <- paste("SGP_", calculate.confidence.intervals$confidence.quantiles, "_CONFIDENCE_BOUND", sep="")
+						quantile.data <- cbind(quantile.data, tmp.cq)
+				}
 			}
 			if (!is.null(calculate.confidence.intervals$confidence.quantiles)) {
 				tmp.cq <- round(t(apply(simulation.data[, -1, with=FALSE], 1, quantile, probs = calculate.confidence.intervals$confidence.quantiles)))
@@ -824,19 +882,27 @@ function(panel.data,         ## REQUIRED
 			quantile.data <- cbind(quantile.data, cuts.best)
 		}
 
-		SGPercentiles[[tmp.path]] <- rbind.fill(.unget.data.table(quantile.data, ss.data), SGPercentiles[[tmp.path]]) 
+		if (return.prior.scale.score) {
+			PRIOR_SCALE_SCORE <- NULL
+			quantile.data[, PRIOR_SCALE_SCORE:=prior.ss]
+		}
 
 		if (goodness.of.fit) {
 			Goodness_of_Fit[[tmp.path]][[paste("GRADE_", paste(tmp.gp, collapse="-"), sep="")]] <- .goodness.of.fit(data.table(prior.ss, quantile.data[, "SGP", with=FALSE])) 
 		}
+
+		if (identical(sgp.labels[['my.extra.label']], "BASELINE")) setnames(quantile.data, "SGP", "SGP_BASELINE")
+		if (identical(sgp.labels[['my.extra.label']], "BASELINE") & tf.growth.levels) setnames(quantile.data, "SGP_LEVEL", "SGP_LEVEL_BASELINE")
+		SGPercentiles[[tmp.path]] <- rbind.fill(.unget.data.table(quantile.data, ss.data), SGPercentiles[[tmp.path]])
+
 	} ## End if calculate.sgps
 
 	### Start/Finish Message & Return SGP Object
 
 	if (print.time.taken) {
-	        message(paste("\tStarted studentGrowthPercentiles", started.date))
+	        message(paste("\tStarted studentGrowthPercentiles:", started.date))
 		message(paste("\tContent Area: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ", paste(tmp.gp, collapse=", "), " ", sgp.labels$my.extra.label, sep=""))
-		message(paste(tmp.messages, "\tFinished SGP Student Growth Percentile Analysis", date(), "in", timetaken(started.at), "\n")) 
+		message(c(tmp.messages, "\tFinished SGP Student Growth Percentile Analysis: ", date(), " in ", timetaken(started.at), "\n")) 
 	}
 
 	list(Coefficient_Matrices=Coefficient_Matrices,

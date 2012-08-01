@@ -1,7 +1,7 @@
 `abcSGP` <- 
 function(sgp_object,
 	state=NULL,
-	steps=c("prepareSGP", "analyzeSGP", "combineSGP", "summarizeSGP", "visualizeSGP"),
+	steps=c("prepareSGP", "analyzeSGP", "combineSGP", "summarizeSGP", "visualizeSGP", "outputSGP"),
 	years=NULL,
 	content_areas=NULL,
 	grades=NULL,
@@ -24,23 +24,18 @@ function(sgp_object,
         started.at <- proc.time()
 	message(paste("\nStarted abcSGP", date()), "\n")
 
+	names.type <- names.provided <- names.output <- NULL
+
 	### Create state (if NULL) from sgp_object (if possible)
 
 	if (is.null(state)) {
 		tmp.name <- gsub("_", " ", deparse(substitute(sgp_object)))
-		if (any(sapply(c(state.name, "Demonstration", "sgpData LONG"), function(x) regexpr(x, tmp.name)))==1) {
-			state <- c(state.abb, rep("DEMO", 2))[which(sapply(c(state.name, "Demonstration", "sgpData LONG"), function(x) regexpr(x, tmp.name))==1)]
+		if (any(sapply(c(state.name, "Demonstration", "sgpData LONG", "AOB"), function(x) regexpr(x, tmp.name)))==1) {
+			state <- c(state.abb, rep("DEMO", 2), "AOB")[which(sapply(c(state.name, "Demonstration", "sgpData LONG", "AOB"), function(x) regexpr(x, tmp.name))==1)]
 		} else {
 			message("\tNOTE: Use of the higher level 'abcSGP' function requires extensive metadata embedded in the 'SGPstateData' list object. Please add your state's data to 'SGPstateData' by examining a state that is currently embedded. For example, SGPstateData[['DEMO']]. Please contact the package administrator with further questions.")
 		}
 	}
-
-        ### Check for consistency between simulate.sgps and existence of CSEMs ###
-
-	if (simulate.sgps & is.null(SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
-                message("\tCSEMs are required in SGPstateData to simulate SGPs for confidence interval calculations. Confidence intervals will not be calculated.")
-                simulate.sgps <- FALSE
-        }
 
 
 	### prepareSGP ###
@@ -50,17 +45,6 @@ function(sgp_object,
 	        if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}
 
-
-        ### Calculate Relevant Quantities ###
-
-        if (is.null(content_areas)) {
-                content_areas <- unique(sgp_object@Data["VALID_CASE"]$CONTENT_AREA)
-        }
-        if (is.null(years)) {
-                for (i in content_areas) {
-                        years <- sort(tail(unique(sgp_object@Data[J("VALID_CASE", content_areas)]$YEAR), -2))
-                }
-        }
 
 	### analyzeSGP ###
 
@@ -142,7 +126,24 @@ function(sgp_object,
 			parallel.config=parallel.config)
 	}
 
+
+	### outputSGP ###
+
+	if ("outputSGP" %in% steps) {
+		outputSGP(
+			sgp_object=sgp_object,
+			state=state,
+			outputSGP_SUMMARY.years=years,
+			outputSGP_SUMMARY.content_areas=content_areas,
+			outputSGP_INDIVIDUAL.years=years,
+			outputSGP_INDIVIDUAL.content_areas=content_areas,
+			outputSGP.student.groups=intersect(names(sgp_object@Data), subset(sgp_object@Names, names.type=="demographic" & names.output==TRUE, select=names.provided, drop=TRUE)))
+	}
+
+
+	### Print finish and return SGP object
+
         message(paste("Finished abcSGP", date(), "in", timetaken(started.at), "\n"))
 	return(sgp_object)
-} ## END abcSGP Function
 
+} ## END abcSGP Function
