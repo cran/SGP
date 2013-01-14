@@ -1247,7 +1247,7 @@ if (22 %in% bPlot.styles) {
 		### Data sets and relevant quantities used for bubblePlots
 
 		if (bPlot.full.academic.year) {
-			tmp.bPlot.data <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__INSTRUCTOR_ENROLLMENT_STATUS__CONTENT_AREA__YEAR"]][!is.na(INSTRUCTOR_ENROLLMENT_STATUS)]
+			tmp.bPlot.data <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__CONTENT_AREA__YEAR__INSTRUCTOR_ENROLLMENT_STATUS"]][!is.na(INSTRUCTOR_ENROLLMENT_STATUS)]
 		} else {
 			tmp.bPlot.data <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__CONTENT_AREA__YEAR"]]
 		}
@@ -1345,7 +1345,7 @@ if (22 %in% bPlot.styles) {
 		### Data sets and relevant quantities used for bubblePlots
 
 		if (bPlot.full.academic.year) {
-			tmp.bPlot.data <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__INSTRUCTOR_ENROLLMENT_STATUS__CONTENT_AREA__YEAR"]][!is.na(INSTRUCTOR_ENROLLMENT_STATUS)]
+			tmp.bPlot.data <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__CONTENT_AREA__YEAR__INSTRUCTOR_ENROLLMENT_STATUS"]][!is.na(INSTRUCTOR_ENROLLMENT_STATUS)]
 		} else {
 			tmp.bPlot.data <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__CONTENT_AREA__YEAR"]]
 		}
@@ -1449,7 +1449,7 @@ if (22 %in% bPlot.styles) {
 		} else bPlot.levels <- list(A=NULL)
 
 		if (bPlot.full.academic.year) {
-			tmp.bPlot.data <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__INSTRUCTOR_ENROLLMENT_STATUS__CONTENT_AREA__YEAR"]][!is.na(INSTRUCTOR_ENROLLMENT_STATUS)]
+			tmp.bPlot.data <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__CONTENT_AREA__YEAR__INSTRUCTOR_ENROLLMENT_STATUS"]][!is.na(INSTRUCTOR_ENROLLMENT_STATUS)]
 			if (!is.null(bPlot.levels)) {
 				tmp.bPlot.levels.data <- data.frame(eval(parse(text=paste("sgp_object@Data[,c(grep('INSTRUCTOR_NUMBER', names(sgp_object@Data)), 
 					intersect(grep('ENROLLMENT_STATUS', names(sgp_object@Data)), grep('INSTRUCTOR', names(sgp_object@Data))),", 
@@ -1599,7 +1599,7 @@ if (22 %in% bPlot.styles) {
 		### Data sets and relevant quantities used for bubblePlots
 
 		if (bPlot.full.academic.year) {
-			tmp.bPlot.data <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__INSTRUCTOR_ENROLLMENT_STATUS__CONTENT_AREA__YEAR"]][!is.na(INSTRUCTOR_ENROLLMENT_STATUS)]
+			tmp.bPlot.data <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__CONTENT_AREA__YEAR__INSTRUCTOR_ENROLLMENT_STATUS"]][!is.na(INSTRUCTOR_ENROLLMENT_STATUS)]
 		} else {
 			tmp.bPlot.data <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__CONTENT_AREA__YEAR"]]
 		}
@@ -1704,7 +1704,7 @@ if (22 %in% bPlot.styles) {
 		} else bPlot.levels <- list(A=NULL)
 
 		if (bPlot.full.academic.year) {
-			tmp.bPlot.data <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__INSTRUCTOR_ENROLLMENT_STATUS__CONTENT_AREA__YEAR"]][!is.na(INSTRUCTOR_ENROLLMENT_STATUS)]
+			tmp.bPlot.data <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__CONTENT_AREA__YEAR__INSTRUCTOR_ENROLLMENT_STATUS"]][!is.na(INSTRUCTOR_ENROLLMENT_STATUS)]
 			if (!is.null(bPlot.levels)) {
 				tmp.bPlot.levels.data <- data.frame(eval(parse(text=paste("sgp_object@Data[,c(grep('INSTRUCTOR_NUMBER', names(sgp_object@Data)), 
 					intersect(grep('ENROLLMENT_STATUS', names(sgp_object@Data)), grep('INSTRUCTOR', names(sgp_object@Data))),", 
@@ -1888,7 +1888,7 @@ if (22 %in% bPlot.styles) {
 
 		if (bPlot.prior.achievement) {
 			if (!all(c("SCALE_SCORE_PRIOR", "SGP_PRIOR", "SGP_TARGET_PRIOR", "CONTENT_AREA_PRIOR") %in% names(sgp_object@Data))) {
-				sgp_object@Data$YEAR_INTEGER_TMP <- as.integer(sgp_object@Data$YEAR) ## To convert YEAR, when factor, to integer
+				sgp_object@Data$YEAR_INTEGER_TMP <- as.integer(as.factor(sgp_object@Data$YEAR))
 				setkeyv(sgp_object@Data, c("ID", "CONTENT_AREA", "YEAR_INTEGER_TMP", "VALID_CASE")) ## CRITICAL that VALID_CASE is last in group
 				if (!"SCALE_SCORE_PRIOR" %in% names(sgp_object@Data)) {
 					sgp_object@Data$SCALE_SCORE_PRIOR <- sgp_object@Data[SJ(ID, CONTENT_AREA, YEAR_INTEGER_TMP-1), mult="last"][,SCALE_SCORE]
@@ -1973,19 +1973,27 @@ if (22 %in% bPlot.styles) {
 			school.content_area.grade.median <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__CONTENT_AREA__YEAR__GRADE__SCHOOL_ENROLLMENT_STATUS"]][
 				SCHOOL_ENROLLMENT_STATUS=="Enrolled School: Yes" & SCHOOL_NUMBER==tmp.unique.schools[school.iter] & 
 				CONTENT_AREA==content_area.iter & YEAR==year.iter & GRADE==grade.iter][["MEDIAN_SGP"]]
+			if (length(school.content_area.grade.median)==0) school.content_area.grade.median <- NA
 		} else {
 			school.content_area.grade.median <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__CONTENT_AREA__YEAR__GRADE"]][
 				SCHOOL_NUMBER==tmp.unique.schools[school.iter] & CONTENT_AREA==content_area.iter & YEAR==year.iter & GRADE==grade.iter][["MEDIAN_SGP"]]
+			if (length(school.content_area.grade.median)==0) school.content_area.grade.median <- NA
 		}
 
 
 		### Custom draft message with two median SGP lines
 
+		if (!is.na(school.content_area.grade.median)) {
+			school.content_area.grade.median.line <- 
+				c(paste("grid.lines(x=unit(", school.content_area.grade.median, ", 'native'), y=c(0.03,0.97), gp=gpar(col='blue', lwd=1.75, lty=2, alpha=0.75))", sep=""),
+				paste("grid.text('Grade ", grade.iter, " Median = ", school.content_area.grade.median, "', x=unit(", school.content_area.grade.median,
+					", 'native'), y=0.005, gp=gpar(col='blue', cex=0.85))", sep=""))
+		} else {
+			school.content_area.grade.median.line <- NULL
+		}
 		bPlot.message.style.100 <- c("grid.text(x=unit(50, 'native'), y=unit(mean(bubble_plot_data.Y), 'native'), 'CONFIDENTIAL \n STUDENT DATA -\n DO NOT DISTRIBUTE', 
-				rot=-30, gp=gpar(col='grey80', cex=2, alpha=0.8, fontface=2))", 
-			paste("grid.lines(x=unit(", school.content_area.grade.median, ", 'native'), y=c(0.03,0.97), gp=gpar(col='blue', lwd=1.75, lty=2, alpha=0.75))", sep=""),
-			paste("grid.text('Grade ", grade.iter, " Median = ", school.content_area.grade.median, "', x=unit(", school.content_area.grade.median,
-				", 'native'), y=0.005, gp=gpar(col='blue', cex=0.85))", sep=""))
+				rot=-30, gp=gpar(col='grey80', cex=2, alpha=0.8, fontface=2))",
+			school.content_area.grade.median.line)
 
 
 		### Create bubblePlot ###
@@ -2109,7 +2117,8 @@ if (22 %in% bPlot.styles) {
 						measure.vars=mult.memb[[1]][["ENROLLMENT_STATUS"]])[,2]])
 				}
 			}
-		
+
+			setkeyv(tmp.bPlot.data.1.long, "INSTRUCTOR_NUMBER")
 			tmp.unique.schools <- my.iters$tmp.schools[my.iters$tmp.schools %in% unique(tmp.bPlot.data.1.long$SCHOOL_NUMBER)]
 			for (school.iter in seq_along(tmp.unique.schools)) { ### Loop over schools (seq_along to get integer for anonymize)
 	
@@ -2148,9 +2157,7 @@ if (22 %in% bPlot.styles) {
 	
 			# Get median SGP for grade, school, content area combination
 	
-				instructor.content_area.grade.median <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__INSTRUCTOR_ENROLLMENT_STATUS__CONTENT_AREA__YEAR__GRADE"]][
-					INSTRUCTOR_NUMBER==instructor.iter & CONTENT_AREA==content_area.iter & YEAR==year.iter & GRADE==grade.iter][["MEDIAN_SGP"]]
-				if (bPlot.demo) instructor.content_area.grade.median <- median(bPlot.data$SGP, na.rm=TRUE)
+				instructor.content_area.grade.median <- median(bPlot.data$SGP, na.rm=TRUE)
 	
 			### Custom draft message with two median SGP lines
 	
@@ -2338,7 +2345,7 @@ if (22 %in% bPlot.styles) {
 				}
 			} else {
 				if (bPlot.full.academic.year) {
-					instructor.content_area.grade.median <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__INSTRUCTOR_ENROLLMENT_STATUS__CONTENT_AREA__YEAR__GRADE"]][
+					instructor.content_area.grade.median <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__CONTENT_AREA__YEAR__GRADE__INSTRUCTOR_ENROLLMENT_STATUS"]][
 						INSTRUCTOR_NUMBER==instructor.iter & CONTENT_AREA==content_area.iter & YEAR==year.iter & GRADE==grade.iter][["MEDIAN_SGP"]]
 				} else {
 					instructor.content_area.grade.median <- sgp_object@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__CONTENT_AREA__YEAR__GRADE"]][

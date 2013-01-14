@@ -8,6 +8,8 @@ function(sgp_object,
          confidence.interval.groups=NULL,
          produce.all.summary.tables=FALSE,
          summarizeSGP.baseline=NULL,
+         projection.years.for.target=3,
+         save.old.summaries=FALSE,
          parallel.config=NULL) {
 
 	started.at <- proc.time()
@@ -20,10 +22,25 @@ function(sgp_object,
 	
 	### Create state (if NULL) from sgp_object (if possible)
 
-	if (is.null(state)) {
-		tmp.name <- gsub("_", " ", deparse(substitute(sgp_object)))
-		if (any(sapply(c(state.name, "Demonstration", "AOB"), function(x) regexpr(x, tmp.name))==1)) {
-			state <- c(state.abb, "DEMO", "AOB")[which(sapply(c(state.name, "Demonstration", "AOB"), function(x) regexpr(x, tmp.name))==1)]
+        if (is.null(state)) {
+                tmp.name <- toupper(gsub("_", " ", deparse(substitute(sgp_object))))
+                state <- getStateAbbreviation(tmp.name, "summarizeSGP")
+        }
+
+	### Export/Overwrite old summaries
+
+	if (!is.null(sgp_object@Summary)) {
+		if (save.old.summaries) {
+			tmp.year <- tail(sort(sgp_object@Summary[['STATE']][['STATE__YEAR__STATE_ENROLLMENT_STATUS']][['YEAR']]), 1)
+			tmp.state.name <- gsub(" ", "_", toupper(getStateAbbreviation(state, type="name")))
+			tmp.file.name <- paste(tmp.state.name, "SGP_Summary", tmp.year, sep="_")
+			assign(tmp.file.name, sgp_object@Summary)
+			message(paste("\tNOTE: Saving @Summary slot to", paste("Data/", tmp.file.name, ".Rdata and then deleting @Summary slot.", sep="")))
+			save(list=tmp.file.name, file=file.path("Data", paste(tmp.file.name, "Rdata", sep=".")))
+			sgp_object@Summary <- NULL
+		} else {
+			message("\tNOTE: Deleting @Summary slot")
+			sgp_object@Summary <- NULL
 		}
 	}
 
@@ -39,11 +56,17 @@ function(sgp_object,
 	if (summarizeSGP.baseline) {
 		my.sgp <- "SGP_BASELINE"
 		my.sgp.level <- "SGP_LEVEL_BASELINE"
-		my.sgp.target <- "SGP_TARGET_BASELINE"
+		my.sgp.target <- paste("SGP_TARGET_BASELINE", projection.years.for.target, "YEAR", sep="_")
+		my.sgp.target.musu <- paste("SGP_TARGET_BASELINE_MOVE_UP_STAY_UP", projection.years.for.target, "YEAR", sep="_")
+		if (!my.sgp.target %in% names(sgp_object@Data)) my.sgp.target <- NULL
+		if (!my.sgp.target.musu %in% names(sgp_object@Data)) my.sgp.target.musu <- NULL
 	} else {
 		my.sgp <- "SGP"
 		my.sgp.level <- "SGP_LEVEL"
-		my.sgp.target <- "SGP_TARGET"
+		my.sgp.target <- paste("SGP_TARGET", projection.years.for.target, "YEAR", sep="_")
+		my.sgp.target.musu <- paste("SGP_TARGET_MOVE_UP_STAY_UP", projection.years.for.target, "YEAR", sep="_")
+		if (!my.sgp.target %in% names(sgp_object@Data)) my.sgp.target <- NULL
+		if (!my.sgp.target.musu %in% names(sgp_object@Data)) my.sgp.target.musu <- NULL
 	}
 
 	if (missing(sgp_object)) {
@@ -119,10 +142,9 @@ function(sgp_object,
 	}
 
 	sgpSummary <- function(data, sgp.groups.to.summarize, produce.confidence.interval) {
-		SGP_SIM <- V1 <- .SD <- NULL ## To prevent R CMD check warning
+		SGP_SIM <- V1 <- .SD <- MEDIAN_SGP_with_SHRINKAGE <- NULL ## To prevent R CMD check warning
 		if (produce.confidence.interval) {
 			if ("Bootstrap" %in% confidence.interval.groups$TYPE) {
-				require(boot)
 				tmp.list <- list()
 				tmp.quantiles <- paste("c(", paste(confidence.interval.groups$QUANTILES, collapse=", "), ")", sep="")
 				for (i in confidence.interval.groups$VARIABLES) {
@@ -142,18 +164,20 @@ function(sgp_object,
  
 		ListExpr <- parse(text=paste("as.list(c(", paste(unlist(tmp.sgp.summaries), collapse=", "),"))",sep="")) 
 		ByExpr <- parse(text=paste("list(", paste(sgp.groups.to.summarize, collapse=", "), ")", sep=""))
-		tmp <- data[, eval(ListExpr), by=eval(ByExpr)]
+		tmp <- data[, eval(ListExpr), keyby=eval(ByExpr)]
 		if (produce.confidence.interval & "CSEM" %in% confidence.interval.groups$TYPE) {
 			SIM_ByExpr1 <- parse(text=paste("list(", paste(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))
 				[!(unlist(strsplit(as.character(sgp.groups.to.summarize), ", "))) %in% key(data)], collapse=", "), 
 				", ", paste(names(tmp.simulation.dt)[grep("SGP_SIM_", names(tmp.simulation.dt))], collapse=", "), ")", sep=""))
 			SIM_ByExpr2 <- parse(text=paste("list(", paste(sgp.groups.to.summarize, collapse=", "), ")", sep=""))
 				tmp.sim <- data[tmp.simulation.dt, eval(SIM_ByExpr1)][, -(1:2), with=FALSE][,
-				lapply(.SD, median_na), by=eval(SIM_ByExpr2)][, 
-				as.list(round(apply(.SD, 1, quantile, probs=confidence.interval.groups$QUANTILES))), by=eval(SIM_ByExpr2)]
+				lapply(.SD, median_na), keyby=eval(SIM_ByExpr2)][, 
+				as.list(round(apply(.SD, 1, quantile, probs=confidence.interval.groups$QUANTILES))), keyby=eval(SIM_ByExpr2)]
 			tmp <- data.table(merge.data.frame(tmp, tmp.sim, by = unlist(strsplit(as.character(sgp.groups.to.summarize), ", ")),all=TRUE))
 		}
 		setnames(tmp, (dim(tmp)[2]-length(sgp.summaries.names)+1):dim(tmp)[2], sgp.summaries.names)
+		constant <- var(tmp[['MEDIAN_SGP']], na.rm=TRUE) - mean(tmp[['MEDIAN_SGP_STANDARD_ERROR']]^2, na.rm=TRUE)
+		tmp[,MEDIAN_SGP_with_SHRINKAGE := round(50 + ((tmp[['MEDIAN_SGP']]-50) * (constant/(constant+tmp[['MEDIAN_SGP_STANDARD_ERROR']]^2))))]
 		message(paste("\tFinished with", sgp.groups.to.summarize))
 		return(tmp)
 	} ### END sgpSummary function
@@ -164,9 +188,8 @@ function(sgp_object,
 		for (i in tmp.names) {
 			tmp.list[[i]] <- data.frame(sgp_object@SGP[["Simulated_SGPs"]][[i]],
 				CONTENT_AREA=unlist(strsplit(i, "[.]"))[1],
-				YEAR=type.convert(unlist(strsplit(i, "[.]"))[2]))
+				YEAR=unlist(strsplit(i, "[.]"))[2])
 		}
- 
 		data.table(rbind.fill(tmp.list), VALID_CASE="VALID_CASE", key=key(data))
 	}
 
@@ -204,13 +227,26 @@ function(sgp_object,
 					)
 				}
 
-				if ("SGP_TARGET" %in% names(sgp_object@Data)) {
+				if (!is.null(my.sgp.target)) {
 					tmp.sgp.summaries <- c(
 						tmp.sgp.summaries, 
-						MEDIAN_SGP_TARGET="median_na(SGP_TARGET)",  
-						MEDIAN_SGP_TARGET_COUNT="num_non_missing(SGP_TARGET)",
+						M1=paste("median_na(", my.sgp.target, ")", sep=""),  
+						M2=paste("num_non_missing(", my.sgp.target, ")", sep=""),
 						PERCENT_CATCHING_UP_KEEPING_UP="percent_in_category(CATCH_UP_KEEP_UP_STATUS, list(c('Catch Up: Yes', 'Keep Up: Yes')), list(c('Catch Up: Yes', 'Catch Up: No', 'Keep Up: Yes', 'Keep Up: No')))"
 					)
+					names(tmp.sgp.summaries)[sapply(c("M1", "M2"), function(x) which(names(tmp.sgp.summaries)==x))] <- 
+						c(paste("MEDIAN", my.sgp.target, sep="_"), paste("MEDIAN", my.sgp.target, "COUNT", sep="_"))
+				}
+
+				if (!is.null(my.sgp.target.musu)) {
+					tmp.sgp.summaries <- c(
+						tmp.sgp.summaries, 
+						M1=paste("median_na(", my.sgp.target.musu, ")", sep=""),  
+						M2=paste("num_non_missing(", my.sgp.target.musu, ")", sep=""),
+						PERCENT_MOVING_UP_STAYING_UP="percent_in_category(MOVE_UP_STAY_UP_STATUS, list(c('Move Up: Yes', 'Stay Up: Yes')), list(c('Move Up: Yes', 'Move Up: No', 'Stay Up: Yes', 'Stay Up: No')))"
+					)
+					names(tmp.sgp.summaries)[sapply(c("M1", "M2"), function(x) which(names(tmp.sgp.summaries)==x))] <- 
+						c(paste("MEDIAN", my.sgp.target.musu, sep="_"), paste("MEDIAN", my.sgp.target.musu, "COUNT", sep="_"))
 				}
 
 			return(tmp.sgp.summaries)
@@ -223,12 +259,14 @@ function(sgp_object,
 				content=getFromNames("content"),
 				time=getFromNames("time"),
 				institution_level=getFromNames("institution_level"),
-				demographic=intersect(c(getFromNames("demographic"), "CATCH_UP_KEEP_UP_STATUS", "ACHIEVEMENT_LEVEL_PRIOR", "HIGH_NEED_STATUS"), names(sgp_object@Data)),
+				demographic=intersect(c(getFromNames("demographic"), "CATCH_UP_KEEP_UP_STATUS", "MOVE_UP_STAY_UP_STATUS", "ACHIEVEMENT_LEVEL_PRIOR", "HIGH_NEED_STATUS"), names(sgp_object@Data)),
 				institution_multiple_membership=get.multiple.membership(sgp_object@Names[!is.na(sgp_object@Names$names.sgp),]))
 
 				for (i in tmp.summary.groups[["institution"]]) {
 					tmp.split <- paste(c(unlist(strsplit(i, "_"))[!unlist(strsplit(i, "_"))=="NUMBER"], "ENROLLMENT_STATUS"), collapse="_")
-					tmp.summary.groups[["institution_inclusion"]][[i]] <- intersect(tmp.split, getFromNames("institution_inclusion"))
+					if (tmp.split %in% getFromNames("institution_inclusion")) {
+						tmp.summary.groups[["institution_inclusion"]][[i]] <- tmp.split
+					} 
 					tmp.summary.groups[["growth_only_summary"]][[i]] <- "BY_GROWTH_ONLY"
 				}
 				tmp.summary.groups[["institution_inclusion"]] <- as.list(tmp.summary.groups[["institution_inclusion"]])
@@ -433,17 +471,19 @@ function(sgp_object,
 	if (is.null(confidence.interval.groups)) confidence.interval.groups <- summarizeSGP.config(sgp_object, "confidence.interval.groups")
 
 	if (any(!sapply(summary.groups[["growth_only_summary"]], is.null))) {
-#		sgp_object@Data[,BY_GROWTH_ONLY := factor(is.na(sgp_object@Data$SGP), levels=c(FALSE, TRUE), labels=c("Students without SGP", "Students with SGP"))]
-		sgp_object@Data[["BY_GROWTH_ONLY"]] <- factor(is.na(sgp_object@Data$SGP), levels=c(FALSE, TRUE), labels=c("Students without SGP", "Students with SGP"))
+#		sgp_object@Data[,BY_GROWTH_ONLY := factor(is.na(sgp_object@Data[[my.sgp]]), levels=c(FALSE, TRUE), labels=c("Students without SGP", "Students with SGP"))]
+		sgp_object@Data[["BY_GROWTH_ONLY"]] <- factor(is.na(sgp_object@Data[[my.sgp]]), levels=c(FALSE, TRUE), labels=c("Students without SGP", "Students with SGP"))
 	}
 
-	variables.for.summaries <- intersect(c(my.sgp, my.sgp.target, "ACHIEVEMENT_LEVEL", "ACHIEVEMENT_LEVEL_PRIOR", unique(as.character(unlist(summary.groups)))),
+	variables.for.summaries <- intersect(c(my.sgp, my.sgp.target, my.sgp.target.musu, 
+						"ACHIEVEMENT_LEVEL", "ACHIEVEMENT_LEVEL_PRIOR", "CATCH_UP_KEEP_UP_STATUS", "MOVE_UP_STAY_UP_STATUS",
+						unique(as.character(unlist(summary.groups)))),
 					names(sgp_object@Data)) 
 
 
 	### Define demographic subgroups and tables that will be calculated from all possible created by expand.grid
 
-	selected.demographic.subgroups <- intersect(c(getFromNames("demographic"), "CATCH_UP_KEEP_UP_STATUS", "ACHIEVEMENT_LEVEL_PRIOR", "HIGH_NEED_STATUS"), names(sgp_object@Data))
+	selected.demographic.subgroups <- intersect(c(getFromNames("demographic"), "CATCH_UP_KEEP_UP_STATUS", "MOVE_UP_STAY_UP_STATUS", "ACHIEVEMENT_LEVEL_PRIOR", "HIGH_NEED_STATUS"), names(sgp_object@Data))
 	if (is.null(SGPstateData[[state]][["Variable_Name_Lookup"]])) {
 		selected.institution.types <- c("STATE", "DISTRICT_NUMBER", "SCHOOL_NUMBER")
 	} else {
@@ -460,11 +500,20 @@ function(sgp_object,
 				ENROLLMENT_STATUS_ARGUMENT <- "INSTRUCTOR_ENROLLMENT_STATUS"; ADD_MISSING_ARGUMENT <- FALSE
 			}
 
-			selected.summary.tables[[k]] <- do.call(paste, c(expand.grid(k,
-					group.format("CONTENT_AREA"),
-					group.format("YEAR"),
-					group.format("GRADE"),
-					group.format(ENROLLMENT_STATUS_ARGUMENT, ADD_MISSING_ARGUMENT)), sep=""))
+			if (length(grep("SCHOOL", k)) > 0) {
+				selected.summary.tables[[k]] <- do.call(paste, c(expand.grid(k,
+						group.format("EMH_LEVEL"),
+						group.format("CONTENT_AREA"),
+						group.format("YEAR"),
+						group.format("GRADE"),
+						group.format(ENROLLMENT_STATUS_ARGUMENT, ADD_MISSING_ARGUMENT)), sep=""))
+			} else {
+				selected.summary.tables[[k]] <- do.call(paste, c(expand.grid(k,
+						group.format("CONTENT_AREA"),
+						group.format("YEAR"),
+						group.format("GRADE"),
+						group.format(ENROLLMENT_STATUS_ARGUMENT, ADD_MISSING_ARGUMENT)), sep=""))
+			}
 		} else {
 			if (!paste(c(unlist(strsplit(k, "_"))[!unlist(strsplit(k, "_"))=="NUMBER"], "ENROLLMENT_STATUS"), collapse="_") %in% names(sgp_object@Data)) {
 				ENROLLMENT_STATUS_ARGUMENT <- NULL
@@ -502,7 +551,7 @@ function(sgp_object,
 
 	### Loop and send to summarizeSGP_INTERNAL
 
-	tmp.dt <- sgp_object@Data[data.table("VALID_CASE", content_areas.by.years), nomatch=0][, variables.for.summaries, with=FALSE][, STATE:=as.factor(state)]
+	tmp.dt <- sgp_object@Data[data.table("VALID_CASE", content_areas.by.years), nomatch=0][, variables.for.summaries, with=FALSE][, STATE:=state]
 
 	par.start <- startParallel(parallel.config, 'SUMMARY')
 
@@ -531,28 +580,29 @@ function(sgp_object,
 				tmp.dt.long <- data.table(melt(as.data.frame(tmp.dt), 
 					measure.vars=summary.groups[["institution_multiple_membership"]][[j-1]][["VARIABLE.NAMES"]], 
 					value.name=multiple.membership.variable.name))
-				invisible(tmp.dt.long[, variable := NULL])
+				tmp.dt.long[, variable := NULL]
 				if (!is.null(summary.groups[["institution_multiple_membership"]][[j-1]][["WEIGHTS"]])) {
-					invisible(tmp.dt.long[, WEIGHT := melt(as.data.frame(tmp.dt[, 
+					tmp.dt.long[, WEIGHT := melt(as.data.frame(tmp.dt[, 
 						summary.groups[["institution_multiple_membership"]][[j-1]][["WEIGHTS"]], with=FALSE]), 
-						measure.vars=summary.groups[["institution_multiple_membership"]][[j-1]][["WEIGHTS"]])[,2]])
+						measure.vars=summary.groups[["institution_multiple_membership"]][[j-1]][["WEIGHTS"]])[,2]]
 				}
 				if (!is.null(summary.groups[["institution_multiple_membership"]][[j-1]][["ENROLLMENT_STATUS"]])) {
-					invisible(tmp.dt.long[, ENROLLMENT_STATUS := melt(as.data.frame(tmp.dt[, 
+					tmp.dt.long[, ENROLLMENT_STATUS := melt(as.data.frame(tmp.dt[, 
 						summary.groups[["institution_multiple_membership"]][[j-1]][["ENROLLMENT_STATUS"]], with=FALSE]), 
-						measure.vars=summary.groups[["institution_multiple_membership"]][[j-1]][["ENROLLMENT_STATUS"]])[,2]])
+						measure.vars=summary.groups[["institution_multiple_membership"]][[j-1]][["ENROLLMENT_STATUS"]])[,2]]
 					setnames(tmp.dt.long, "ENROLLMENT_STATUS", enrollment.status.name)
 					summary.groups[["institution_inclusion"]][[tmp.inst]] <- enrollment.status.name
 				} else {
 					summary.groups[["institution_inclusion"]][[tmp.inst]] <- paste(i, "ENROLLMENT_STATUS", sep="_")
 				}
 				summary.groups[["growth_only_summary"]][[tmp.inst]] <- "BY_GROWTH_ONLY" # Do we have an option to NOT include "BY_GROWTH_ONLY"? (would we want this?)
-				sgp_object@Summary[[i]] <- c(sgp_object@Summary[[i]], summarizeSGP_INTERNAL(tmp.dt.long, tmp.inst))
+				sgp_object@Summary[[i]] <- c(sgp_object@Summary[[i]], summarizeSGP_INTERNAL(tmp.dt.long[!is.na(get(multiple.membership.variable.name))], tmp.inst))
 			} 
 		} ### End i loop over summary.groups[["institution"]]
 	} ### END j loop over multiple membership groups (if they exist)
 
 	stopParallel(parallel.config, par.start)
+
 
 	## NULL out BY_GROWTH_ONLY
 	if (any(!sapply(summary.groups[["growth_only_summary"]], is.null))) {
