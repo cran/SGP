@@ -6,11 +6,14 @@ testSGP runs large scale tests of the SGP package to test for consistent perform
 }
 
 \usage{
-testSGP(TEST_NUMBER)
+testSGP(TEST_NUMBER,
+	memory.profile=FALSE)
 }
 
 \arguments{
   \item{TEST_NUMBER}{An integer indicating the test to be run. Type 'testSGP()' to see list and descritpion of available tests. 
+  }
+  \item{memory.profile}{Boolean variable indicating whether to use memory profiling via \code{Rprof}.  Experimental. Defaults to FALSE. 
   }
 }
 

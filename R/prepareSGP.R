@@ -1,76 +1,26 @@
 `prepareSGP` <- 
-	function(data,
-		state=NULL,
-		var.names=NULL,
-		create.additional.variables=TRUE,
-		fix.duplicates="keep.all") {
+function(data,
+	state=NULL,
+	var.names=NULL,
+	create.additional.variables=TRUE,
+	fix.duplicates="keep.all") {
 
 	## Print start time
 
 	started.at <- proc.time()
 	message(paste("\nStarted prepareSGP", date()))
 
-	VALID_CASE <- ID <- CONTENT_AREA <- YEAR <- ID <- GRADE <- SCALE_SCORE <- DUPLICATED_CASES <- SCALE_SCORE_PRIOR <- GRADE_PRIOR <- SCHOOL_NUMBER <- YEAR_INT <- NULL
+	VALID_CASE <- ID <- CONTENT_AREA <- YEAR <- ID <- GRADE <- SCALE_SCORE <- DUPLICATED_CASES <- NULL
 
 	## Get state (if possible)
 
 		if (is.null(state)) {
-			tmp.name <- gsub("_", " ", deparse(substitute(data)))
-			if (any(sapply(c(state.name, "Demonstration", "sgpData LONG", "AOB"), function(x) regexpr(x, tmp.name))==1)) {
-				state <- c(state.abb, rep("DEMO", 2), "AOB")[which(sapply(c(state.name, "Demonstration", "sgpData LONG", "AOB"), function(x) regexpr(x, tmp.name))==1)]
-			} else {
-				state <- "TEMP"
-			}
+			tmp.name <- toupper(gsub("_", " ", deparse(substitute(data))))
+			state <- getStateAbbreviation(tmp.name, "prepareSGP")
 		}
 
 
 	### Utility functions
-
-	# achievement_level_recode
-
-	achievement_level_recode <- function(sgp_object, state=NULL, year=NULL, content_area=NULL, grade=NULL) {
-		if (!"ACHIEVEMENT_LEVEL" %in% names(sgp_object@Data)) {
-			sgp_object@Data[["ACHIEVEMENT_LEVEL"]] <- 
-				factor(1, levels=seq_along(SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]][!is.na(SGPstateData[[state]][["Achievement"]][["Levels"]][["Proficient"]])]),
-				labels=SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]][!is.na(SGPstateData[[state]][["Achievement"]][["Levels"]][["Proficient"]])], ordered=TRUE)
-		}
-
-		if (is.null(year)) year <- sort(unique(sgp_object@Data$YEAR))
-		if (is.null(content_area)) content_area <- sort(unique(sgp_object@Data$CONTENT_AREA[sgp_object@Data$YEAR %in% year]))
-		if (is.null(grade)) grade <- sort(unique(sgp_object@Data$GRADE[sgp_object@Data$YEAR %in% year & sgp_object@Data$CONTENT_AREA %in% content_area]))
-
-		get.cutscore.label <- function(state, year, content_area) {
-			tmp.cutscore.names <- names(SGPstateData[[state]][["Achievement"]][["Cutscores"]])
-			tmp.cutscore.years <- sapply(strsplit(tmp.cutscore.names[grep(content_area, tmp.cutscore.names)], "[.]"), function(x) x[2])
-			if (any(!is.na(tmp.cutscore.years))) {
-				if (year %in% tmp.cutscore.years) {
-					return(paste(content_area, year, sep="."))
-				} else {
-					if (year==sort(c(year, tmp.cutscore.years))[1]) {
-						return(content_area)
-					} else {
-						return(paste(content_area, sort(tmp.cutscore.years)[which(year==sort(c(year, tmp.cutscore.years)))-1], sep="."))
-					}
-				}
-			} else {
-				return(content_area)
-			}
-		}
-
-		achievement_level_recode_INTERNAL <- function(state, content_area, year, grade, scale_score) {
-			factor(findInterval(scale_score, SGPstateData[[state]][["Achievement"]][["Cutscores"]][[get.cutscore.label(state, year, content_area)]][[paste("GRADE_", grade, sep="")]])+1,
-				levels=seq_along(SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]][!is.na(SGPstateData[[state]][["Achievement"]][["Levels"]][["Proficient"]])]),
-				labels=SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]][!is.na(SGPstateData[[state]][["Achievement"]][["Levels"]][["Proficient"]])], ordered=TRUE)
-		}
-
-		setkeyv(sgp_object@Data, c("VALID_CASE", "CONTENT_AREA", "YEAR", "GRADE"))
-			sgp_object@Data[["ACHIEVEMENT_LEVEL"]][sgp_object@Data[CJ("VALID_CASE", content_area, year, grade), which=TRUE, nomatch=0]] <- 
-			sgp_object@Data[CJ("VALID_CASE", content_area, year, grade), nomatch=0][, achievement_level_recode_INTERNAL(state, CONTENT_AREA, YEAR, GRADE, SCALE_SCORE), 
-				by=list(CONTENT_AREA, YEAR, GRADE)][["V1"]]
-		setkeyv(sgp_object@Data, c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))
-
-		return(sgp_object)
-	}
 
 	# Function producing HIGH_NEED_STATUS variable (not yet in use)
 
@@ -170,27 +120,6 @@
 		return(data.frame(variable.names[order(variable.names$column.provided),][,c("names.provided", "names.sgp", "names.type", "names.info", "names.output")], row.names=NULL, stringsAsFactors=FALSE))
 	} ## END getNames
 
-	## create.knots.boundaries
-
-	create.knots.boundaries <- function(tmp.data) {
-		tmp.grade.list <- tmp.list <- list()
-		for (my.list.label in unique(tmp.data["VALID_CASE"][["CONTENT_AREA"]])) {
-			tmp.grade.list[[my.list.label]] <- unique(tmp.data[SJ("VALID_CASE", my.list.label)][["GRADE"]])
-			for (j in seq_along(tmp.grade.list[[my.list.label]])) {
-				tmp.list[[my.list.label]][[3*j-2]] <-
-					round(as.vector(quantile(subset(tmp.data, VALID_CASE=="VALID_CASE" & CONTENT_AREA==my.list.label & GRADE==tmp.grade.list[[my.list.label]][j], select="SCALE_SCORE"), 
-						probs=c(0.2,0.4,0.6,0.8), na.rm=TRUE)), digits=3)
-				tmp.list[[my.list.label]][[3*j-1]] <-
-					round(as.vector(extendrange(subset(tmp.data, VALID_CASE=="VALID_CASE" & CONTENT_AREA==my.list.label & GRADE==tmp.grade.list[[my.list.label]][j], select="SCALE_SCORE"), f=0.1)), digits=3)
-				tmp.list[[my.list.label]][[3*j]] <-
-					round(as.vector(extendrange(subset(tmp.data, VALID_CASE=="VALID_CASE" & CONTENT_AREA==my.list.label & GRADE==tmp.grade.list[[my.list.label]][j], select="SCALE_SCORE"), f=0.0)), digits=3)
-			}
-			names(tmp.list[[my.list.label]]) <- paste(rep(c("knots_", "boundaries_", "loss.hoss_"), length(tmp.grade.list[[my.list.label]])), 
-				rep(tmp.grade.list[[my.list.label]], each=3), sep="")
-		}
-		return(tmp.list)
-	} ## END create.knots.boundaries
-
 	## getVersion
 	
 	getVersion <- function(data) {
@@ -211,18 +140,6 @@
 
 	if (is.SGP(data)) {
 
-		## Fix matrices if they aren't of splineMatrix class
-
-		if (!is.null(data@SGP[["Coefficient_Matrices"]])) {
-			for (i in names(data@SGP[["Coefficient_Matrices"]])) {
-				splineMatrix.tf <- sapply(data@SGP[["Coefficient_Matrices"]][[i]], is.splineMatrix)
-				if (!any(splineMatrix.tf)) {
-					data@SGP[["Coefficient_Matrices"]][[i]][!splineMatrix.tf] <- 
-						lapply(data@SGP[["Coefficient_Matrices"]][[i]][!splineMatrix.tf], function(x) as.splineMatrix(matrix=x, sgp_object=data))
-				}
-			}
-		}
-
 		if (!is.null(state) & is.null(var.names)) {
 			if (!identical(state, "DEMO") & !identical(data@Names, SGPstateData[[state]][["Variable_Name_Lookup"]])) {
 				data@Names <- SGPstateData[[state]][["Variable_Name_Lookup"]]
@@ -236,28 +153,29 @@
 			data@Names <- getNames(data@Data, var.names)
 		}
 
-		## Check class values of fields
+		## run checkSGP
 
-		data <- checkSGP(data)
+		data <- checkSGP(data, state=state)
 
+		## Key data.table and check for duplicate cases
 
 		if (!identical(key(data@Data), c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))) {
 			setkeyv(data@Data, c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))
 			if (any(duplicated(data@Data["VALID_CASE"]))) {
 				message("\tWARNING: @Data keyed by 'VALID_CASE', 'CONTENT_AREA', 'YEAR', 'ID' has duplicate cases. Subsequent merges will likely be corrupt.")
-				message("\tDuplicate cases are saved and available in current working environment as 'DUPLICATED_CASES'.")
-				assign("DUPLICATED_CASES", data@Data["VALID_CASE"][duplicated(data@Data["VALID_CASE"])][,list(VALID_CASE, CONTENT_AREA, YEAR, ID)], envir=globalenv())
-				assign("DUPLICATED_CASES", data@Data["VALID_CASE"][duplicated(data@Data["VALID_CASE"])][,list(VALID_CASE, CONTENT_AREA, YEAR, ID)])
+				message("\tNOTE: Duplicate cases are available in current workspace as 'DUPLICATED_CASES' and saved as 'DUPLICATED_CASES.Rdata'.")
+				DUPLICATED_CASES <- data@Data["VALID_CASE"][duplicated(data@Data["VALID_CASE"])][,list(VALID_CASE, CONTENT_AREA, YEAR, ID)]
 				save(DUPLICATED_CASES, file="DUPLICATED_CASES.Rdata")
 			}
 		}
 
+		## Check for knots and boundaries
+
 		if (is.null(SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]])) {
-			SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]] <- create.knots.boundaries(data@Data)
-			assign("SGPstateData", SGPstateData, envir=globalenv())
+			SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]] <- createKnotsBoundaries(data@Data)
 			assign(paste(state, "Knots_Boundaries", sep="_"), SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]])
 			save(list=paste(state, "Knots_Boundaries", sep="_"), file=paste(state, "Knots_Boundaries.Rdata", sep="_"))
-			message(paste("\tKnots and Boundaries do not exist for state provided but have been produced, embedded in a working copy of SGPstateData (using state=", state, ") for subsequent analyses and saved to your working directory '", getwd(), "'.", sep=""))
+			message(paste("\tNOTE: Knots and Boundaries do not exist for state provided.\n\tThey have been produced and are available using state=", state, " for subsequent analyses and saved to your working directory '", getwd(), "'.", sep=""))
 		}
 
 		data@Version <- getVersion(data)
@@ -273,40 +191,34 @@
 		setkeyv(data, c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))
 		if (any(duplicated(data["VALID_CASE"]))) {
 			message("\tWARNING: Data keyed by 'VALID_CASE', 'CONTENT_AREA', 'YEAR', 'ID' has duplicate cases. Subsequent merges will be corrupted.")
-			message("\tDuplicate cases are saved and available in current working environment as 'DUPLICATED_CASES'.")
-			assign("DUPLICATED_CASES", data["VALID_CASE"][duplicated(data["VALID_CASE"])][,list(VALID_CASE, CONTENT_AREA, YEAR, ID)], envir=globalenv())
+			message("\tNOTE: Duplicate cases are available in current workspace as 'DUPLICATED_CASES' and saved as 'DUPLICATED_CASES.Rdata'.")
 			assign("DUPLICATED_CASES", data["VALID_CASE"][duplicated(data["VALID_CASE"])][,list(VALID_CASE, CONTENT_AREA, YEAR, ID)])
 			save(DUPLICATED_CASES, file="DUPLICATED_CASES.Rdata")
 		}
 
+		## Check for knots and boundaries
+
 		if (is.null(SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]])) {
-			SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]] <- create.knots.boundaries(data)
-			assign("SGPstateData", SGPstateData, envir=globalenv())
+			SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]] <- createKnotsBoundaries(data)
 			assign(paste(state, "Knots_Boundaries", sep="_"), SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]])
 			save(list=paste(state, "Knots_Boundaries", sep="_"), file=paste(state, "Knots_Boundaries.Rdata", sep="_"))
-			message(paste("\tKnots and Boundaries do not exist for state provided but have been produced, embedded in a working copy of SGPstateData (using state=", state, ") for subsequent analyses and saved to your working directory '", getwd(), "'.", sep=""))
+			save(SGPstateData, file="SGPstateData.Rdata")
+			message(paste("\tNOTE: Knots and Boundaries do not exist for state provided.\n\tThey have been produced and are available using state=", state, " for subsequent analyses and saved to your working directory '", getwd(), "'.", sep=""))
 		}
-
-
-		################################################################	
-		## INCLUDE CODE HERE TO HANDLE DUPLICATE CASES
-		################################################################	
-
-		## Check class values of fields
-
-		data <- checkSGP(data)
 
 		##  Create the SGP object
 
 		sgp_object <- new("SGP", Data=data, Names=variable.names, Version=getVersion(data))
+		sgp_object <- checkSGP(sgp_object, state=state)
 
 	} ## END else
 
-	#################################################################
+
+	#########################################################################
 	###
-	### Tidy up variables (could be validity checks)
+	### Tidy up variables (could be validity checks, e.g., duplicate cases)
 	###
-	#################################################################
+	#########################################################################
 
 
 
@@ -319,7 +231,8 @@
 	## Create ACHIEVEMENT_LEVEL is it doesn't exist
 	
 	if (!"ACHIEVEMENT_LEVEL" %in% names(sgp_object@Data) & !is.null(SGPstateData[[state]][["Achievement"]][["Cutscores"]])) {
-		sgp_object <- achievement_level_recode(sgp_object, state=state)
+		sgp_object@Data <- getAchievementLevel(sgp_object@Data, state=state)
+		setkeyv(sgp_object@Data, c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))
 		message(paste("\tNOTE: Added variable ACHIEVEMENT_LEVEL to @Data using", state, "cutscores embedded in SGPstateData."))
 	}
 
@@ -328,21 +241,23 @@
 		### HIGH_NEED_STATUS
 
 		if (!"HIGH_NEED_STATUS" %in% names(sgp_object@Data) & "SCHOOL_NUMBER" %in% names(sgp_object@Data)) {
-			sgp_object@Data[["YEAR_INT"]] <- as.integer(factor(sgp_object@Data[["YEAR"]]))
-			setkeyv(sgp_object@Data, c("ID", "CONTENT_AREA", "YEAR_INT", "VALID_CASE")) ## CRITICAL that VALID_CASE is last in group
-			sgp_object@Data$SCALE_SCORE_PRIOR <- sgp_object@Data[SJ(ID, CONTENT_AREA, YEAR_INT-1L), mult="last"][,SCALE_SCORE]
-			sgp_object@Data$GRADE_PRIOR <- sgp_object@Data[SJ(ID, CONTENT_AREA, YEAR_INT-1L), mult="last"][,GRADE]
-
-			setkeyv(sgp_object@Data, c("VALID_CASE", "CONTENT_AREA", "YEAR_INT", "SCHOOL_NUMBER", "GRADE_PRIOR", "ID"))
-			sgp_object@Data[["HIGH_NEED_STATUS"]] <- sgp_object@Data[,my.quantile.function(SCALE_SCORE_PRIOR, !VALID_CASE[1]=="VALID_CASE"), 
-				by=list(VALID_CASE, CONTENT_AREA, YEAR_INT, SCHOOL_NUMBER, GRADE_PRIOR)]$V1
-			sgp_object@Data[["SCALE_SCORE_PRIOR"]] <- sgp_object@Data[["GRADE_PRIOR"]] <- sgp_object@Data[["YEAR_INT"]] <- NULL
-			message("\tNOTE: Added variable HIGH_NEED_STATUS to @Data.")
-			sgp_object@Names <- rbind(sgp_object@Names, c("HIGH_NEED_STATUS", "HIGH_NEED_STATUS", "demographic", "High need status flag", TRUE))
+			sgp_object <- getHighNeedStatus(sgp_object)
 		}
 
-	}
+		### STATE_ENROLLMENT_STATUS, DISTRICT_ENROLLMENT_STATUS, SCHOOL_ENROLLMENT_STATUS
 
+		tmp.enrollment_status.variables <- c("STATE_ENROLLMENT_STATUS", "DISTRICT_ENROLLMENT_STATUS", "SCHOOL_ENROLLMENT_STATUS")
+		tmp.enrollment_status.levels <- c("STATE", "DISTRICT", "SCHOOL")
+		
+		for (i in seq_along(tmp.enrollment_status.variables)) {
+			if (!tmp.enrollment_status.variables[i] %in% names(sgp_object@Data) & !paste(tmp.enrollment_status.levels[i], "NUMBER", sep="_") %in% names(sgp_object@Data)) {
+				sgp_object@Data[[tmp.enrollment_status.variables[i]]][sgp_object@Data[['VALID_CASE']]=="VALID_CASE"] <- 
+					factor(1, levels=0:1, labels=paste("Enrolled", capwords(tmp.enrollment_status.levels[i]), c(": No", ": Yes"), sep=""))
+				message(paste("\tNOTE: Added variable", tmp.enrollment_status.variables[i], "to @Data."))
+			}
+		}
+
+	} ### end if (create.additional.variables)
 
 	##  Print finish time
 	message(paste("Finished prepareSGP", date(), "in", timetaken(started.at), "\n"))

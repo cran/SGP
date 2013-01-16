@@ -15,6 +15,7 @@ function(sgp_object,
 	simulate.sgps=TRUE,
 	parallel.config=NULL,
 	save.intermediate.results=FALSE,
+	save.old.summaries=FALSE,
 	sgPlot.demo.report=FALSE,
 	sgp.summaries=NULL,
 	summary.groups=NULL,
@@ -29,12 +30,8 @@ function(sgp_object,
 	### Create state (if NULL) from sgp_object (if possible)
 
 	if (is.null(state)) {
-		tmp.name <- gsub("_", " ", deparse(substitute(sgp_object)))
-		if (any(sapply(c(state.name, "Demonstration", "sgpData LONG", "AOB"), function(x) regexpr(x, tmp.name)))==1) {
-			state <- c(state.abb, rep("DEMO", 2), "AOB")[which(sapply(c(state.name, "Demonstration", "sgpData LONG", "AOB"), function(x) regexpr(x, tmp.name))==1)]
-		} else {
-			message("\tNOTE: Use of the higher level 'abcSGP' function requires extensive metadata embedded in the 'SGPstateData' list object. Please add your state's data to 'SGPstateData' by examining a state that is currently embedded. For example, SGPstateData[['DEMO']]. Please contact the package administrator with further questions.")
-		}
+		tmp.name <- toupper(gsub("_", " ", deparse(substitute(sgp_object))))
+		state <- getStateAbbreviation(tmp.name, "abcSGP")
 	}
 
 
@@ -103,7 +100,8 @@ function(sgp_object,
 			sgp.summaries=sgp.summaries, 
 			summary.groups=summary.groups, 
 			confidence.interval.groups=confidence.interval.groups,
-			parallel.config=parallel.config)
+			parallel.config=parallel.config,
+			save.old.summaries=save.old.summaries)
 
                 if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}
@@ -145,5 +143,4 @@ function(sgp_object,
 
         message(paste("Finished abcSGP", date(), "in", timetaken(started.at), "\n"))
 	return(sgp_object)
-
 } ## END abcSGP Function

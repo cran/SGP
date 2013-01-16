@@ -1,3 +1,75 @@
+Changes in version: SGP_1.0-0.0
+
+  NEW FEATURES:
+
+	  o Update goodness of fit plots to include an additional representation of growth percentiles by prior achievement level.
+	  o Incorporated updateSGP into SGP package including a new test in testSGP, testSGP(2), utilizing it.
+
+  USER VISIBLE CHANGES:
+
+	  o Removed chunk.size argument from 'studentGrowthProjections' function based upon refined implementation using data.table.
+	  o Changed SGP_LEVEL and SGP_LEVEL_BASELINE to ordered factor from factor.
+	  o SGPstateData is now an environment instead of a list so that updates can be smoothly added.
+
+Changes in version: SGP_0.9-9.9
+
+  NEW FEATURES:
+
+	  o Update of splineMatrix class to include a validity check and update of as.splineMatrix to convert older splineMatrices to current version.
+
+Changes in version: SGP_0.9-9.8
+
+  NEW FEATURES:
+
+	  o Major re-factoring of package involving externalization of previously internal functions for better unit testing.
+
+
+
+Changes in version: SGP_0.9-9.7
+
+  NEW FEATURES:
+
+	  o studentGrowthPlot allows arrow.legend.color to be specified in a state specific fashion and controlled from SGPstateData.
+	  o checkSGP converts ID to numeric to take advantage of data.table improvements.
+	  o checkSGP checks for match between levels in ACHIEVEMENT_LEVEL and SGPstateData.
+	  o Added organization abbreviation to SGPstateData.
+	  o Added Move Up Calculations to combineSGP.
+	  o Made major refinements to growthAchievementPlot and visualizeSGP that speeds up the creation of growth and achievement plots.
+	  o Improved baselineSGP configuration for dealing with non-standard content area progressions.
+	  o On *NIX OS types studentGrowthPlot directories are zipped/gzipped and directory removed to minimize space requirements.
+	  o outputSGP converts names back to @Names$name.original.
+	  o Projection fan in student growth plots now projects across multiple year spans.
+	  o Internal capwords function now exported and available for use.
+	  o Added argument sgPlot.zip to visualizeSGP and studentGrowthPlot_Styles to control zip compression of school studentGrowthPlot folders.
+	  o Added shrinkage estimator calculation to summarizeSGP.
+	  o Added PNG and PDF_PIECES output of student growth plots via the visualizeSGP option sgPlot.output.format='PNG' or sgPlot.output.format='PDF_PIECES'.
+	  o splineMatrix class now includes slots for 'Content_Areas' and 'Grade_Progresssion' to accomodate more varied prior score combinations.
+	  o Added argument 'content.area.progression' to studentGrowthPercentiles to accomodate non-uniform content area progressions as priors to be included in the coefficient matrices produced/used.
+	  o Integrated sgp.loss.hoss.adjustment into analyzeSGP.
+	  o Added STAY_UP as part of previous MOVE_UP analyses. combineSGP now calculates CATCH_UP/KEEP_UP/MOVE_UP/STAY_UP.
+	  o Added additional functionality to 'studentGrowthPlot_Styles' allowing for the construction of student growth plot catalogs by instructor.
+	  o Refinements of merges in 'combineSGP' to maximize speed and efficiency.
+	  o Created internal function 'getStateAbbreviation' to handle calculation of state abbreviation with SGP functions based upon supplied sgp_object argument name.
+	  o Added gofSGP function to create more thorough goodness-of-fit plots including results distributed by prior achievement level.
+	  o Added Indiana baseline coefficient matrices to SGPstateData.
+
+  USER VISIBLE CHANGES:
+
+	  o Updated Hawaii variable name lookup table.
+	  o Zipped files for studentGrowthPlots and outputSGP no longer include full file path. 
+	  o Internal capwords function now exported and available for use.
+	  o Removed parentheses in naming of folders when sgPlot.folder.names='name' is supplied.
+	  o Instructor by School Number tables now include EMH_LEVEL aggregations as well.
+
+  BUG FIXES:
+
+	  o Fixed spacing bug for attaching front page to studentGrowthPlots.
+	  o Corrected logic bug in combineSGP leading to the creation of SGP_TARGET when no projections exist.
+	  o Projection fan cuts calculated across a gap year using a piecewise transformation corrected to accomodate corect increase in years.
+	  o studentGrowthPercentiles and studentGrowthProjections better checks for empty data.
+	  o Corrected naming of baseline coefficient matrices for New Jersey.
+
+
 Changes in version: SGP_0.9-9.0
 
   NEW FEATURES:
