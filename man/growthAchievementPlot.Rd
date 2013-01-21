@@ -3,7 +3,7 @@
 \title{growthAchievementPlot for SGP}
 \description{
 Function to create growth and achievement plots depicting system level results associated with student growth percentile results. The charts show, simultaneously, 
-norm- and criterion-referneced student achievement (i.e., status) as well as norm- and criterion-referenced student growth. These charts are those shown on the 
+norm- and criterion-referenced student achievement (i.e., status) as well as norm- and criterion-referenced student growth. These charts are those shown on the 
 cover of the December 2009 Issue of \emph{Educational Measurement: Issues and Practice}. See Betebenner (2009) and Betebenner (2012) for more details
 }
 \usage{
@@ -20,7 +20,8 @@ growthAchievementPlot(
         year,
         format="print",
         baseline=FALSE,
-        pdf.folder,
+	output.format="PDF",
+        output.folder,
         assessment.name)
 }
 
@@ -64,7 +65,11 @@ growthAchievementPlot(
 	\item{baseline}{
 	Boolean variable (defaults to FALSE) indicating whether to create percentile trajectories using baseline referenced coefficient matrices. 
 	}
-	\item{pdf.folder}{
+	\item{output.format}{
+	A character vector indicating which output format to use. Currently support 'PDF' (the default) and 'PNG'. The call to growthAchievementPlot in \code{\link{visualizeSGP}} outputs in both
+	formats.
+	}
+	\item{output.folder}{
 	A character vector indicating where to put the produced growth and achievement plot.
 	}
 	\item{assessment.name}{
@@ -76,7 +81,7 @@ growthAchievementPlot(
 \details{Typical use of the function is as part of \code{visualizeSGP} function. However, function can be used to produce growth and achievement charts. 
 }
 
-\value{Function creates a growth and achievement chart and writes the result as a PDF to \code{pdf.folder}.} 
+\value{Function creates a growth and achievement chart and writes the result as a PDF to \code{output.folder}.} 
 
 \references{
 Betebenner, D. W. (2012). Growth, standards, and accountability. In G. J. Cizek,

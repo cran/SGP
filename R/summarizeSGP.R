@@ -79,7 +79,7 @@ function(sgp_object,
 	## Set up parallel.config if NULL
 
 	if (is.null(parallel.config)) {
-		 parallel.config=list(BACKEND="FOREACH", TYPE="NA", WORKERS=list(SUMMARY=1))
+		 parallel.config=list(BACKEND="PARALLEL", WORKERS=list(SUMMARY=1))
 	}
 
 	## Utility Functions
@@ -108,7 +108,7 @@ function(sgp_object,
 
 	median_na <- function(x) median(as.numeric(x), na.rm=TRUE)
 	boot.median <- function(x,i) median(x[i], na.rm=TRUE)
-	mean_na <- function(x, result.digits=1) round(mean(as.numeric(x), na.rm=TRUE), digits=result.digits)
+	mean_na <- function(x, result.digits=2) round(mean(as.numeric(x), na.rm=TRUE), digits=result.digits)
 	num_non_missing <- function(x) sum(!is.na(as.numeric(x)))
 	sgp_standard_error <- function(x,y=1) round(y*sd(x, na.rm=TRUE)/sqrt(sum(!is.na(as.numeric(x)))), digits=2)
 
@@ -224,6 +224,13 @@ function(sgp_object,
 						PERCENT_AT_ABOVE_PROFICIENT_PRIOR=paste("percent_in_category(ACHIEVEMENT_LEVEL_PRIOR, ", 
 							get.expression(proficient.achievement.levels), ", ", get.expression(all.achievement.levels), ")",sep=""),
 						PERCENT_AT_ABOVE_PROFICIENT_PRIOR_COUNT="num_non_missing(ACHIEVEMENT_LEVEL_PRIOR)"
+					)
+				}
+
+				if ("SCALE_SCORE_PRIOR_STANDARDIZED" %in% names(sgp_object@Data)) {
+					tmp.sgp.summaries <- c(
+						tmp.sgp.summaries,
+						MEAN_SCALE_SCORE_PRIOR_STANDARDIZED="mean_na(SCALE_SCORE_PRIOR_STANDARDIZED)"
 					)
 				}
 
@@ -476,7 +483,7 @@ function(sgp_object,
 	}
 
 	variables.for.summaries <- intersect(c(my.sgp, my.sgp.target, my.sgp.target.musu, 
-						"ACHIEVEMENT_LEVEL", "ACHIEVEMENT_LEVEL_PRIOR", "CATCH_UP_KEEP_UP_STATUS", "MOVE_UP_STAY_UP_STATUS",
+						"ACHIEVEMENT_LEVEL", "ACHIEVEMENT_LEVEL_PRIOR", "CATCH_UP_KEEP_UP_STATUS", "MOVE_UP_STAY_UP_STATUS", "SCALE_SCORE_PRIOR_STANDARDIZED",
 						unique(as.character(unlist(summary.groups)))),
 					names(sgp_object@Data)) 
 
