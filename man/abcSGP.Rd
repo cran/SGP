@@ -21,15 +21,19 @@ abcSGP(sgp_object,
 	sgp.percentiles.baseline=TRUE,
 	sgp.projections.baseline=TRUE,
 	sgp.projections.lagged.baseline=TRUE,
+	sgp.use.my.coefficient.matrices=NULL,
 	simulate.sgps=TRUE,
+	calculate.simex=NULL,
 	parallel.config=NULL,
 	save.intermediate.results=FALSE,
 	save.old.summaries=FALSE,
 	sgPlot.demo.report=FALSE,
 	sgp.summaries=NULL,
 	summary.groups=NULL,
+	data_supplementary=NULL,
 	confidence.interval.groups=NULL,
-	plot.types=c("bubblePlot", "studentGrowthPlot", "growthAchievementPlot")) 
+	plot.types=c("bubblePlot", "studentGrowthPlot", "growthAchievementPlot"),
+	verbose.output=FALSE) 
 }
 
 \arguments{
@@ -63,8 +67,13 @@ If missing the function will use the data to infer all the grade progressions fo
   }
   \item{sgp.projections.lagged.baseline}{Boolean variable indicating whether to calculate lagged baseline student growth projections. Defaults to TRUE.
   }
+  \item{sgp.use.my.coefficient.matrices}{Boolean variable indicating whether to use embedded coefficient matrices to calculate SGPs. One should be careful to remove previously calculated SGPs prior
+  to recalculating SGPs.
+  }
   \item{simulate.sgps}{Boolean variable indicating whether to simulate SGP values for students based on test-specific Conditional Standard Errors of Measurement (CSEM). 
   Test CSEM data must be available for simulation.  Must be set to TRUE for confidence interval construction. Defaults to TRUE in \code{abcSGP} only.
+  }
+  \item{calculate.simex}{A character state acronymn or list including state/csem variable, simulation.iterations, lambda and extrapolation method. Default to NULL, no simex calculations done.
   }
  \item{parallel.config}{A named list with, at a minimum, two elements indicating 1) the BACKEND package to be used for parallel computation and 2) the WORKERS list to specify the number of processors to be used in each major analysis.  The BACKEND element can be set = to \code{FOREACH} or \code{PARALLEL}.  Please consult the manuals and vignettes for information of these packages!  The \code{\link{analyzeSGP}} help page contains more thorough explanation and examples of the \code{parallel.config} setup. 
  
@@ -86,11 +95,16 @@ If missing the function will use the data to infer all the grade progressions fo
   \code{institution_level}, \code{demographic}, and \code{institution_inclusion}. Summaries generated in summarizeSGP are for all possible combinations of the 8 types of group. See documentation for 
   \code{\link{summarizeSGP}} for more detail. 
   }
+  \item{data_supplementary}{A list argument (or NULL, the default) providing additional multiple membership lookup tables for \code{\link{summarizeSGP}}. See \code{\link{sgpData_INSTRUCTOR_NUMBER}}
+  for an example. Supplied data is embedded in the @Data_Supplementary slot.
+  }
   \item{confidence.interval.groups}{A subset of the groups provided in the \code{summary.groups} argument indicating which groups to provide confidence intervals for. 
   See documentation for \code{\link{summarizeSGP}} for more detail.
   }
   \item{plot.types}{A character vector passed to \code{\link{visualizeSGP}} indicating the types of plots to produce. Currently supported plots include \code{\link{bubblePlot}}s, 
   \code{\link{studentGrowthPlot}}s, and \code{\link{growthAchievementPlot}}s. 
+  }
+  \item{verbose.output}{A boolean argument indicating whether the function should output verbose diagnostic messages.
   }
 }
 

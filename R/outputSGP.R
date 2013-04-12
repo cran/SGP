@@ -1,7 +1,7 @@
 `outputSGP` <- 
 function(sgp_object,
 	state=NULL,
-	output.type=c("LONG_Data", "WIDE_Data"),
+	output.type=c("LONG_Data", "WIDE_Data", "INSTRUCTOR_Data"),
 	baseline.sgps=FALSE,
 	outputSGP_SUMMARY.years=NULL,
 	outputSGP_SUMMARY.content_areas=NULL,
@@ -23,7 +23,7 @@ function(sgp_object,
 	### Define varaibles (to prevent R CMD check warnings)
 
 	SCALE_SCORE <- CONTENT_AREA <- YEAR <- GRADE <- ID <- ETHNICITY <- GENDER <- LAST_NAME <- FIRST_NAME <- VALID_CASE <- DISTRICT_NUMBER <- SCHOOL_NUMBER <- YEAR_BY_CONTENT_AREA <- NULL
-	names.type <- names.provided <- names.output <- STATE_ENROLLMENT_STATUS <- EMH_LEVEL <- NULL
+	names.type <- names.provided <- names.output <- names.sgp <- STATE_ENROLLMENT_STATUS <- EMH_LEVEL <- NULL
 
 	### Create state (if missing) from sgp_object (if possible)
 
@@ -37,7 +37,7 @@ function(sgp_object,
 
 	if (is.null(outputSGP.student.groups)) {
 		outputSGP.student.groups <- intersect(names(sgp_object@Data), 
-			subset(sgp_object@Names, names.type=="demographic" & names.output==TRUE, select=names.provided, drop=TRUE))
+			subset(sgp_object@Names, names.type=="demographic" & names.output==TRUE, select=names.sgp, drop=TRUE))
 	}
 
 
@@ -147,6 +147,57 @@ function(sgp_object,
 
 	###############################################
 	###
+	### INSTRUCTOR data
+	###
+	###############################################
+
+	if ("INSTRUCTOR_Data" %in% output.type && "INSTRUCTOR_NUMBER" %in% names(sgp_object@Data_Supplementary)) {
+
+		### Create state name
+
+		if (state %in% c(state.abb, "DEMO")) {
+			tmp.state <- gsub(" ", "_", c(state.name, "Demonstration")[state==c(state.abb, "DEMO")])
+		} else {
+			tmp.state <- gsub(" ", "_", state)
+		}
+
+		### Write WIDE table
+
+		started.at <- proc.time()
+		message(paste("\tStarted INSTRUCTOR data production in outputSGP", date()))
+
+		assign(paste(tmp.state, "SGP_INSTRUCTOR_Data", sep="_"), sgp_object@Data[data.table(sgp_object@Data_Supplementary[["INSTRUCTOR_NUMBER"]][,VALID_CASE:="VALID_CASE"], 
+			key=getKey(sgp_object@Data)), nomatch=0])
+
+		save(list=paste(tmp.state, "SGP_INSTRUCTOR_Data", sep="_"), file=file.path(outputSGP.directory, paste(tmp.state, "SGP_INSTRUCTOR_Data.Rdata", sep="_")))
+		write.table(get(paste(tmp.state, "SGP_INSTRUCTOR_Data", sep="_")), 
+			file=file.path(outputSGP.directory, paste(tmp.state, "SGP_INSTRUCTOR_Data.txt", sep="_")), sep="|", quote=FALSE, row.names=FALSE, na="")
+
+		if (identical(.Platform$OS.type, "unix")) {
+			if (file.info(file.path(outputSGP.directory, paste(tmp.state, "SGP_INSTRUCTOR_Data.txt", sep="_")))$size > 4000000000) {
+				tmp.working.directory <- getwd()
+				setwd(file.path(outputSGP.directory))
+				if (paste(tmp.state, "SGP_INSTRUCTOR_Data.txt.gz", sep="_") %in% list.files()) file.remove(paste(tmp.state, "SGP_INSTRUCTOR_Data.txt.gz", sep="_"))
+				system(paste("gzip", paste(tmp.state, "SGP_INSTRUCTOR_Data.txt", sep="_")))
+				setwd(tmp.working.directory)
+			} else {
+				tmp.working.directory <- getwd()
+				setwd(file.path(outputSGP.directory))
+				if (paste(tmp.state, "SGP_INSTRUCTOR_Data.txt.zip", sep="_") %in% list.files()) file.remove(paste(tmp.state, "SGP_INSTRUCTOR_Data.txt.zip", sep="_"))
+				suppressMessages(
+					zip(paste(tmp.state, "SGP_INSTRUCTOR_Data.txt.zip", sep="_"), paste(tmp.state, "SGP_INSTRUCTOR_Data.txt", sep="_"))
+				)
+				setwd(tmp.working.directory)
+			}
+		}
+
+		message(paste("\tFinished INSTRUCTOR data production in outputSGP", date(), "in", timetaken(started.at), "\n"))
+
+	} ### END if INSTRUCTOR_Data %in% output.type
+
+
+	###############################################
+	###
 	### SchoolView tables
 	###
 	###############################################
@@ -173,11 +224,15 @@ function(sgp_object,
 			started.at <- proc.time()
 			message(paste("\tStarted SchoolView STUDENT_GROWTH data production in outputSGP", date()))
 
-		### Utility functions
+		### Check arguments
 
-		.year.increment <- function(year, increment) {
-			paste(as.numeric(unlist(strsplit(as.character(year), "_")))+increment, collapse="_")
+		if (!all(c("LAST_NAME", "FIRST_NAME") %in% names(sgp_object@Data))) {
+			message("\tNOTE: 'LAST_NAME' and 'FIRST_NAME' are not included in supplied data. Anonymized last names and first names will be supplied.")
+			outputSGP.anonymize <- TRUE
+			sgp_object@Data[['FIRST_NAME']] <- sgp_object@Data[['LAST_NAME']] <- as.character(NA)
 		}
+
+		### Utility functions
 
 		get.my.label <- function(state, content_area, year, label="Cutscores") {
 			tmp.cutscore.years <- sapply(strsplit(names(SGPstateData[[state]][["Achievement"]][[label]])[grep(content_area, names(SGPstateData[[state]][["Achievement"]][[label]]))], "[.]"),
@@ -220,7 +275,7 @@ function(sgp_object,
 
 		convert.variables <- function(tmp.df) {
 			if ("YEAR" %in% names(tmp.df) && is.character(tmp.df$YEAR)) {
-				tmp.df$YEAR <- as.integer(sapply(strsplit(tmp.df$YEAR, "_"), '[', 2))
+				if (length(grep("_", tmp.df$YEAR)) > 0) tmp.df$YEAR <- as.integer(sapply(strsplit(tmp.df$YEAR, "_"), '[', 2)) else tmp.df$YEAR <- as.integer(tmp.df$YEAR)
 			}
 			if ("CONTENT_AREA" %in% names(tmp.df) && is.character(tmp.df$CONTENT_AREA)) {
 				tmp.df$CONTENT_AREA <- as.integer(as.factor(tmp.df$CONTENT_AREA))
@@ -237,12 +292,13 @@ function(sgp_object,
 			if ("GENDER" %in% names(tmp.df) && is.factor(tmp.df$GENDER)) {
 				tmp.df[['GENDER']] <- substr(tmp.df$GENDER, 1, 1)
 			}
-			for (names.iter in c(outputSGP.student.groups, "SCHOOL_ENROLLMENT_STATUS", "DISTRICT_ENROLLMENT_STATUS", "STATE_ENROLLMENT_STATUS") %w/o% "ETHNICITY") {
+			for (names.iter in c(outputSGP.student.groups, "SCHOOL_ENROLLMENT_STATUS", "DISTRICT_ENROLLMENT_STATUS", "STATE_ENROLLMENT_STATUS") %w/o% grep("ETHNICITY", outputSGP.student.groups, value=TRUE)) {
 				if (names.iter %in% names(tmp.df) && is.factor(tmp.df[[names.iter]])) {
 					tmp.df[[names.iter]] <- as.character(tmp.df[[names.iter]])
 					tmp.df[[names.iter]][grep("Yes", tmp.df[[names.iter]])] <- "Y"
 					tmp.df[[names.iter]][grep("No", tmp.df[[names.iter]])] <- "N"
 					tmp.df[[names.iter]][tmp.df[[names.iter]]=="Students with Disabilities (IEP)"] <- "Y"
+					tmp.df[[names.iter]][tmp.df[[names.iter]]=="High Need Status: ELL, Special Education, or Disadvantaged Student"] <- "Y"
 					tmp.df[[names.iter]][tmp.df[[names.iter]]=="Economically Disadvantaged"] <- "Y"
 					tmp.df[[names.iter]][tmp.df[[names.iter]]=="English Language Learners (ELL)"] <- "N"
 				}
@@ -265,14 +321,24 @@ function(sgp_object,
 		if (is.null(outputSGP_INDIVIDUAL.years)) {
 			tmp.years <- sort(unique(sgp_object@Data["VALID_CASE"][["YEAR"]]))
 			tmp.last.year <- tail(tmp.years, 1)
-			tmp.years.short <- sapply(strsplit(tmp.years, "_"), '[', 2)
-			tmp.last.year.short <- tail(unlist(strsplit(tail(tmp.years, 1), "_")), 1)
+			if (length(grep("_", tmp.years)) > 0) {
+				tmp.years.short <- sapply(strsplit(tmp.years, "_"), '[', 2) 
+				tmp.last.year.short <- tail(unlist(strsplit(tail(tmp.years, 1), "_")), 1)
+			} else {
+				tmp.years.short <- tmp.years
+				tmp.last.year.short <- tmp.last.year
+			}
 		} else {
 			tmp.all.years <- sort(unique(sgp_object@Data["VALID_CASE"][["YEAR"]])) 
 			tmp.years <- tmp.all.years[1:which(tmp.all.years==tail(sort(outputSGP_INDIVIDUAL.years), 1))]
 			tmp.last.year <- tail(tmp.years, 1)
-			tmp.years.short <- sapply(strsplit(tmp.years, "_"), '[', 2)
-			tmp.last.year.short <- tail(unlist(strsplit(tail(tmp.years, 1), "_")), 1)
+			if (length(grep("_", tmp.years)) > 0) {
+				tmp.years.short <- sapply(strsplit(tmp.years, "_"), '[', 2)
+				tmp.last.year.short <- tail(unlist(strsplit(tail(tmp.years, 1), "_")), 1)
+			} else {
+				tmp.years.short <- tmp.years
+				tmp.last.year.short <- tmp.last.year
+			}
 		}
 
 
@@ -283,7 +349,6 @@ function(sgp_object,
 		} else {
 			tmp.content_areas <- sort(outputSGP_INDIVIDUAL.content_areas)
 		}
-
 
 		### subset data
 
@@ -307,10 +372,9 @@ function(sgp_object,
 			piecewise.transform(SCALE_SCORE, state, as.character(CONTENT_AREA[1]), as.character(YEAR[1]), as.character(GRADE[1])), 
 				by=list(CONTENT_AREA, YEAR, GRADE)]$V1
 
-
 		#### Anonymize (if requested) (NOT necessary if wide data is provided)
  
-		if (outputSGP.anonymize | !all(c("LAST_NAME", "FIRST_NAME") %in% names(tmp.table))) {
+		if (outputSGP.anonymize) {
 			suppressPackageStartupMessages(require(randomNames))
 			if (!"ETHNICITY" %in% names(tmp.table)) tmp.table[["ETHNICITY"]] <- 1
 			if (!"GENDER" %in% names(tmp.table)) tmp.table[["GENDER"]] <- round(runif(dim(tmp.table)[1], min=0, max=1))
@@ -318,8 +382,8 @@ function(sgp_object,
 			setkey(tmp.dt, ID)
 			tmp.dt <- tmp.dt[!duplicated(tmp.dt),]
 
-			tmp.dt$LAST_NAME <- randomNames(gender=tmp.dt$GENDER, ethnicity=tmp.dt$ETHNICITY, which.names="last")
-			tmp.dt$FIRST_NAME <- randomNames(gender=tmp.dt$GENDER, ethnicity=tmp.dt$ETHNICITY, which.names="first")	
+			tmp.dt[,LAST_NAME:=randomNames(gender=tmp.dt$GENDER, ethnicity=tmp.dt$ETHNICITY, which.names="last")]
+			tmp.dt[,FIRST_NAME:=randomNames(gender=tmp.dt$GENDER, ethnicity=tmp.dt$ETHNICITY, which.names="first")]
 
 			names.dt <- tmp.dt[,list(ID, LAST_NAME, FIRST_NAME)]
 			setkey(names.dt, ID)
@@ -328,8 +392,7 @@ function(sgp_object,
 			tmp.table <- names.dt[tmp.table]
 		} ## END if (outputSGP.anonymize)
 
-
-	### Reshape data set
+		### Reshape data set
 
 		variables.to.keep <- c("VALID_CASE", "ID", "LAST_NAME", "FIRST_NAME", "CONTENT_AREA", "YEAR", "GRADE", "EMH_LEVEL", 
 			"SCALE_SCORE", "TRANSFORMED_SCALE_SCORE", "ACHIEVEMENT_LEVEL", "SGP", getTargetName(target.years=outputSGP.projection.years.for.target),
@@ -355,7 +418,7 @@ function(sgp_object,
 				}
 				outputSGP.data <- data.table(convert.variables(rbind.fill(tmp.list)), key=paste(key(outputSGP.data), collapse=","))[outputSGP.data]
 				tmp.grade.name <- paste("GRADE", tmp.last.year.short, sep=".")
-				tmp.year.name <- .year.increment(tmp.last.year.short, j)
+				tmp.year.name <- yearIncrement(tmp.last.year.short, j)
 				setkeyv(outputSGP.data, c("CONTENT_AREA", tmp.grade.name))
 				for (proj.iter in grep(paste("PROJ_YEAR", j, sep="_"), names(outputSGP.data))) {
 					tmp.scale_score.name <- names(outputSGP.data)[proj.iter]

@@ -20,14 +20,19 @@ analyzeSGP(sgp_object,
          sgp.percentiles.baseline.max.order=3,
          sgp.projections.baseline.max.order=3,
          sgp.projections.lagged.baseline.max.order=3,
+	 sgp.minimum.default.panel.years=3,
          sgp.use.my.coefficient.matrices=NULL,
          simulate.sgps=TRUE,
+	 calculate.simex=NULL,
          goodness.of.fit.print=TRUE,
          sgp.config=NULL,
          sgp.config.drop.nonsequential.grade.progression.variables=TRUE,
          sgp.baseline.panel.years=NULL,
          sgp.baseline.config=NULL,
          parallel.config=NULL,
+	 verbose.output=FALSE,
+	 print.other.gp=FALSE,
+	 get.cohort.data.info=FALSE,
          ...)
 }
 
@@ -66,10 +71,14 @@ To utilize the maximum matrix order, set to NULL.
   \item{sgp.projections.lagged.baseline.max.order}{Integer indicating the maximum order to calculate lagged baseline student growth projections (regardless of maximum coefficient matrix order). 
 Default is 3.  To utilize the maximum matrix order, set to NULL.
   }
+  \item{sgp.minimum.default.panel.years}{Integer indicating the minimum number of panels years to use for default sgp analyses. Default value is 3 years of data.
+  }
   \item{sgp.use.my.coefficient.matrices}{Argument, defaults to NULL indicating whether to use coefficient matrices to calculate student growth percentiles embedded in provided object of 
   same name as those provided by the sgp.labels argument.
   }
   \item{simulate.sgps}{Boolean variable indicating whether to simulate SGP values for students based on test-specific Conditional Standard Errors of Measurement (CSEM).  Test CSEM data must be available for simulation and included in \code{SGPstateData}.  This argument must be set to TRUE for confidence interval construction. Defaults to TRUE.
+  }
+  \item{calculate.simex}{A character state acronymn or list including state/csem variable, simulation.iterations, lambda and extrapolation method. Defaults to NULL, no simex calculations performed.
   }
   \item{goodness.of.fit.print}{Boolean variable indicating whether to print out Goodness of Fit figures as PDF into a directory labeled Goodness of Fit. Defaults to TRUE.
   }
@@ -91,7 +100,14 @@ Alternatively, the name of an external CLUSTER.OBJECT (SOCK or MPI) set up by th
 
 Example use cases are provided below.
   }
-\item{...}{Arguments to be passed to \code{\link{studentGrowthPercentiles}} or \code{\link{studentGrowthProjections}} for finer control over SGP calculations. NOTE: arguments can only be passed to one lower level function at a time, and only student growth percentiles OR projections can be created but not both at the same time.
+  \item{verbose.output}{A boolean argument (defaults to FALSE) indicating whether the function should output verbose diagnostic messages.
+  }
+  \item{print.other.gp}{A boolean argument (defaults to FALSE) indicating whether the function should output SGP of all orders.
+  }
+  \item{get.cohort.data.info}{A boolean argument (defaults to FALSE) indicating whether the a summary of all cohorts to be submitted to the \code{\link{studentGrowthPercentiles}} and 
+  \code{\link{studentGrowthProjections}} functions should be performed prior to analysis.
+  }
+  \item{...}{Arguments to be passed to \code{\link{studentGrowthPercentiles}} or \code{\link{studentGrowthProjections}} for finer control over SGP calculations. NOTE: arguments can only be passed to one lower level function at a time, and only student growth percentiles OR projections can be created but not both at the same time.
   }
 }
 
@@ -123,13 +139,13 @@ Demonstration_SGP <- analyzeSGP(Demonstration_SGP, state="DEMO")
 #  and only perform analyses for most recent year (2012)
 
 my.custom.config <- list(
-MATHEMATICS.2011_2012 = list(
+MATHEMATICS.2012_2013 = list(
 	sgp.content.areas=rep("MATHEMATICS", 3), # Note, must be same length as sgp.panel.years
-	sgp.panel.years=c('2009_2010', '2010_2011', '2011_2012'),
+	sgp.panel.years=c('2010_2011', '2011_2012', '2012_2013'),
 	sgp.grade.sequences=list(3:4, 3:5, 4:6)),
-READING.2011_2012 = list(
+READING.2012_2013 = list(
 	sgp.content.areas=rep("READING", 3),
-	sgp.panel.years=c('2009_2010', '2010_2011', '2011_2012'),
+	sgp.panel.years=c('2010_2011', '2011_2012', '2012_2013'),
 	sgp.grade.sequences=list(3:4, 3:5, 4:6)))
 
 Demonstration_SGP <- prepareSGP(sgpData_LONG)
@@ -145,13 +161,13 @@ Demonstration_SGP <- analyzeSGP(Demonstration_SGP,
 
 #  Use different CONTENT_AREA priors, and only 1 year of prior data
 my.custom.config <- list(
-MATHEMATICS.2011_2012.READ_PRIOR = list(
+MATHEMATICS.2012_2013.READ_PRIOR = list(
 	sgp.content.areas=c("READING", "MATHEMATICS"),
-	sgp.panel.years=c('2010_2011', '2011_2012'),
+	sgp.panel.years=c('2011_2012', '2012_2013'),
 	sgp.grade.sequences=list(3:4, 4:5, 5:6)),
-READING.2011_2012.MATH_PRIOR = list(
+READING.2012_2013.MATH_PRIOR = list(
 	sgp.content.areas=c("MATHEMATICS", "READING"),
-	sgp.panel.years=c('2010_2011', '2011_2012'),
+	sgp.panel.years=c('2011_2012', '2012_2013'),
 	sgp.grade.sequences=list(3:4, 4:5, 5:6)))
 
 
@@ -160,13 +176,13 @@ READING.2011_2012.MATH_PRIOR = list(
 Demonstration_SGP <- prepareSGP(sgpData_LONG)
  
 DEMO.config <- list(
-READING.2010_2011 = list(
+READING.2011_2012 = list(
 	sgp.content.areas=c("MATHEMATICS", "READING", "MATHEMATICS", "READING", "READING"),
-	sgp.panel.years=c('2008_2009', '2008_2009', '2009_2010', '2009_2010', '2010_2011'),
+	sgp.panel.years=c('2009_2010', '2009_2010', '2010_2011', '2010_2011', '2011_2012'),
 	sgp.grade.sequences=list(c(3,3,4,4,5), c(4,4,5,5,6), c(5,5,6,6,7), c(6,6,7,7,8))),
-MATHEMATICS.2010_2011 = list(
+MATHEMATICS.2011_2012 = list(
 	sgp.content.areas=c("READING", "MATHEMATICS", "READING", "MATHEMATICS", "MATHEMATICS"),
-	sgp.panel.years=c('2008_2009', '2008_2009', '2009_2010', '2009_2010', '2010_2011'),
+	sgp.panel.years=c('2009_2010', '2009_2010', '2010_2011', '2010_2011', '2011_2012'),
 	sgp.grade.sequences=list(c(3,3,4,4,5), c(4,4,5,5,6), c(5,5,6,6,7), c(6,6,7,7,8))))
 
 Demonstration_SGP <- analyzeSGP(Demonstration_SGP,

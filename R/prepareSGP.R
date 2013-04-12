@@ -1,5 +1,6 @@
 `prepareSGP` <- 
 function(data,
+	data_supplementary=NULL,
 	state=NULL,
 	var.names=NULL,
 	create.additional.variables=TRUE,
@@ -70,11 +71,11 @@ function(data,
 
 		if (!is.null(var.names)) {
 			if (!class(var.names) %in% c("list", "data.frame")) {
-				stop("Supplied argument to 'var.names' must be of class list or data.frame. Please supply argument of appropriate class.")
+				stop("\tNOTE: Supplied argument to 'var.names' must be of class list or data.frame. Please supply argument of appropriate class.")
 			}
 			if (identical("data.frame", class(var.names))) {
 				if (!identical(names(var.names), c("names.provided", "names.sgp", "names.type", "names.info", "names.output"))) {
-					stop("Supplied data.frame to arugment 'var.names' does not include all required columns: 'names.provided', 'names.sgp', 'names.type', 'names.info', 'names.output'")
+					stop("\tNOTE: Supplied data.frame to arugment 'var.names' does not include all required columns: 'names.provided', 'names.sgp', 'names.type', 'names.info', 'names.output'")
 				}
 			}
 			if (identical("list", class(var.names))) {
@@ -114,7 +115,7 @@ function(data,
 		## Check see if any of the required variables are missing
 
 		if (!all(required.names %in% variable.names$names.sgp)) {
-			stop(paste("\tThe {data} object is missing the following column name: ", required.names[(required.names %in% variable.names$names.sgp)==FALSE],
+			stop(paste("\tNOTE: The {data} object is missing the following column name: ", required.names[(required.names %in% variable.names$names.sgp)==FALSE],
 			". Please identify the variable using the {var.names} argument.", sep=""))
 		}
 		return(data.frame(variable.names[order(variable.names$column.provided),][,c("names.provided", "names.sgp", "names.type", "names.info", "names.output")], row.names=NULL, stringsAsFactors=FALSE))
@@ -157,14 +158,18 @@ function(data,
 
 		data <- checkSGP(data, state=state)
 
+		## define the key
+
+		if ("YEAR_WITHIN" %in% names(data@Data)) tmp.key <- c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID", "YEAR_WITHIN") else tmp.key <- c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID")
+
 		## Key data.table and check for duplicate cases
 
-		if (!identical(key(data@Data), c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))) {
-			setkeyv(data@Data, c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))
+		if (!identical(key(data@Data), tmp.key)) {
+			setkeyv(data@Data, tmp.key)
 			if (any(duplicated(data@Data["VALID_CASE"]))) {
-				message("\tWARNING: @Data keyed by 'VALID_CASE', 'CONTENT_AREA', 'YEAR', 'ID' has duplicate cases. Subsequent merges will likely be corrupt.")
+				message(paste("\tWARNING: @Data keyed by", tmp.key, "has duplicate cases. Subsequent merges will likely be corrupt."))
 				message("\tNOTE: Duplicate cases are available in current workspace as 'DUPLICATED_CASES' and saved as 'DUPLICATED_CASES.Rdata'.")
-				DUPLICATED_CASES <- data@Data["VALID_CASE"][duplicated(data@Data["VALID_CASE"])][,list(VALID_CASE, CONTENT_AREA, YEAR, ID)]
+				DUPLICATED_CASES <- data@Data["VALID_CASE"][duplicated(data@Data["VALID_CASE"])][,tmp.key, with=FALSE]
 				save(DUPLICATED_CASES, file="DUPLICATED_CASES.Rdata")
 			}
 		}
@@ -178,21 +183,41 @@ function(data,
 			message(paste("\tNOTE: Knots and Boundaries do not exist for state provided.\n\tThey have been produced and are available using state=", state, " for subsequent analyses and saved to your working directory '", getwd(), "'.", sep=""))
 		}
 
+		## Create FIRST_OBESRVATION, LAST_OBSERVATION if YEAR_WITHIN exists
+
+		if ("YEAR_WITHIN" %in% names(data@Data) & !all(c("FIRST", "LAST") %in% names(data@Data))) {
+			data@Data <- getFirstAndLastInGroup(data@Data)
+			setkeyv(data@Data, getKey(data@Data))
+		}
+
+		if (!.hasSlot(data, "Data_Supplementary")) data@Data_Supplementary <- NULL
+
+		if (!is.null(data_supplementary)) {
+			if (!identical(class(data_supplementary), "list")) {
+				stop("\tNOTE: Supplied supplementary data to 'data_supplementary' must be data table(s) embedded in a wrapper list")
+			} else {
+				data@Data_Supplementary <- c(data@Data_Supplementary, data_supplementary)
+			}
+		}
+
 		data@Version <- getVersion(data)
 		sgp_object <- data
 	} else {
 		variable.names <- getNames(data, var.names)
 
-	
+		## define the key
+
+		if ("YEAR_WITHIN" %in% names(data)) tmp.key <- c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID", "YEAR_WITHIN") else tmp.key <- c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID")
+
 		##  Create keyed data.table and check for duplicate cases
 
 		data <- as.data.table(data)
 		setnames(data, which(!is.na(variable.names$names.sgp)), variable.names$names.sgp[!is.na(variable.names$names.sgp)])
-		setkeyv(data, c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))
+		setkeyv(data, tmp.key)
 		if (any(duplicated(data["VALID_CASE"]))) {
-			message("\tWARNING: Data keyed by 'VALID_CASE', 'CONTENT_AREA', 'YEAR', 'ID' has duplicate cases. Subsequent merges will be corrupted.")
+			message(paste("\tWARNING: Data keyed by", tmp.key, "has duplicate cases. Subsequent merges will be corrupted."))
 			message("\tNOTE: Duplicate cases are available in current workspace as 'DUPLICATED_CASES' and saved as 'DUPLICATED_CASES.Rdata'.")
-			assign("DUPLICATED_CASES", data["VALID_CASE"][duplicated(data["VALID_CASE"])][,list(VALID_CASE, CONTENT_AREA, YEAR, ID)])
+			assign("DUPLICATED_CASES", data["VALID_CASE"][duplicated(data["VALID_CASE"])][,tmp.key, with=FALSE])
 			save(DUPLICATED_CASES, file="DUPLICATED_CASES.Rdata")
 		}
 
@@ -206,9 +231,22 @@ function(data,
 			message(paste("\tNOTE: Knots and Boundaries do not exist for state provided.\n\tThey have been produced and are available using state=", state, " for subsequent analyses and saved to your working directory '", getwd(), "'.", sep=""))
 		}
 
+		## Create FIRST_OBESRVATION, LAST_OBSERVATION if YEAR_WITHIN exists
+
+		if ("YEAR_WITHIN" %in% names(data) & !all(c("FIRST", "LAST") %in% names(data))) {
+			data <- getFirstAndLastInGroup(data)
+			setkeyv(data, getKey(data))
+		}
+
+		## Test data_supplementary argument
+
+		if (!is.null(data_supplementary) && !identical(class(data_supplementary), "list")) {
+			stop("\tNOTE: Supplied supplementary data to 'data_supplementary' must be data table(s) embedded in a wrapper list")
+		}
+
 		##  Create the SGP object
 
-		sgp_object <- new("SGP", Data=data, Names=variable.names, Version=getVersion(data))
+		sgp_object <- new("SGP", Data=data, Data_Supplementary=data_supplementary, Names=variable.names, Version=getVersion(data))
 		sgp_object <- checkSGP(sgp_object, state=state)
 
 	} ## END else
@@ -232,7 +270,7 @@ function(data,
 	
 	if (!"ACHIEVEMENT_LEVEL" %in% names(sgp_object@Data) & !is.null(SGPstateData[[state]][["Achievement"]][["Cutscores"]])) {
 		sgp_object@Data <- getAchievementLevel(sgp_object@Data, state=state)
-		setkeyv(sgp_object@Data, c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))
+		setkeyv(sgp_object@Data, getKey(sgp_object))
 		message(paste("\tNOTE: Added variable ACHIEVEMENT_LEVEL to @Data using", state, "cutscores embedded in SGPstateData."))
 	}
 
@@ -251,8 +289,9 @@ function(data,
 		
 		for (i in seq_along(tmp.enrollment_status.variables)) {
 			if (!tmp.enrollment_status.variables[i] %in% names(sgp_object@Data) & !paste(tmp.enrollment_status.levels[i], "NUMBER", sep="_") %in% names(sgp_object@Data)) {
-				sgp_object@Data[[tmp.enrollment_status.variables[i]]][sgp_object@Data[['VALID_CASE']]=="VALID_CASE"] <- 
+				sgp_object@Data[[tmp.enrollment_status.variables[i]]] <- 
 					factor(1, levels=0:1, labels=paste("Enrolled", capwords(tmp.enrollment_status.levels[i]), c(": No", ": Yes"), sep=""))
+				sgp_object@Data[[tmp.enrollment_status.variables[i]]][sgp_object@Data[['VALID_CASE']]!="VALID_CASE"] <- NA
 				message(paste("\tNOTE: Added variable", tmp.enrollment_status.variables[i], "to @Data."))
 			}
 		}

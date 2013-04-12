@@ -13,20 +13,25 @@ function(sgp_object,
          sgp.percentiles.baseline.max.order=3,
          sgp.projections.baseline.max.order=3,
          sgp.projections.lagged.baseline.max.order=3,
+	 sgp.minimum.default.panel.years=3,
          sgp.use.my.coefficient.matrices=NULL,
          simulate.sgps=TRUE,
+	 calculate.simex=NULL,
          goodness.of.fit.print=TRUE,
          sgp.config=NULL,
          sgp.config.drop.nonsequential.grade.progression.variables=TRUE,
          sgp.baseline.panel.years=NULL,
          sgp.baseline.config=NULL, 
          parallel.config=NULL,
+	 verbose.output=FALSE,
+	 print.other.gp=FALSE,
+	 get.cohort.data.info=FALSE,
          ...) {
 
 	started.at <- proc.time()
 	message(paste("\nStarted analyzeSGP", date()))
 
-	VALID_CASE <- CONTENT_AREA <- YEAR <- GRADE <- ID <- NULL
+	VALID_CASE <- CONTENT_AREA <- YEAR <- GRADE <- ID <- YEAR_WITHIN <- NULL
 
 
 	###
@@ -48,8 +53,12 @@ function(sgp_object,
 	if (simulate.sgps==TRUE) {
 		if (is.null(SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
 			message("\tNOTE: CSEMs are required in SGPstateData to simulate SGPs for confidence interval calculations. Confidence intervals will not be calculated.")
-			simulate.sgps <- FALSE
+			calculate.confidence.intervals <- NULL
+		} else {
+			calculate.confidence.intervals <- state
 		}
+	} else {
+		calculate.confidence.intervals <- NULL
 	}
 
 	if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][["sgp.config.drop.nonsequential.grade.progression.variables"]])) {
@@ -130,8 +139,13 @@ function(sgp_object,
 
 	tmp_sgp_object <- list(Coefficient_Matrices=sgp_object@SGP[["Coefficient_Matrices"]], Knots_Boundaries=sgp_object@SGP[["Knots_Boundaries"]])
 
-	tmp_sgp_data_for_analysis <- sgp_object@Data[,c("VALID_CASE", "YEAR", "CONTENT_AREA", "GRADE", "ID", "SCALE_SCORE", "ACHIEVEMENT_LEVEL"), with=FALSE]
-	setkey(tmp_sgp_data_for_analysis, VALID_CASE, CONTENT_AREA, YEAR, GRADE)
+	variables.to.get <- c("VALID_CASE", "YEAR", "CONTENT_AREA", "GRADE", "ID", "SCALE_SCORE", "ACHIEVEMENT_LEVEL", "YEAR_WITHIN", "FIRST_OBSERVATION", "LAST_OBSERVATION")
+	tmp_sgp_data_for_analysis <- sgp_object@Data[,intersect(names(sgp_object@Data), variables.to.get), with=FALSE]
+	if ("YEAR_WITHIN" %in% names(tmp_sgp_data_for_analysis)) {
+		setkey(tmp_sgp_data_for_analysis, VALID_CASE, CONTENT_AREA, YEAR, GRADE, YEAR_WITHIN)
+	} else {
+		setkey(tmp_sgp_data_for_analysis, VALID_CASE, CONTENT_AREA, YEAR, GRADE)
+	}
 
 
 	#######################################################################################################################
@@ -219,17 +233,24 @@ function(sgp_object,
 
 	### Create par.sgp.config (for both parallel and sequential implementations)
 
-	setkey(sgp_object@Data, VALID_CASE, CONTENT_AREA, YEAR, GRADE)
+	setkeyv(sgp_object@Data, getKey(sgp_object))
 	par.sgp.config <- getSGPConfig(sgp_object, tmp_sgp_object, content_areas, years, grades, sgp.config, sgp.percentiles.baseline, sgp.projections.baseline, sgp.projections.lagged.baseline,
-		sgp.config.drop.nonsequential.grade.progression.variables)
+		sgp.config.drop.nonsequential.grade.progression.variables, sgp.minimum.default.panel.years)
 
 	if (sgp.percentiles.baseline | sgp.projections.baseline | sgp.projections.lagged.baseline) {
 		if (any(sapply(par.sgp.config, function(x) identical(x[['base.gp']], "NO_BASELINE_COEFFICIENT_MATRICES")))) {
 			baseline.missings <- which(sapply(par.sgp.config, function(x) identical(x[['base.gp']], "NO_BASELINE_COEFFICIENT_MATRICES")))
-			baseline.missings <- paste(unlist(sapply(par.sgp.config[baseline.missings], function(x) paste(tail(x$sgp.content.areas, 1), x$sgp.grade.sequences))), collapse="; ")
-			message("\tNOTE: Baseline coefficient matrices are not available for ", baseline.missings, ".", sep="")
+			baseline.missings <- paste(unlist(sapply(par.sgp.config[baseline.missings], function(x) paste(tail(x$sgp.content.areas, 1), x$sgp.grade.sequences))), collapse=";\n\t\t")
+			message("\tNOTE: Baseline coefficient matrices are not available for:\n\t\t", baseline.missings, ".", sep="")
 		}
 		par.sgp.config.baseline <- par.sgp.config[which(sapply(par.sgp.config, function(x) !identical(x[['base.gp']], "NO_BASELINE_COEFFICIENT_MATRICES")))]
+	}
+
+
+	### Produce cohort data information
+
+	if (get.cohort.data.info) {
+		cohort.data.info <- getCohortDataInfo(tmp_sgp_data_for_analysis, par.sgp.config)
 	}
 
 
@@ -250,155 +271,94 @@ function(sgp_object,
 		
 			###  FOREACH flavor
 			if (toupper(parallel.config[["BACKEND"]]) == "FOREACH") {
-				if (simulate.sgps) {
-					if (!exists("calculate.confidence.intervals")) {
-						calculate.confidence.intervals <- state
+				tmp <- foreach(sgp.iter=iter(rev(par.sgp.config)), .packages="SGP", .combine="mergeSGP", .inorder=FALSE,
+					.options.multicore=par.start$foreach.options, .options.mpi=par.start$foreach.options, .options.redis=par.start$foreach.options) %dopar% {
+					return(studentGrowthPercentiles(
+						panel.data=list(Panel_Data=getPanelData(tmp_sgp_data_for_analysis, "sgp.percentiles", sgp.iter), 
+							Coefficient_Matrices=tmp_sgp_object[["Coefficient_Matrices"]], Knots_Boundaries=getKnotsBoundaries(sgp.iter, state)),
+						sgp.labels=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
+						use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
+						use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
+						growth.levels=state,
+						calculate.confidence.intervals=calculate.confidence.intervals,
+						panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter, names(tmp_sgp_data_for_analysis)),
+						additional.vnames.to.return=getPanelDataVnames("sgp.percentiles.to.return", sgp.iter, names(tmp_sgp_data_for_analysis)),
+						grade.progression=sgp.iter[["sgp.grade.sequences"]][[1]],
+						content.area.progression=sgp.iter[["sgp.content.areas"]],
+						year.progression=sgp.iter[["sgp.panel.years"]],
+						max.order.for.percentile=SGPstateData[[state]][["SGP_Configuration"]][["max.order.for.percentile"]],
+						percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
+						drop.nonsequential.grade.progression.variables=FALSE, # taken care of with config
+						exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
+						sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
+						goodness.of.fit=state,
+						verbose.output=verbose.output,
+						print.other.gp=print.other.gp,
+						calculate.simex=calculate.simex,
+						...))
 					}
-					tmp <- foreach(sgp.iter=iter(rev(par.sgp.config)), .packages="SGP", .combine="mergeSGP", .inorder=FALSE,
-						.options.multicore=par.start$foreach.options, .options.mpi=par.start$foreach.options, .options.redis=par.start$foreach.options) %dopar% {
-						return(studentGrowthPercentiles(
-							panel.data=list(Panel_Data=getPanelData(tmp_sgp_data_for_analysis, "sgp.percentiles", sgp.iter), 
-								Coefficient_Matrices=tmp_sgp_object[["Coefficient_Matrices"]], Knots_Boundaries=getKnotsBoundaries(sgp.iter, state)),
-							sgp.labels=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-							use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-							use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
-							growth.levels=state,
-							calculate.confidence.intervals=calculate.confidence.intervals,
-							panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter),
-							grade.progression=sgp.iter[["sgp.grade.sequences"]][[1]],
-							content.area.progression=sgp.iter[["sgp.content.areas"]],
-							year.progression=sgp.iter[["sgp.panel.years"]],
-							max.order.for.percentile=SGPstateData[[state]][["SGP_Configuration"]][["max.order.for.percentile"]],
-							percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
-							drop.nonsequential.grade.progression.variables=FALSE, # taken care of with config
-							exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
-							sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
-							goodness.of.fit=state,
-							...))
-					}
-				} else {
-					tmp <- foreach(sgp.iter=iter(rev(par.sgp.config)), .packages="SGP", .combine="mergeSGP", .inorder=FALSE,
-						.options.multicore=par.start$foreach.options, .options.mpi=par.start$foreach.options, .options.redis=par.start$foreach.options) %dopar% {
-						return(studentGrowthPercentiles(
-							panel.data=list(Panel_Data=getPanelData(tmp_sgp_data_for_analysis, "sgp.percentiles", sgp.iter), 
-								Coefficient_Matrices=tmp_sgp_object[["Coefficient_Matrices"]], Knots_Boundaries=getKnotsBoundaries(sgp.iter, state)),
-							sgp.labels=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-							use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-							use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
-							growth.levels=state,
-							panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter),
-							grade.progression=sgp.iter[["sgp.grade.sequences"]][[1]],
-							content.area.progression=sgp.iter[["sgp.content.areas"]],
-							year.progression=sgp.iter[["sgp.panel.years"]],
-							max.order.for.percentile=SGPstateData[[state]][["SGP_Configuration"]][["max.order.for.percentile"]],
-							percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
-							drop.nonsequential.grade.progression.variables=FALSE, # taken care of with config
-							exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
-							sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
-							goodness.of.fit=state,
-							...))
-					}
-				}
 				tmp_sgp_object <- mergeSGP(tmp_sgp_object, tmp)
 				rm(tmp)
 			} else { # END FOREACH
 				###    SNOW flavor
 				if (par.start$par.type == 'SNOW') {
-					if (simulate.sgps) {
-						if (!exists("calculate.confidence.intervals")) {
-							calculate.confidence.intervals <- state
-						}
-						tmp <- clusterApplyLB(par.start$internal.cl, rev(par.sgp.config), 	function(sgp.iter)	studentGrowthPercentiles( 
-							panel.data=list(Panel_Data=getPanelData(tmp_sgp_data_for_analysis, "sgp.percentiles", sgp.iter), 
-								Coefficient_Matrices=tmp_sgp_object[["Coefficient_Matrices"]], Knots_Boundaries=getKnotsBoundaries(sgp.iter, state)),
-							sgp.labels=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-							use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-							use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
-							growth.levels=state,
-							calculate.confidence.intervals=calculate.confidence.intervals,
-							panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter),
-							grade.progression=sgp.iter[["sgp.grade.sequences"]][[1]],
-							content.area.progression=sgp.iter[["sgp.content.areas"]],
-							year.progression=sgp.iter[["sgp.panel.years"]],
-							max.order.for.percentile=SGPstateData[[state]][["SGP_Configuration"]][["max.order.for.percentile"]],
-							percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
-							drop.nonsequential.grade.progression.variables=FALSE, # taken care of with config
-							exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
-							sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
-							goodness.of.fit=state,
-							...))
-					} else {
-						tmp <- clusterApplyLB(par.start$internal.cl, rev(par.sgp.config), 	function(sgp.iter)	studentGrowthPercentiles( 
-							panel.data=list(Panel_Data=getPanelData(tmp_sgp_data_for_analysis, "sgp.percentiles", sgp.iter), 
-								Coefficient_Matrices=tmp_sgp_object[["Coefficient_Matrices"]], Knots_Boundaries=getKnotsBoundaries(sgp.iter, state)),
-							sgp.labels=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-							use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-							use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
-							growth.levels=state,
-							panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter),
-							grade.progression=sgp.iter[["sgp.grade.sequences"]][[1]],
-							content.area.progression=sgp.iter[["sgp.content.areas"]],
-							year.progression=sgp.iter[["sgp.panel.years"]],
-							max.order.for.percentile=SGPstateData[[state]][["SGP_Configuration"]][["max.order.for.percentile"]],
-							percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
-							drop.nonsequential.grade.progression.variables=FALSE, # taken care of with config
-							exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
-							sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
-							goodness.of.fit=state,
-							...))
-					}
+					tmp <- clusterApplyLB(par.start$internal.cl, rev(par.sgp.config), 	function(sgp.iter)	studentGrowthPercentiles( 
+						panel.data=list(Panel_Data=getPanelData(tmp_sgp_data_for_analysis, "sgp.percentiles", sgp.iter), 
+							Coefficient_Matrices=tmp_sgp_object[["Coefficient_Matrices"]], Knots_Boundaries=getKnotsBoundaries(sgp.iter, state)),
+						sgp.labels=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
+						use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
+						use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
+						growth.levels=state,
+						calculate.confidence.intervals=calculate.confidence.intervals,
+						panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter, names(tmp_sgp_data_for_analysis)),
+						additional.vnames.to.return=getPanelDataVnames("sgp.percentiles.to.return", sgp.iter, names(tmp_sgp_data_for_analysis)),
+						grade.progression=sgp.iter[["sgp.grade.sequences"]][[1]],
+						content.area.progression=sgp.iter[["sgp.content.areas"]],
+						year.progression=sgp.iter[["sgp.panel.years"]],
+						max.order.for.percentile=SGPstateData[[state]][["SGP_Configuration"]][["max.order.for.percentile"]],
+						percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
+						drop.nonsequential.grade.progression.variables=FALSE, # taken care of with config
+						exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
+						sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
+						goodness.of.fit=state,
+						verbose.output=verbose.output,
+						print.other.gp=print.other.gp,
+						calculate.simex=calculate.simex,
+						...))
+
 					tmp_sgp_object <- mergeSGP(Reduce(mergeSGP, tmp), tmp_sgp_object)
 					if (any(tmp.tf <- sapply(tmp, function(x) identical(class(x), "try-error")))) {
 						tmp_sgp_object[['Error_Reports']] <- c(tmp_sgp_object[['Error_Reports']], sgp.percentiles.=getErrorReports(tmp, tmp.tf, rev(par.sgp.config)))
 					}
 					rm(tmp)
-					} # END SNOW
+				} # END SNOW
 				
 				###  MULTICORE flavor
 				if (par.start$par.type == 'MULTICORE') {
-					if (simulate.sgps) {
-						if (!exists("calculate.confidence.intervals")) {
-							calculate.confidence.intervals <- state
-						}
-						tmp <- mclapply(rev(par.sgp.config), function(sgp.iter)	studentGrowthPercentiles( 
-							panel.data=list(Panel_Data=getPanelData(tmp_sgp_data_for_analysis, "sgp.percentiles", sgp.iter), 
-								Coefficient_Matrices=tmp_sgp_object[["Coefficient_Matrices"]], Knots_Boundaries=getKnotsBoundaries(sgp.iter, state)),
-							sgp.labels=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-							use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-							use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
-							growth.levels=state,
-							calculate.confidence.intervals=calculate.confidence.intervals,
-							panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter),
-							grade.progression=sgp.iter[["sgp.grade.sequences"]][[1]],
-							content.area.progression=sgp.iter[["sgp.content.areas"]],
-							year.progression=sgp.iter[["sgp.panel.years"]],
-							max.order.for.percentile=SGPstateData[[state]][["SGP_Configuration"]][["max.order.for.percentile"]],
-							percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
-							drop.nonsequential.grade.progression.variables=FALSE, # taken care of with config
-							exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
-							sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
-							goodness.of.fit=state,
-							...), mc.cores=par.start$workers, mc.preschedule=FALSE)
-					} else {
-						tmp <- mclapply(rev(par.sgp.config), function(sgp.iter)	studentGrowthPercentiles( 
-							panel.data=list(Panel_Data=getPanelData(tmp_sgp_data_for_analysis, "sgp.percentiles", sgp.iter), 
-								Coefficient_Matrices=tmp_sgp_object[["Coefficient_Matrices"]], Knots_Boundaries=getKnotsBoundaries(sgp.iter, state)),
-							sgp.labels=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-							use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-							use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
-							growth.levels=state,
-							panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter),
-							grade.progression=sgp.iter[["sgp.grade.sequences"]][[1]],
-							content.area.progression=sgp.iter[["sgp.content.areas"]],
-							year.progression=sgp.iter[["sgp.panel.years"]],
-							max.order.for.percentile=SGPstateData[[state]][["SGP_Configuration"]][["max.order.for.percentile"]],
-							percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
-							drop.nonsequential.grade.progression.variables=FALSE, # taken care of with config
-							exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
-							sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
-							goodness.of.fit=state,
-							...), mc.cores=par.start$workers, mc.preschedule=FALSE)
-					}
+					tmp <- mclapply(rev(par.sgp.config), function(sgp.iter)	studentGrowthPercentiles( 
+						panel.data=list(Panel_Data=getPanelData(tmp_sgp_data_for_analysis, "sgp.percentiles", sgp.iter), 
+							Coefficient_Matrices=tmp_sgp_object[["Coefficient_Matrices"]], Knots_Boundaries=getKnotsBoundaries(sgp.iter, state)),
+						sgp.labels=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
+						use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
+						use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
+						growth.levels=state,
+						calculate.confidence.intervals=calculate.confidence.intervals,
+						panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter, names(tmp_sgp_data_for_analysis)),
+						additional.vnames.to.return=getPanelDataVnames("sgp.percentiles.to.return", sgp.iter, names(tmp_sgp_data_for_analysis)),
+						grade.progression=sgp.iter[["sgp.grade.sequences"]][[1]],
+						content.area.progression=sgp.iter[["sgp.content.areas"]],
+						year.progression=sgp.iter[["sgp.panel.years"]],
+						max.order.for.percentile=SGPstateData[[state]][["SGP_Configuration"]][["max.order.for.percentile"]],
+						percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
+						drop.nonsequential.grade.progression.variables=FALSE, # taken care of with config
+						exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
+						sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
+						goodness.of.fit=state,
+						verbose.output=verbose.output,
+						print.other.gp=print.other.gp,
+						calculate.simex=calculate.simex,
+						...), mc.cores=par.start$workers, mc.preschedule=FALSE)
+
 					tmp_sgp_object <- mergeSGP(Reduce(mergeSGP, tmp), tmp_sgp_object)
 					if (any(tmp.tf <- sapply(tmp, function(x) identical(class(x), "try-error")))) {
 						tmp_sgp_object[['Error_Reports']] <- c(tmp_sgp_object[['Error_Reports']], sgp.percentiles.=getErrorReports(tmp, tmp.tf, rev(par.sgp.config)))
@@ -431,9 +391,11 @@ function(sgp_object,
 						use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
 						use.my.coefficient.matrices=list(my.year="BASELINE", my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
 						growth.levels=state,
-						panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter),
+						calculate.confidence.intervals=calculate.confidence.intervals,
+						panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter, names(tmp_sgp_data_for_analysis)),
+						additional.vnames.to.return=getPanelDataVnames("sgp.percentiles.to.return", sgp.iter, names(tmp_sgp_data_for_analysis)),
 						grade.progression=sgp.iter[["base.gp"]],
-						content.area.progression=tail(sgp.iter[["sgp.content.areas"]], min(sgp.iter[["max.order"]], sgp.percentiles.baseline.max.order)+1),
+						content.area.progression=tail(sgp.iter[["sgp.content.areas"]], length(sgp.iter[["base.gp"]])),
 						year.progression.lags=sgp.iter[["time.lags"]],
 						num.prior=min(sgp.iter[["max.order"]], sgp.percentiles.baseline.max.order),
 						percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
@@ -441,6 +403,8 @@ function(sgp_object,
 						exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
 						sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
 						goodness.of.fit=state,
+						verbose.output=verbose.output,
+						print.other.gp=print.other.gp,
 						...))
 				}
 				tmp_sgp_object <- mergeSGP(tmp_sgp_object, tmp)
@@ -456,9 +420,11 @@ function(sgp_object,
 						use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
 						use.my.coefficient.matrices=list(my.year="BASELINE", my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
 						growth.levels=state,
-						panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter),
+						calculate.confidence.intervals=calculate.confidence.intervals,
+						panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter, names(tmp_sgp_data_for_analysis)),
+						additional.vnames.to.return=getPanelDataVnames("sgp.percentiles.to.return", sgp.iter, names(tmp_sgp_data_for_analysis)),
 						grade.progression=sgp.iter[["base.gp"]],
-						content.area.progression=tail(sgp.iter[["sgp.content.areas"]], min(sgp.iter[["max.order"]], sgp.percentiles.baseline.max.order)+1),
+						content.area.progression=tail(sgp.iter[["sgp.content.areas"]], length(sgp.iter[["base.gp"]])),
 						year.progression.lags=sgp.iter[["time.lags"]],
 						num.prior=min(sgp.iter[["max.order"]], sgp.percentiles.baseline.max.order),
 						percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
@@ -466,6 +432,8 @@ function(sgp_object,
 						exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
 						sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
 						goodness.of.fit=state,
+						verbose.output=verbose.output,
+						print.other.gp=print.other.gp,
 						...))
 	
 					tmp_sgp_object <- mergeSGP(Reduce(mergeSGP, tmp), tmp_sgp_object)
@@ -473,7 +441,7 @@ function(sgp_object,
 						tmp_sgp_object[['Error_Reports']] <- c(tmp_sgp_object[['Error_Reports']], sgp.percentiles.baseline.=getErrorReports(tmp, tmp.tf, rev(par.sgp.config.baseline)))
 					}
 					rm(tmp)
-					} # END SNOW
+				} # END SNOW
 				
 				###  MULTICORE flavor
 				if (par.start$par.type == 'MULTICORE') {
@@ -485,9 +453,11 @@ function(sgp_object,
 						use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
 						use.my.coefficient.matrices=list(my.year="BASELINE", my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
 						growth.levels=state,
-						panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter),
+						calculate.confidence.intervals=calculate.confidence.intervals,
+						panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter, names(tmp_sgp_data_for_analysis)),
+						additional.vnames.to.return=getPanelDataVnames("sgp.percentiles.to.return", sgp.iter, names(tmp_sgp_data_for_analysis)),
 						grade.progression=sgp.iter[["base.gp"]],
-						content.area.progression=tail(sgp.iter[["sgp.content.areas"]], min(sgp.iter[["max.order"]], sgp.percentiles.baseline.max.order)+1),
+						content.area.progression=tail(sgp.iter[["sgp.content.areas"]], length(sgp.iter[["base.gp"]])),
 						year.progression.lags=sgp.iter[["time.lags"]],
 						num.prior=min(sgp.iter[["max.order"]], sgp.percentiles.baseline.max.order),
 						percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
@@ -495,6 +465,8 @@ function(sgp_object,
 						exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
 						sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
 						goodness.of.fit=state,
+						verbose.output=verbose.output,
+						print.other.gp=print.other.gp,
 						...), mc.cores=par.start$workers, mc.preschedule=FALSE)
 	
 					tmp_sgp_object <- mergeSGP(Reduce(mergeSGP, tmp), tmp_sgp_object)
@@ -877,49 +849,30 @@ function(sgp_object,
 				tmp.knots.boundaries <- getKnotsBoundaries(sgp.iter, state) # Get specific knots and boundaries in case course sequence is different
 				panel.data[["Knots_Boundaries"]][[names(tmp.knots.boundaries)]] <- tmp.knots.boundaries[[names(tmp.knots.boundaries)]]
 
-				if (simulate.sgps) {
-					if (!exists("calculate.confidence.intervals")) {
-						calculate.confidence.intervals <- state
-					}
-					tmp_sgp_object <- studentGrowthPercentiles(
-						panel.data=panel.data,
-						sgp.labels=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-						use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-						use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
-						growth.levels=state,
-						panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter),
-						grade.progression=sgp.iter[["sgp.grade.sequences"]][[1]],
-						content.area.progression=sgp.iter[["sgp.content.areas"]],
-						year.progression=sgp.iter[["sgp.panel.years"]],
-						max.order.for.percentile=SGPstateData[[state]][["SGP_Configuration"]][["max.order.for.percentile"]],
-						percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
-						calculate.confidence.intervals=calculate.confidence.intervals,
-						drop.nonsequential.grade.progression.variables=FALSE,
-						exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
-						sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
-						goodness.of.fit=state,
-						...)
-				} else {
-					tmp_sgp_object <- studentGrowthPercentiles(
-						panel.data=panel.data,
-						sgp.labels=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-						use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
-						use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
-						growth.levels=state,
-						panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter),
-						grade.progression=sgp.iter[["sgp.grade.sequences"]][[1]],
-						content.area.progression=sgp.iter[["sgp.content.areas"]],
-						year.progression=sgp.iter[["sgp.panel.years"]],
-						max.order.for.percentile=SGPstateData[[state]][["SGP_Configuration"]][["max.order.for.percentile"]],
-						percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
-						drop.nonsequential.grade.progression.variables=FALSE,
-						exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
-						sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
-						goodness.of.fit=state,
-						...)
-				}
-				suppressMessages(gc())
+				tmp_sgp_object <- studentGrowthPercentiles(
+					panel.data=panel.data,
+					sgp.labels=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
+					use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
+					use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
+					growth.levels=state,
+					panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter, names(tmp_sgp_data_for_analysis)),
+					additional.vnames.to.return=getPanelDataVnames("sgp.percentiles.to.return", sgp.iter, names(tmp_sgp_data_for_analysis)),
+					grade.progression=sgp.iter[["sgp.grade.sequences"]][[1]],
+					content.area.progression=sgp.iter[["sgp.content.areas"]],
+					year.progression=sgp.iter[["sgp.panel.years"]],
+					max.order.for.percentile=SGPstateData[[state]][["SGP_Configuration"]][["max.order.for.percentile"]],
+					percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
+					calculate.confidence.intervals=calculate.confidence.intervals,
+					drop.nonsequential.grade.progression.variables=FALSE,
+					exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
+					sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
+					goodness.of.fit=state,
+					verbose.output=verbose.output,
+					print.other.gp=print.other.gp,
+					calculate.simex=calculate.simex,
+					...)
 			}
+			suppressMessages(gc())
 		} ## END if sgp.percentiles
 
 
@@ -939,16 +892,20 @@ function(sgp_object,
 					use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
 					use.my.coefficient.matrices=list(my.year="BASELINE", my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
 					growth.levels=state,
-					panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter),
+					panel.data.vnames=getPanelDataVnames("sgp.percentiles", sgp.iter, names(tmp_sgp_data_for_analysis)),
+					additional.vnames.to.return=getPanelDataVnames("sgp.percentiles.to.return", sgp.iter, names(tmp_sgp_data_for_analysis)),
 					grade.progression=sgp.iter[["base.gp"]],
-					content.area.progression=tail(sgp.iter[["sgp.content.areas"]], min(sgp.iter[["max.order"]], sgp.percentiles.baseline.max.order)+1),
+					content.area.progression=tail(sgp.iter[["sgp.content.areas"]], length(sgp.iter[["base.gp"]])),
 					year.progression.lags=sgp.iter[["time.lags"]],
 					num.prior=min(sgp.iter[["max.order"]], sgp.percentiles.baseline.max.order),
 					percentile.cuts=SGPstateData[[state]][["SGP_Configuration"]][["percentile.cuts"]],
+					calculate.confidence.intervals=calculate.confidence.intervals,
 					drop.nonsequential.grade.progression.variables=FALSE,
 					exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
 					sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
 					goodness.of.fit=state,
+					verbose.output=verbose.output,
+					print.other.gp=print.other.gp,
 					...)
 				suppressMessages(gc())
 			}
@@ -1077,7 +1034,7 @@ function(sgp_object,
 	sgp_object@SGP <- mergeSGP(tmp_sgp_object, sgp_object@SGP)
 
 	if (goodness.of.fit.print) gof.print(sgp_object)
-	setkey(sgp_object@Data, VALID_CASE, CONTENT_AREA, YEAR, ID) # re-key data for combineSGP, etc.
+	setkeyv(sgp_object@Data, getKey(sgp_object)) # re-key data for combineSGP, etc.
 	sgp_object@Version[["analyzeSGP"]][[as.character(gsub("-", "_", Sys.Date()))]] <- as.character(packageVersion("SGP"))
 	message(paste("Finished analyzeSGP", date(), "in", timetaken(started.at), "\n"))
 	return(sgp_object)
