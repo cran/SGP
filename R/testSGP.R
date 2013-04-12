@@ -1,6 +1,7 @@
 `testSGP` <- 
 function(
-	TEST_NUMBER, 
+	TEST_NUMBER,
+	save.results=FALSE,
 	memory.profile=FALSE) {
 
 	YEAR <- NULL
@@ -21,13 +22,15 @@ function(
 	if (1 %in% TEST_NUMBER) {
 
 	options(error=recover)
+	options(warn=2)
 	suppressPackageStartupMessages(require(parallel))
 	Demonstration_SGP <- tmp.messages <- NULL
 	number.cores <- detectCores()-1
 
 	expression.to.evaluate <- 
-		paste("Demonstration_SGP <- abcSGP(\n\tsgp_object=sgpData_LONG,\n\tsgPlot.demo.report=TRUE,\n\tparallel.config=list(BACKEND='PARALLEL', WORKERS=list(PERCENTILES=", number.cores, ", BASELINE_PERCENTILES=", number.cores, ", PROJECTIONS=", number.cores, ", LAGGED_PROJECTIONS=", number.cores, ", SUMMARY=", number.cores, ", GA_PLOTS=", number.cores, ", SG_PLOTS=1))\n)\n", sep="")
+		paste("Demonstration_SGP <- abcSGP(\n\tsgp_object=sgpData_LONG,\n\tdata_supplementary=list(INSTRUCTOR_NUMBER=sgpData_INSTRUCTOR_NUMBER),\n\tsgPlot.demo.report=TRUE,\n\tparallel.config=list(BACKEND='PARALLEL', WORKERS=list(PERCENTILES=", number.cores, ", BASELINE_PERCENTILES=", number.cores, ", PROJECTIONS=", number.cores, ", LAGGED_PROJECTIONS=", number.cores, ", SUMMARY=", number.cores, ", GA_PLOTS=", number.cores, ", SG_PLOTS=1))\n)\n", sep="")
 
+	if (save.results) expression.to.evaluate <- paste(expression.to.evaluate, "save(Demonstration_SGP, file='Demonstration_SGP.Rdata')", sep="\n")
 
 	cat("##### Begin testSGP test number 1 #####\n", fill=TRUE)
 
@@ -108,10 +111,11 @@ function(
 	if (2 %in% TEST_NUMBER) {
 
 	options(error=recover)
+	options(warn=2)
 	suppressPackageStartupMessages(require(parallel))
 	Demonstration_SGP <- tmp.messages <- NULL
-	Demonstration_Data_LONG <- subset(sgpData_LONG, YEAR %in% c("2007_2008", "2008_2009", "2009_2010", "2010_2011"))
-	Demonstration_Data_LONG_2011_2012 <- subset(sgpData_LONG, YEAR %in% c("2011_2012"))
+	Demonstration_Data_LONG <- subset(sgpData_LONG, YEAR %in% c("2008_2009", "2009_2010", "2010_2011", "2011_2012"))
+	Demonstration_Data_LONG_2012_2013 <- subset(sgpData_LONG, YEAR %in% c("2012_2013"))
 	number.cores <- detectCores()-1
 
 	### Part 1
@@ -184,7 +188,7 @@ function(
 	### Part 2
 
 	expression.to.evaluate <- 
-		paste("Demonstration_SGP <- updateSGP(\n\twhat_sgp_object=Demonstration_SGP,\n\twith_sgp_data_LONG=Demonstration_Data_LONG_2011_2012,\n\tsgPlot.demo.report=TRUE,\n\tparallel.config=list(BACKEND='PARALLEL', WORKERS=list(PERCENTILES=", number.cores, ", BASELINE_PERCENTILES=", number.cores, ", PROJECTIONS=", number.cores, ", LAGGED_PROJECTIONS=", number.cores, ", SUMMARY=", number.cores, ", GA_PLOTS=", number.cores, ", SG_PLOTS=1))\n)\n", sep="")
+		paste("Demonstration_SGP <- updateSGP(\n\twhat_sgp_object=Demonstration_SGP,\n\twith_sgp_data_LONG=Demonstration_Data_LONG_2012_2013,\n\tsgPlot.demo.report=TRUE,\n\tparallel.config=list(BACKEND='PARALLEL', WORKERS=list(PERCENTILES=", number.cores, ", BASELINE_PERCENTILES=", number.cores, ", PROJECTIONS=", number.cores, ", LAGGED_PROJECTIONS=", number.cores, ", SUMMARY=", number.cores, ", GA_PLOTS=", number.cores, ", SG_PLOTS=1))\n)\n", sep="")
 
 	cat(paste("EVALUATING:\n", expression.to.evaluate, sep=""), fill=TRUE)
 
