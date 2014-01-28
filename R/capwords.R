@@ -1,12 +1,15 @@
 `capwords` <-
 function(x, 
-	special.words = c("ELA", "II", "III", "IV", "EMH", "HS", "MS", "ES", "SES", "IEP", "ELL", "MAD", "SD", "US", "SGP")) {
+	special.words = c("ELA","I", "II", "III", "IV", "EMH", "HS", "MS", "ES", "SES", "IEP", "ELL", "MAD", "SD", "SWD", "US", "SGP", "SIMEX")) {
 
 	trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
 	if (is.null(x)) return(NULL)
+	if (is.na(x)) return(NA)
+	if (identical(x, " ")) return(" ")
 	x <- gsub("_", " ", x)
 	x <- gsub("[.]", " ", x)
+	x <- gsub("  ", " ", x)
 	x <- trim(x)
 	my.split <- function(words, split.character) {
 		tmp.split <- unlist(strsplit(words, split=split.character))

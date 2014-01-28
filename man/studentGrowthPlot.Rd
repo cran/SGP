@@ -1,8 +1,8 @@
 \name{studentGrowthPlot}
 \alias{studentGrowthPlot}
 \title{Create a student growth and achievement chart}
-\description{Function used to produce individual student growth and achievement time lines/plots for based upon output from student growth percentile
-analyses. Function is integrated with \code{SGPstateData} to accommodate state specific scales and nomenclature including performance
+\description{Function used to produce individual student growth and achievement chart (an achievement time lines indicating student growth) based upon output from student growth percentile
+and student growth projection analyses. Function is integrated with \code{SGPstateData} to accommodate state specific scales and nomenclature including performance
 level names. See Betebenner (2012) for discussion}
 \usage{
 studentGrowthPlot(Scale_Scores,
@@ -10,9 +10,11 @@ studentGrowthPlot(Scale_Scores,
 	Achievement_Levels, 
 	SGP, 
 	SGP_Levels, 
-	Grades, 
-	Cuts_NY1,
-	Connect_Points="Arrows",
+	Grades,
+	Content_Areas,
+	Cuts,
+	SGP_Targets,
+	SGP_Scale_Score_Targets,
 	Cutscores,
 	Report_Parameters) 
 }
@@ -36,22 +38,28 @@ studentGrowthPlot(Scale_Scores,
 	\item{Grades}{
 		A vector of historical grades student was tested in.
 	}
-	\item{Cuts_NY1}{
-		A vector of cuts scores for next year.
+	\item{Content_Areas}{
+		A vector of historical content areas student was tested in.
 	}
-	\item{Connect_Points}{
-		Argument specifying how historical achievement scores are connected in the studentGrowthPlot. Currently accepts either \code{Arrows}, the default, or 
-		\code{None}.
+	\item{Cuts}{
+		A list of cuts scores for NY1, NY2, and NY3.
+	}
+	\item{SGP_Targets}{
+		A list of CUKU, CUKU_Current, MUSU, MUSU_Current targets.
+	}
+	\item{SGP_Scale_Score_Targets}{
+		A list of CUKU, CUKU_Current, MUSU, MUSU_Current scale score targets.
 	}
 	\item{Cutscores}{
 		A data.frame of long formatted achievement level cutscores.
 	}
 	\item{Report_Parameters}{
-		A list containing arguments: \code{Current_Year}, \code{Content_Area}, \code{State}.
+		A list containing arguments: \code{Current_Year}, \code{Content_Area}, \code{State}, \code{Denote_Content_Area}, \code{SGP_Targets}, and \code{Configuration}.
 	}
 }
-\details{Function currently used as part of SGP package to produce student growth charts for states. More documentation to follow.}
-\value{Returns a studentGrowthPlot graphical object for the content area specified. More documentation to follow.}
+\details{Function currently used as part of SGP package to produce student growth charts for states. Function is usally called from the higher level function \code{\link{visualizeSGP}} which
+allows for the creation of a student growth plot catalog for each school with student reports organized by grade and student name.} 
+\value{Returns a student growth plot graphical object that is usually exported in either PDF or PNG format.}
 \author{Damian W. Betebenner \email{dbetebenner@nciea.org}}
 \references{
 Betebenner, D. W. (2012). Growth, standards, and accountability. In G. J. Cizek,

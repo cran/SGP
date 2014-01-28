@@ -1,4 +1,25 @@
-Changes in version: SGP_1.0-9.8
+Changes in version: SGP_1.2-0.0
+
+  USER VISIBLE CHANGES:
+
+	  o Modified and corrected citation in LICENSE.
+	  o Added capability to calculate student growth projections for End of Course testing sequences.
+	  o Added capability to calculate scale score targets to combineSGP and visualize them on student growth plots.
+	  o Added capability to calculate weighted medians and weighted means in summarizeSGP.
+	  o Added Guatemala meta-data to SGPstateData. 
+	  o Added argument 'steps' to updateSGP allowing user to specify steps that abcSGP uses as part of updateSGP. 
+	  o Added MS baseline coefficient matrices to SGPstateData. 
+	  o Corrected error message provided in summarizeSGP for INSTRUCTOR_NUMBER summaries. 
+	  o outputSGP output.type='SchoolView' now outputs JSON data for tables. 
+	  o Added argument return.norm.group.scale.scores to studentGrowthPercentiles to return score vector of each student associated with their SGP. 
+	  o Changed growth trajectory to distinguishing color on growth achievement plots.
+	  o Added argument sgp.cohort.size to studentGrowthPercentiles to control minimum cohort size restriction.
+	  o summarizeSGP now calculates bootstrap standard errors as well as bootstrap confidence intervals.
+	  o outputSGP now includes ability to export data for FINAL YEAR of long format 'LONG_FINAL_YEAR_Data'.
+	  o combineSGP now produces current year targets as well as lagged targets adding arguments 'sgp.projections' and 'sgp.projections.baseline'.
+	  o student growth plot now functions with end of course tests. See testSGP(4) for an implemented example.
+
+Changes in version: SGP_1.1-0.0
 
   USER VISIBLE CHANGES:
 
