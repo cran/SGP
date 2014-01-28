@@ -33,12 +33,12 @@ function(sgp_object,
 	## checkchangeVariableClassVariableClass
 
 	changeVariableClass <- function(my.data, convert.tf, data.slot) {
-		if (!data.slot=="@Data") {
-			message(paste("\tNOTE: ID in", data.slot, "converted from class factor to character to accomodate data.table >= 1.8.0 changes."))
+		if (!data.slot=="@Data" & !data.slot=="@Data_Supplementary") {
+			message(paste("\tNOTE: ID in", data.slot, "converted from class factor to character to accommodate data.table >= 1.8.0 changes."))
 			my.data[["ID"]] <- as.character(my.data[["ID"]])			
 		} else {
 			for (my.variable in c("ID", "VALID_CASE", "CONTENT_AREA", "YEAR", "GRADE")[convert.tf]) {
-				message(paste("\tNOTE:", my.variable, "in", data.slot, "converted from class ", class(my.data[[my.variable]]), " to character to accomodate data.table >= 1.8.0 changes."))
+				message(paste("\tNOTE:", my.variable, "in", data.slot, "converted from class ", class(my.data[[my.variable]]), " to character to accommodate data.table >= 1.8.0 changes."))
 				my.data[[my.variable]] <- as.character(my.data[[my.variable]])
 			}
 		}
@@ -56,6 +56,16 @@ function(sgp_object,
 
 	if (any(tmp.check <- checkVariableClass(sgp_object@Data, id.only=FALSE))) {
 		sgp_object@Data <- changeVariableClass(sgp_object@Data, convert.tf=tmp.check, data.slot="@Data")
+	}
+
+	## Check class of variables in @Data_Supplementary
+	
+	if (!is.null(sgp_object@Data_Supplementary)) {
+		for(j in 1:length(sgp_object@Data_Supplementary)) {
+			if (any(tmp.check <- checkVariableClass(sgp_object@Data_Supplementary[[j]], id.only=FALSE))) {
+				sgp_object@Data_Supplementary[[j]] <- changeVariableClass(sgp_object@Data_Supplementary[[j]], convert.tf=tmp.check, data.slot="@Data_Supplementary")
+			}
+		}
 	}
 
 	## Check class and construction of coefficient matrices
@@ -114,6 +124,27 @@ function(sgp_object,
 		setnames(sgp_object@Data, i, paste(i, "3_YEAR", sep="_"))
 	}
 
+	## Add CURRENT to names of straight projection targets
+
+	for (i in grep("LAGGED", names(sgp_object@SGP[['SGProjections']]), value=TRUE, invert=TRUE)) {
+		tmp.names <- grep("YEAR", names(sgp_object@SGP[['SGProjections']][[i]]), value=TRUE)
+		if (length(grep("CURRENT", tmp.names))!=length(tmp.names)) {
+			setnames(sgp_object@SGP[['SGProjections']][[i]], tmp.names, paste(tmp.names, "CURRENT", sep="_"))
+			message(paste("\tNOTE: Adding '_CURRENT' to non-lagged variable names in @SGP[['SGProjections']][['", i, "']]", sep=""))
+		}
+	}
+
+	## Test if SCALE_SCORE and SCALE_SCORE_PRIOR are of class numeric and convert if not
+
+	if (!is.double(sgp_object@Data[['SCALE_SCORE']])) {
+		sgp_object@Data[['SCALE_SCORE']] <- as.numeric(sgp_object@Data[['SCALE_SCORE']])
+		message("\tNOTE: Converting SCALE_SCORE to class 'numeric'.")
+	}
+
+	if ("SCALE_SCORE_PRIOR" %in% names(sgp_object@Data) && !is.double(sgp_object@Data[['SCALE_SCORE_PRIOR']])) {
+		sgp_object@Data[['SCALE_SCORE_PRIOR']] <- as.numeric(sgp_object@Data[['SCALE_SCORE_PRIOR']])
+		message("\tNOTE: Converting SCALE_SCORE_PRIOR to class 'numeric'.")
+	}
 
 	## Return sgp_object	
 

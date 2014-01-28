@@ -17,11 +17,12 @@ summarizeSGP(sgp_object,
            summarizeSGP.baseline=NULL,
            projection.years.for.target=3,
            save.old.summaries=FALSE,
+	   highest.level.summary.grouping="STATE",
            parallel.config=NULL) 
 }
 
 \arguments{
-  \item{sgp_object}{A list containing long formatted data in the \code{Student} slot. If summaries of student growth percentiles are requested, those quantities must first be produced (possibly by first using \code{\link{analyzeSGP}}) and subsequently combined with the \code{Student} data (possibly with \code{\link{combineSGP}}).
+  \item{sgp_object}{A list containing long formatted data in the \code{@Data} slot. If summaries of student growth percentiles are requested, those quantities must first be produced (possibly by first using \code{\link{analyzeSGP}}) and subsequently combined with the \code{@Data} data (possibly with \code{\link{combineSGP}}).
   }
   \item{state}{Acronym indicating state associated with the summaries for access to assessment program information embedded in \code{SGPstateData}.
   }
@@ -74,14 +75,16 @@ All group slots MUST be included in the list, although \code{NULL} can be provid
 }
 For \code{CSEM} analysis this argument requires that simulated SGPs have been produced (see \code{\link{analyzeSGP}} for more information). List slots set to \code{NULL} will not produce confidence intervals. NOTE: This is currently an experimental functionality and is very memory intensive. Groups to be included should be identified selectively! The default 95\% confidence intervals are provided in the selected summary tables as two additional columns named \code{LOWER_MEDIAN_SGP_95_CONF_BOUND} and \code{UPPER_MEDIAN_SGP_95_CONF_BOUND}. 
   }
-\item{produce.all.summary.tables}{A boolean variable, defaults to FALSE, indicating whether the function should produce ALL possible summary table. By default, a set of approximately 70 tables are produced that are used in other parts of the packages (e.g., bubblePlots).}
-\item{summarizeSGP.baseline}{A boolean variable, defaults to FALSE, indicating whether the function should utilize baseline sgp for summary table production. By default, 
+\item{produce.all.summary.tables}{A Boolean variable, defaults to FALSE, indicating whether the function should produce ALL possible summary table. By default, a set of approximately 70 tables are produced that are used in other parts of the packages (e.g., bubblePlots).}
+\item{summarizeSGP.baseline}{A Boolean variable, defaults to FALSE, indicating whether the function should utilize baseline sgp for summary table production. By default, 
 a set of approximately 100 tables are produced that are used in other parts of the packages (e.g., bubblePlots).}
 \item{projection.years.for.target}{An integer argument indicating \code{SGP_TARGET} variables to summarize based upon years projected forward. Default is 3 years which is what is generally used by
 most states.
 }
-\item{save.old.summaries}{A boolean argument, defaults to FALSE, indicating whether to save the @Summary slot (if not NULL) prior to calculating new summaries. By defaulting to FALSE, the function
+\item{save.old.summaries}{A Boolean argument, defaults to FALSE, indicating whether to save the \code{@Summary} slot (if not NULL) prior to calculating new summaries. By defaulting to FALSE, the function
 overwrites previous (e.g., last year's summaries) summaries.
+}
+\item{highest.level.summary.grouping}{A character vector indicating the highest level for summary groups, defaults to 'STATE'.
 }
  \item{parallel.config}{A named list with, at a minimum, two elements indicating 1) the BACKEND package to be used for parallel computation and 2) the WORKERS list to specify the number of processors to be used in each major analysis.  The BACKEND element can be set = to \code{FOREACH} or \code{PARALLEL}.  Please consult the manuals and vignettes for information of these packages!  The \code{\link{analyzeSGP}} help page contains more thorough explanation and examples of the \code{parallel.config} setup. 
 
@@ -98,7 +101,7 @@ Example parallel use cases are provided below.
 \details{Function makes use of the \code{foreach} package to parallel process summary tables of student data. The proper choice of parallel backend is dependent upon the user's operating system, software and system memory capacity. Please see the \code{foreach} documentation for details. By default, the function will process the summary tables sequentially.
 }
 
-\value{Function returns lists containing the summary tables as data.table objects in the \code{Summary} slot of the SGP data object. Each \code{institution} has a slot in the \code{Summary} list. 
+\value{Function returns lists containing the summary tables as data.table objects in the \code{@Summary} slot of the SGP data object. Each \code{institution} has a slot in the \code{@Summary} list. 
 }
 
 \author{Damian W. Betebenner \email{dbetebenner@nciea.org} and Adam Van Iwaarden \email{vaniwaarden@colorado.edu}}

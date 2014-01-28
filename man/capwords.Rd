@@ -7,7 +7,8 @@ The function capwords converts characters to mixed case character as intelligent
 
 \usage{
 capwords(x,
-	 special.words = c("ELA", "II", "III", "IV", "EMH", "HS", "MS", "ES", "SES", "IEP", "ELL", "MAD", "SD", "US", "SGP"))
+	 special.words = c("ELA","I", "II", "III", "IV", "EMH", "HS", "MS", "ES", 
+	 		"SES", "IEP", "ELL", "MAD", "SD", "SWD", "US", "SGP", "SIMEX"))
 }
 
 \arguments{
@@ -33,6 +34,13 @@ capwords("JOHN'S") ## John's
 
 test.vector <- paste("TEST", 1:10, sep="")
 sapply(test.vector, capwords)
+
+
+## With factors, convert levels instead of the entire vector
+
+test.factor <- factor(paste("TEST", rep(letters[1:10], each=50)))
+levels(test.factor) <- sapply(levels(test.factor), capwords)
+levels(test.factor)
 }  
 }
 

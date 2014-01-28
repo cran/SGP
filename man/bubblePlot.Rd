@@ -2,13 +2,14 @@
 \alias{bubblePlot}
 \title{Core bubblePlot function for SGP}
 \description{
-Function to create bubble plots associated with student growth percentile results. The function is adaptable to many representation but 
+Function to create bubble plots associated with student growth percentile and percentile growth trajectory results. The function is adaptable to many representations but 
 is used in conjunction with results derived from \code{\link{summarizeSGP}} to represent summary level results of growth against achievement 
 (usually, median student growth percentile against percentage at/above proficient). The function has MANY options and users are advised to 
 read this documentation thoroughly as well as investigate the source code for the function itself to see what the many different representations 
 that are possible. The function has the ability to produce interactive data tips using the \code{pdf2} package available on R-Forge. This package is NOT
 installed as part of the SGP package and must be installed separately from the package to take advantage of this functionality of the \code{bubblePlot} function.
-To install \code{pdf2} from the \code{R} prompt type: \code{install.packages("pdf2",repos="http://R-Forge.R-project.org")}
+To install \code{pdf2} from the \code{R} prompt type: \code{install.packages("pdf2",repos="http://R-Forge.R-project.org")}. The use of the pdf2 package is 
+scheduled to be deprecated as it is no longer maintained by the creator and requires use of a pre 2.14 version of R.
 }
 \usage{
 bubblePlot(
@@ -33,6 +34,7 @@ bubblePlot(
 	bubble_plot_titles.LEGEND1="School Size",
 	bubble_plot_titles.LEGEND2_P1=NULL,
 	bubble_plot_titles.LEGEND2_P2=NULL,
+	bubble_plot_titles.NOTE=NULL,
 	bubble_plot_configs.BUBBLE_MIN_MAX=c(0.03, 0.03),
 	bubble_plot_configs.BUBBLE_X_TICKS=seq(0,100,10),
 	bubble_plot_configs.BUBBLE_X_TICKS_SIZE=c(rep(0.6, 5), 1, rep(0.6, 5)),
@@ -67,12 +69,12 @@ bubblePlot(
 	A vector of Y coordinates for the bubbles to be plotted.
 	}
 	\item{bubble_plot_data.SUBSET}{
-	A boolean vector indicating a subset of the bubbles to be highlighted and plotted. When BUBBLE_TIPS are indicated, only subsetted bubbles will show bubble tips.
+	A Boolean vector indicating a subset of the bubbles to be highlighted and plotted. When BUBBLE_TIPS are indicated, only subsetted bubbles will show bubble tips.
 	To further accentuate highlight bubbles, their radius can be altered using the bubble_plot_configs.BUBBLE_SUBSET_INCREASE argument. 
 	Default value is \code{bubble_plot_data.SUBSET=NULL}.
 	}
 	\item{bubble_plot_data.INDICATE}{
-	A boolean vector indicating whether to attached a label to to further highlight in a manner suitable for printing. Usually done for few bubbles.
+	A Boolean vector indicating whether to attached a label to to further highlight in a manner suitable for printing. Usually done for few bubbles.
 	Default value is \code{bubble_plot_data.INDICATE=NULL}.
 	}
 	\item{bubble_plot_data.BUBBLE_CENTER_LABEL}{
@@ -130,6 +132,10 @@ bubblePlot(
 	}
 	\item{bubble_plot_titles.LEGEND2_P2}{
 	The 2nd line of the title of the lower legend of the bubble plot. Default value is \code{bubble_plot_titles.LEGEND2_P2=NULL}.
+	}
+	\item{bubble_plot_titles.NOTE}{
+	A note, message, description, etc to be placed in lower half of the legend. Default value is \code{bubble_plot_titles.NOTE=NULL}.  
+	Note that this can only be used if there are not LEVELS (and therefore no second legend).
 	}
 	\item{bubble_plot_configs.BUBBLE_MIN_MAX}{
 	A vector of length two indicating min and max values for the bubbles in inches. Default value is \code{bubble_plot_configs.BUBBLE_MIN_MAX=c(0.03, 0.03)}.

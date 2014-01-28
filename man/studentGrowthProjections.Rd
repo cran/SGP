@@ -10,10 +10,12 @@ studentGrowthProjections(panel.data,
                          sgp.labels,               
                          grade.progression,
                          content_area.progression=NULL,
+			 year_lags.progression=NULL,
                          grade.projection.sequence=NULL,
                          content_area.projection.sequence=NULL,
-                         max.forward.progression.years,
-                         max.forward.progression.grade, 
+                         year_lags.projection.sequence=NULL,
+                         max.forward.progression.years=NULL,
+                         max.forward.progression.grade=NULL, 
                          max.order.for.progression,  
                          use.my.knots.boundaries,   
                          use.my.coefficient.matrices,  
@@ -26,13 +28,14 @@ studentGrowthProjections(panel.data,
                          percentile.trajectory.values=NULL, 
                          isotonize=TRUE,
                          lag.increment=0,
+			 sgp.exact.grade.progression=FALSE,
                          projcuts.digits=NULL,
                          print.time.taken=TRUE)
 }
 
 \arguments{
   \item{panel.data}{Object of class \code{list} containing longitudinal student data in wide format in \code{panel.data$Panel_Data}.  See \code{\link{studentGrowthPercentiles}}
-    for data requirements.  List object must also contain \code{panel.data$Knots_Boundaries} and \code{panel.data$Coefficient_Matrices}.  See \code{\link{sgpData}} for an 
+    for data requirements.  List object must also contain \code{panel.data$Knots_Boundaries} and \code{panel.data$Coefficient_Matrices}.  See \code{\link[SGPdata]{sgpData}} for an 
     exemplar data set. NOTE: The column position of the variables IS IMPORTANT, NOT the names of the variables. 
   }
   \item{sgp.labels}{REQUIRED. A list, \code{sgp.labels}, of the form  \code{list(my.year= ,} \cr
@@ -43,16 +46,23 @@ studentGrowthProjections(panel.data,
   \item{grade.progression}{REQUIRED. Argument to specify a student grade/time progression in the data to be used for percentile growth projection/trajectory calculation. 
     This argument helps in replacing previous arguments \code{num.panels},  \code{max.num.scores}, and \code{num.prior.scores}.
   }
-  \item{content_area.progression}{Argument to specify a student content area progression in the data supplied for percentile growth projection/trajectory calculation. 
+  \item{content_area.progression}{Argument to specify a student content area progression in the data supplied for percentile growth projection/trajectory calculation. Defaults to NULL and is
+  calculated from supplied argument 'sgp.labels'.
+  }
+  \item{year_lags.progression}{Argument to specify a student year progression lags in the data supplied for percentile growth projection/trajectory calculation. Defaults to NULL assuming
+  annual increment
+  calculated from supplied argument 'sgp.labels' and 'grade.progression'.
   }
   \item{grade.projection.sequence}{Argument to manually supply grade sequence over which projection is made. Defaults to NULL and is calculated from available data.
   }
-  \item{content_area.projection.sequence}{Argument to manually supply content area sequence over which projection is made. Defaults to NULL and is calculated from available data.
+  \item{content_area.projection.sequence}{Argument to manually supply content area sequence over which projection is made. Defaults to NULL and assumes current year content area is repeated going forward.
   }
-  \item{max.forward.progression.years}{The MAXIMUM number of years/grades/time periods to project forward conditional upon available coefficient matrices. If missing, function
+  \item{year_lags.projection.sequence}{Argument to manually supply year lags sequence over which projection is made. Length of supplied sequence should be 1 less than length of supplied 'grade.projection.sequence' and 'content_area.projection.sequence'. Defaults to NULL and assumes annual (1 year lags).
+  }
+  \item{max.forward.progression.years}{The MAXIMUM number of years/grades/time periods to project forward conditional upon available coefficient matrices. If missing/NULL (the default), function
   will project forward as far as allowed by available coefficient matrices. 
   }
-  \item{max.forward.progression.grade}{The MAXIMUM grade to project forward based upon available coefficient matrices. If missing, function
+  \item{max.forward.progression.grade}{The MAXIMUM grade to project forward based upon available coefficient matrices. If missing/NULL (the default), function
   will project forward as far as allowed by available coefficient matrices. 
   }
   \item{max.order.for.progression}{Argument to specify the maximum coefficient matrix order to be used for percentile growth projection/trajectory calculation. 
@@ -108,6 +118,8 @@ studentGrowthProjections(panel.data,
   }
   \item{lag.increment}{A non-negative integer (defaults to 0) indicating the lag associated with the data supplied for projections. Only relevant if Cutscores or Knots and Boundaries are year dependent. 
   }
+  \item{sgp.exact.grade.progression}{A Boolean argument (defaults to FALSE) indicating whether to use the exact grade progression supplied or all orders up to the grade progression supplied.
+  }
   \item{projcuts.digits}{The number of digits (defaults to NULL/0) percentile trajectories (if requested) are formatted.
   }
   \item{print.time.taken}{Boolean argument (defaults to TRUE) indicating whether to print message indicating information on studentGrowthProjection analysis and time taken.
@@ -141,7 +153,7 @@ Dette, H. & Volgushev, S. (2008). Non-crossing non-parametric estimates of quant
   \code{performance.level.cutscores}) or included in the \code{SGPstateData} data set.  If your state's cutscores are not included or are incorrect, please contact \email{dbetebenner@nciea.org} to have cutscores added or corrected!
 }
 
-\seealso{\code{\link{studentGrowthPercentiles}}, \code{\link{sgpData}}}
+\seealso{\code{\link{studentGrowthPercentiles}}, \code{\link[SGPdata]{sgpData}}}
 
 \examples{
 \dontrun{

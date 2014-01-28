@@ -7,16 +7,16 @@ testSGP runs large scale tests of the SGP package to test for consistent perform
 
 \usage{
 testSGP(TEST_NUMBER,
-	save.results=FALSE,
+	save.results=TRUE,
 	memory.profile=FALSE)
 }
 
 \arguments{
   \item{TEST_NUMBER}{An integer indicating the test to be run. Type 'testSGP()' to see list and description of available tests. 
   }
-  \item{save.results}{A boolean variable, defaulting to FALSE, indicating whether the results of the analysis is saved to the working directory. 
+  \item{save.results}{A Boolean variable, defaulting to FALSE, indicating whether the results of the analysis is saved to the working directory. 
   }
-  \item{memory.profile}{A boolean variable indicating whether to use memory profiling via \code{Rprof}.  Experimental. Defaults to FALSE. 
+  \item{memory.profile}{A Boolean variable indicating whether to use memory profiling via \code{Rprof}.  Experimental. Defaults to FALSE. 
   }
 }
 
@@ -33,8 +33,15 @@ testSGP(TEST_NUMBER,
 testSGP(1)
 
 ## testSGP(2) runs abcSGP for all years in sgpData_LONG except most recent year than adds 
-## in most recent year and runs current year analyses
+## in most recent year and runs current year analyses using updateSGP
 testSGP(2)
+
+## testSGP(3) runs abcSGP on grade progressions including End of Course Tests in Mathematics 
+## (Algebra I and Algebra II) and Reading (Grade 9 Literature and American Literature)
+testSGP(3)
+
+## testSGP(4) runs prepareSGP and analyzeSGP with simex adjustment for measurement error
+testSGP(4)
 }  
 }
 

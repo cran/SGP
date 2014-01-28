@@ -1,7 +1,7 @@
 `outputSGP` <- 
 function(sgp_object,
 	state=NULL,
-	output.type=c("LONG_Data", "WIDE_Data", "INSTRUCTOR_Data"),
+	output.type=c("LONG_Data", "LONG_FINAL_YEAR_Data", "WIDE_Data", "INSTRUCTOR_Data"),
 	baseline.sgps=FALSE,
 	outputSGP_SUMMARY.years=NULL,
 	outputSGP_SUMMARY.content_areas=NULL,
@@ -23,7 +23,7 @@ function(sgp_object,
 	### Define varaibles (to prevent R CMD check warnings)
 
 	SCALE_SCORE <- CONTENT_AREA <- YEAR <- GRADE <- ID <- ETHNICITY <- GENDER <- LAST_NAME <- FIRST_NAME <- VALID_CASE <- DISTRICT_NUMBER <- SCHOOL_NUMBER <- YEAR_BY_CONTENT_AREA <- NULL
-	names.type <- names.provided <- names.output <- names.sgp <- STATE_ENROLLMENT_STATUS <- EMH_LEVEL <- NULL
+	names.type <- names.provided <- names.output <- names.sgp <- STATE_ENROLLMENT_STATUS <- EMH_LEVEL <- STATE_ASSIGNED_ID <- .N <- TRANSFORMED_SCALE_SCORE <- NULL
 
 	### Create state (if missing) from sgp_object (if possible)
 
@@ -47,7 +47,6 @@ function(sgp_object,
 	###
 	###############################################
 
-
 	if ("LONG_Data" %in% output.type) {
 
 		### Create state name
@@ -64,8 +63,11 @@ function(sgp_object,
 		message(paste("\tStarted LONG data production in outputSGP", date()))
 
 		names.in.data <- which(sgp_object@Names[['names.sgp']] %in% names(sgp_object@Data))
-		if (outputSGP.translate.names) setnames(sgp_object@Data, sgp_object@Names[['names.sgp']][names.in.data], sgp_object@Names[['names.provided']][names.in.data])
-		write.table(sgp_object@Data, file=file.path(outputSGP.directory, paste(tmp.state, "SGP_LONG_Data.txt", sep="_")), sep="|", quote=FALSE, row.names=FALSE, na="")
+		output.data <- copy(sgp_object@Data)
+		if (outputSGP.translate.names) setnames(output.data, sgp_object@Names[['names.sgp']][names.in.data], sgp_object@Names[['names.provided']][names.in.data])
+		assign(paste(tmp.state, "SGP_LONG_Data", sep="_"), output.data)
+		save(list=paste(tmp.state, "SGP_LONG_Data", sep="_"), file=file.path(outputSGP.directory, paste(tmp.state, "SGP_LONG_Data.Rdata", sep="_")))
+		write.table(output.data, file=file.path(outputSGP.directory, paste(tmp.state, "SGP_LONG_Data.txt", sep="_")), sep="|", quote=FALSE, row.names=FALSE, na="")
 		if (identical(.Platform$OS.type, "unix")) {
 			if (file.info(file.path(outputSGP.directory, paste(tmp.state, "SGP_LONG_Data.txt", sep="_")))$size > 4000000000) {
 				tmp.working.directory <- getwd()
@@ -78,16 +80,67 @@ function(sgp_object,
 				setwd(file.path(outputSGP.directory))
 				if (paste(tmp.state, "SGP_LONG_Data.txt.zip", sep="_") %in% list.files()) file.remove(paste(tmp.state, "SGP_LONG_Data.txt.zip", sep="_"))
 				suppressMessages(
-					zip(paste(tmp.state, "SGP_LONG_Data.txt.zip", sep="_"), paste(tmp.state, "SGP_LONG_Data.txt", sep="_"))
+					zip(paste(tmp.state, "SGP_LONG_Data.txt.zip", sep="_"), paste(tmp.state, "SGP_LONG_Data.txt", sep="_"), flags="-rmq")
 				)
 				setwd(tmp.working.directory)
 			}
 		}
-		if (outputSGP.translate.names) setnames(sgp_object@Data, sgp_object@Names[['names.provided']][names.in.data], sgp_object@Names[['names.sgp']][names.in.data])
 
 		message(paste("\tFinished LONG data production in outputSGP", date(), "in", timetaken(started.at), "\n"))
 
 	} ### END if LONG_Data %in% output.type
+
+
+	###############################################
+	###
+	### LONG_FINAL_YEAR_Data
+	###
+	###############################################
+
+	if ("LONG_FINAL_YEAR_Data" %in% output.type) {
+
+		### Create state name
+
+		if (state %in% c(state.abb, "DEMO")) {
+			tmp.state <- gsub(" ", "_", c(state.name, "Demonstration")[state==c(state.abb, "DEMO")])
+		} else {
+			tmp.state <- gsub(" ", "_", state)
+		}
+
+		### Write LONG table
+
+		started.at <- proc.time()
+		message(paste("\tStarted LONG FINAL YEAR data production in outputSGP", date()))
+
+		final.year <- tail(sort(unique(sgp_object@Data$YEAR)), 1)
+		names.in.data <- which(sgp_object@Names[['names.sgp']] %in% names(sgp_object@Data))
+		output.data.final.year <- subset(sgp_object@Data, YEAR==final.year)
+		if (outputSGP.translate.names) setnames(output.data.final.year, sgp_object@Names[['names.sgp']][names.in.data], sgp_object@Names[['names.provided']][names.in.data])
+		assign(paste(tmp.state, "SGP_LONG_Data", final.year, sep="_"), output.data.final.year)
+		save(list=paste(tmp.state, "SGP_LONG_Data", final.year, sep="_"), file=file.path(outputSGP.directory, paste(tmp.state, "_SGP_LONG_Data_", final.year, ".Rdata", sep="")))
+		write.table(output.data.final.year, file=file.path(outputSGP.directory, paste(tmp.state, "_SGP_LONG_Data_", final.year, ".txt", sep="")), 
+			sep="|", quote=FALSE, row.names=FALSE, na="")
+		if (identical(.Platform$OS.type, "unix")) {
+			if (file.info(file.path(outputSGP.directory, paste(tmp.state, "_SGP_LONG_Data_", final.year, ".txt", sep="")))$size > 4000000000) {
+				tmp.working.directory <- getwd()
+				setwd(file.path(outputSGP.directory))
+				if (paste(tmp.state, "_SGP_LONG_Data_", final.year, ".txt.gz", sep="") %in% list.files()) file.remove(paste(tmp.state, "_SGP_LONG_Data_", final.year, ".txt.gz", sep=""))
+				system(paste("gzip", paste(tmp.state, "_SGP_LONG_Data_", final.year, ".txt", sep="")))
+				setwd(tmp.working.directory)
+			} else {
+				tmp.working.directory <- getwd()
+				setwd(file.path(outputSGP.directory))
+				if (paste(tmp.state, "_SGP_LONG_Data_", final.year, ".txt.zip", sep="") %in% list.files()) file.remove(paste(tmp.state, "_SGP_LONG_Data_", final.year, ".txt.zip", sep=""))
+				suppressMessages(
+					zip(paste(tmp.state, "_SGP_LONG_Data_", final.year, ".txt.zip", sep=""), paste(tmp.state, "_SGP_LONG_Data_", final.year, ".txt", sep=""), flags="-rmq")
+				)
+				setwd(tmp.working.directory)
+			}
+		}
+
+		message(paste("\tFinished LONG FINAL YEAR data production in outputSGP", date(), "in", timetaken(started.at), "\n"))
+
+	} ### END if LONG_FINAL_YEAR_Data %in% output.type
 
 
 	###############################################
@@ -134,7 +187,7 @@ function(sgp_object,
 				setwd(file.path(outputSGP.directory))
 				if (paste(tmp.state, "SGP_WIDE_Data.txt.zip", sep="_") %in% list.files()) file.remove(paste(tmp.state, "SGP_WIDE_Data.txt.zip", sep="_"))
 				suppressMessages(
-					zip(paste(tmp.state, "SGP_WIDE_Data.txt.zip", sep="_"), paste(tmp.state, "SGP_WIDE_Data.txt", sep="_"))
+					zip(paste(tmp.state, "SGP_WIDE_Data.txt.zip", sep="_"), paste(tmp.state, "SGP_WIDE_Data.txt", sep="_"), flags="-rmq")
 				)
 				setwd(tmp.working.directory)
 			}
@@ -185,7 +238,7 @@ function(sgp_object,
 				setwd(file.path(outputSGP.directory))
 				if (paste(tmp.state, "SGP_INSTRUCTOR_Data.txt.zip", sep="_") %in% list.files()) file.remove(paste(tmp.state, "SGP_INSTRUCTOR_Data.txt.zip", sep="_"))
 				suppressMessages(
-					zip(paste(tmp.state, "SGP_INSTRUCTOR_Data.txt.zip", sep="_"), paste(tmp.state, "SGP_INSTRUCTOR_Data.txt", sep="_"))
+					zip(paste(tmp.state, "SGP_INSTRUCTOR_Data.txt.zip", sep="_"), paste(tmp.state, "SGP_INSTRUCTOR_Data.txt", sep="_"), flags="-rmq")
 				)
 				setwd(tmp.working.directory)
 			}
@@ -290,17 +343,35 @@ function(sgp_object,
 				tmp.df[['EMH_LEVEL']] <- substr(tmp.df$EMH_LEVEL, 1, 1)
 			}
 			if ("GENDER" %in% names(tmp.df) && is.factor(tmp.df$GENDER)) {
-				tmp.df[['GENDER']] <- substr(tmp.df$GENDER, 1, 1)
+				tmp.female <- grep("FEMALE", levels(sgp_object@Data$GENDER), ignore.case=TRUE)
+				if (tmp.female==1) {
+					levels(tmp.df$GENDER) <- c("F", "M")
+				} else {
+					levels(tmp.df$GENDER) <- c("M", "F")
+
+				}
 			}
 			for (names.iter in c(outputSGP.student.groups, "SCHOOL_ENROLLMENT_STATUS", "DISTRICT_ENROLLMENT_STATUS", "STATE_ENROLLMENT_STATUS") %w/o% grep("ETHNICITY", outputSGP.student.groups, value=TRUE)) {
 				if (names.iter %in% names(tmp.df) && is.factor(tmp.df[[names.iter]])) {
 					tmp.df[[names.iter]] <- as.character(tmp.df[[names.iter]])
 					tmp.df[[names.iter]][grep("Yes", tmp.df[[names.iter]])] <- "Y"
-					tmp.df[[names.iter]][grep("No", tmp.df[[names.iter]])] <- "N"
+					if (names.iter=="ESEA_WAIVER_SUBGROUPS") {
+						tmp.df[[names.iter]][intersect(grep("No", tmp.df[[names.iter]]), grep("Not", tmp.table[["ESEA_WAIVER_SUBGROUPS"]], invert=TRUE))] <- "N"
+					} else {
+						tmp.df[[names.iter]][grep("No", tmp.df[[names.iter]])] <- "N"
+					}
 					tmp.df[[names.iter]][tmp.df[[names.iter]]=="Students with Disabilities (IEP)"] <- "Y"
 					tmp.df[[names.iter]][tmp.df[[names.iter]]=="High Need Status: ELL, Special Education, or Disadvantaged Student"] <- "Y"
 					tmp.df[[names.iter]][tmp.df[[names.iter]]=="Economically Disadvantaged"] <- "Y"
 					tmp.df[[names.iter]][tmp.df[[names.iter]]=="English Language Learners (ELL)"] <- "N"
+					if (names.iter=="ELL_STATUS_MULTILEVEL" & state=="HI") {
+						tmp.df[[names.iter]][tmp.df[[names.iter]]=="Currently ELL"] <- "CE"
+						tmp.df[[names.iter]][tmp.df[[names.iter]]=="Formerly ELL"] <- "FE"
+						tmp.df[[names.iter]][tmp.df[[names.iter]]=="Monitoring ELL"] <- "ME"
+						tmp.df[[names.iter]][tmp.df[[names.iter]]=="Not ELL"] <- "NE"
+						tmp.df[[names.iter]][tmp.df[[names.iter]]=="Parent Refusal"] <- "PR"
+						tmp.df[[names.iter]][tmp.df[[names.iter]]=="Potential ELL"] <- "PE"
+					}
 				}
 			}
 			return(tmp.df)
@@ -354,12 +425,12 @@ function(sgp_object,
 
 		tmp.districts.and.schools <- unique(data.table(sgp_object@Data[CJ("VALID_CASE", tmp.last.year, tmp.content_areas)][,
 								list(VALID_CASE, YEAR, CONTENT_AREA, DISTRICT_NUMBER, SCHOOL_NUMBER, EMH_LEVEL)], key=key(sgp_object)))
-		report.ids <- data.table(sgp_object@Data[tmp.districts.and.schools][VALID_CASE=="VALID_CASE" & STATE_ENROLLMENT_STATUS=="Enrolled State: Yes"][, 
+		report.ids <- data.table(sgp_object@Data[tmp.districts.and.schools][VALID_CASE=="VALID_CASE" & STATE_ENROLLMENT_STATUS=="Enrolled State: Yes" & !is.na(EMH_LEVEL)][, 
 			list(ID, FIRST_NAME, LAST_NAME, DISTRICT_NUMBER, SCHOOL_NUMBER, EMH_LEVEL)], key=c("ID", "FIRST_NAME", "LAST_NAME", "DISTRICT_NUMBER", "SCHOOL_NUMBER"))
 		setkey(report.ids, ID)
 		report.ids <- unique(report.ids)
 		setkeyv(sgp_object@Data, c("ID", "CONTENT_AREA", "YEAR", "VALID_CASE"))
-		tmp.table <- sgp_object@Data[CJ(report.ids[["ID"]], tmp.content_areas, tmp.years, "VALID_CASE")[report.ids]]
+		tmp.table <- sgp_object@Data[data.table(data.table(CJ(report.ids[["ID"]], tmp.content_areas, tmp.years, "VALID_CASE"), key="V1")[report.ids], key=c("V1", "V2", "V3", "V4"))]
 		tmp.table[,FIRST_NAME:=NULL]; tmp.table[,LAST_NAME:=NULL]; tmp.table[,DISTRICT_NUMBER:=NULL]; tmp.table[,SCHOOL_NUMBER:=NULL]; tmp.table[,EMH_LEVEL:=NULL]
 		setnames(tmp.table, "FIRST_NAME.1", "FIRST_NAME"); setnames(tmp.table, "LAST_NAME.1", "LAST_NAME"); 
 		setnames(tmp.table, "DISTRICT_NUMBER.1", "DISTRICT_NUMBER"); setnames(tmp.table, "SCHOOL_NUMBER.1", "SCHOOL_NUMBER"); setnames(tmp.table, "EMH_LEVEL.1", "EMH_LEVEL")
@@ -368,9 +439,7 @@ function(sgp_object,
 		### Create transformed scale scores
 
 		setkeyv(tmp.table, c("CONTENT_AREA", "YEAR", "GRADE"))
-		tmp.table$TRANSFORMED_SCALE_SCORE <- tmp.table[,
-			piecewise.transform(SCALE_SCORE, state, as.character(CONTENT_AREA[1]), as.character(YEAR[1]), as.character(GRADE[1])), 
-				by=list(CONTENT_AREA, YEAR, GRADE)]$V1
+		tmp.table[, TRANSFORMED_SCALE_SCORE:=piecewise.transform(SCALE_SCORE, state, CONTENT_AREA, YEAR, GRADE), by=list(CONTENT_AREA, YEAR, GRADE)]
 
 		#### Anonymize (if requested) (NOT necessary if wide data is provided)
  
@@ -477,7 +546,18 @@ function(sgp_object,
 			setnames(outputSGP.data, grep(paste(getTargetName(target.years=outputSGP.projection.years.for.target), rev(tmp.years.short)[i], sep="."), names(outputSGP.data)), 
 				paste("GROWTH_TARGET", tmp.order[i], sep="_"))
 		}
-	
+
+
+		## Tidy up outputSGP.student.groups
+
+		for (i in intersect(outputSGP.student.groups, names(outputSGP.data))) {
+			if (any(is.na(outputSGP.data[[i]]))) {
+				setkeyv(outputSGP.data, c("STATE_ASSIGNED_ID", i))
+				outputSGP.data[[i]] <- outputSGP.data[,rep(rev(get(i))[1], .N), by=STATE_ASSIGNED_ID][['V1']]
+			}
+		}
+
+
 		## NULLify variable to be removed
 
 		for (i in head(tmp.years.short, -1)) {
@@ -570,24 +650,40 @@ function(sgp_object,
 			"CUT_1_YEAR_2", "CUT_99_YEAR_2", "CUT_35_YEAR_2", "CUT_65_YEAR_2", "CUT_20_YEAR_2", "CUT_40_YEAR_2", "CUT_60_YEAR_2", "CUT_80_YEAR_2",
 			"CUT_1_YEAR_3", "CUT_99_YEAR_3", "CUT_35_YEAR_3", "CUT_65_YEAR_3", "CUT_20_YEAR_3", "CUT_40_YEAR_3", "CUT_60_YEAR_3", "CUT_80_YEAR_3")
 
-		write.table(outputSGP.data[,tmp.variable.names, with=FALSE], file=file.path(outputSGP.directory, "SchoolView", "STUDENT_GROWTH.dat"), row.names=FALSE, na="", quote=FALSE, sep="|")
+		STUDENT_GROWTH <- outputSGP.data[,tmp.variable.names, with=FALSE]
+
+
+		## Check for NAs in select variables STUDENT_GROWTH
+
+		variables.to.check <- c("EMH_LEVEL", unique(outputSGP.student.groups)) %w/o% c("GIFTED_CODE", "HLS_CODE", "LANGUAGE_PROFICIENCY", "HIGH_NEED_STATUS")
+
+		for (i in variables.to.check) {
+			if (any(is.na(STUDENT_GROWTH[[i]]))) {
+				message(paste("\tNAs are present in variable:", i, "of the 'STUDENT_GROWTH' table. Table must be free of NAs for proper loading"))
+			}
+		}
+
+
+		## Output results
+
+		write.table(STUDENT_GROWTH, file=file.path(outputSGP.directory, "SchoolView", "TEXT", "STUDENT_GROWTH.dat"), row.names=FALSE, na="", quote=FALSE, sep="|")
 			tmp.working.directory <- getwd()
-			setwd(file.path(outputSGP.directory, "SchoolView"))
+			setwd(file.path(outputSGP.directory, "SchoolView", "TEXT"))
 			if ("STUDENT_GROWTH.dat.zip" %in% list.files()) file.remove("STUDENT_GROWTH.dat.zip")
 			suppressMessages(
-				zip("STUDENT_GROWTH.dat.zip", "STUDENT_GROWTH.dat")
+				zip("STUDENT_GROWTH.dat.zip", "STUDENT_GROWTH.dat", flags="-rmq")
 			)
 			setwd(tmp.working.directory)
 
-		STUDENT_GROWTH <- outputSGP.data[,tmp.variable.names, with=FALSE]
-		save(STUDENT_GROWTH, file=file.path(outputSGP.directory, "SchoolView", "STUDENT_GROWTH.Rdata"))
+		dir.create(file.path(outputSGP.directory, "SchoolView", "RDATA"), recursive=TRUE, showWarnings=FALSE)
+		save(STUDENT_GROWTH, file=file.path(outputSGP.directory, "SchoolView", "RDATA", "STUDENT_GROWTH.Rdata"))
 
 		message(paste("\tFinished SchoolView STUDENT_GROWTH data production in outputSGP", date(), "in", timetaken(started.at), "\n"))
 
 	} ## End if SchoolView %in% output.type
 
-		setkey(sgp_object@Data, VALID_CASE, CONTENT_AREA, YEAR, ID)
-		message(paste("Finished outputSGP", date(), "in", timetaken(started.at.outputSGP), "\n"))
+	setkeyv(sgp_object@Data, getKey(sgp_object))
+	message(paste("Finished outputSGP", date(), "in", timetaken(started.at.outputSGP), "\n"))
 
 } ## END outputSGP
 

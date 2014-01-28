@@ -13,12 +13,16 @@ function(sgp_object,
 	sgp.projections.baseline=TRUE,
 	sgp.projections.lagged.baseline=TRUE,
 	sgp.use.my.coefficient.matrices=NULL,
+	sgp.minimum.default.panel.years=NULL,
+	sgp.target.scale.scores=FALSE,
 	simulate.sgps=TRUE,
 	calculate.simex=NULL,
+	calculate.simex.baseline=NULL,
 	parallel.config=NULL,
 	save.intermediate.results=FALSE,
 	save.old.summaries=FALSE,
 	sgPlot.demo.report=FALSE,
+	sgp.config=NULL,
 	sgp.summaries=NULL,
 	summary.groups=NULL,
 	data_supplementary=NULL,
@@ -58,6 +62,13 @@ function(sgp_object,
 			simulate.sgps <- FALSE
 		}
 
+		if (is.null(sgp.minimum.default.panel.years) & !is.null(SGPstateData[[state]][["SGP_Configuration"]][['sgp.minimum.default.panel.years']])) {
+			sgp.minimum.default.panel.years <- SGPstateData[[state]][["SGP_Configuration"]][['sgp.minimum.default.panel.years']]
+		} 
+		if (is.null(sgp.minimum.default.panel.years) & is.null(SGPstateData[[state]][["SGP_Configuration"]][['sgp.minimum.default.panel.years']])) {
+			sgp.minimum.default.panel.years <- 3
+		} 
+
 		sgp_object <- analyzeSGP(
 			sgp_object=sgp_object,
 			state=state,
@@ -71,8 +82,11 @@ function(sgp_object,
 			sgp.projections.baseline=sgp.projections.baseline,
 			sgp.projections.lagged.baseline=sgp.projections.lagged.baseline,
 			sgp.use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
+			sgp.minimum.default.panel.years=sgp.minimum.default.panel.years,
+			sgp.config=sgp.config,
 			simulate.sgps=simulate.sgps,
 			calculate.simex=calculate.simex,
+			calculate.simex.baseline=calculate.simex.baseline,
 			parallel.config=parallel.config,
 			verbose.output=verbose.output)
 
@@ -89,8 +103,14 @@ function(sgp_object,
 			years=years,
 			content_areas=content_areas,
 			sgp.percentiles=sgp.percentiles,
+			sgp.percentiles.baseline=sgp.percentiles.baseline,
+			sgp.projections=sgp.projections,
+			sgp.projections.baseline=sgp.projections.baseline,
 			sgp.projections.lagged=sgp.projections.lagged,
-			sgp.projections.lagged.baseline=sgp.projections.lagged.baseline)
+			sgp.projections.lagged.baseline=sgp.projections.lagged.baseline,
+			sgp.target.scale.scores=sgp.target.scale.scores,
+			sgp.config=sgp.config,
+			parallel.config=parallel.config)
 
                 if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}

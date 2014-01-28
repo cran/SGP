@@ -15,6 +15,7 @@ growthAchievementPlot(
         gaPlot.show.scale.transformations=TRUE,
         gaPlot.grade_range,
         gaPlot.max.order.for.progression=NULL,
+	gaPlot.start.points="Achievement Level Cuts",
         state,
         content_area,
         year,
@@ -28,7 +29,7 @@ growthAchievementPlot(
 \arguments{
 	\item{gaPlot.sgp_object}{
         The sgp_object containing system information for constructing the growth and achievement plot. Object is calculated using \code{\link{abcSGP}} or (at least) \code{\link{prepareSGP}}
-        followed by \code{\link{analyzeSGP}}.
+        followed by \code{\link{analyzeSGP}}. The function requires coefficient matrices in order to display percentile growth trajectories.
 	}
 	\item{gaPlot.students}{
         Either NULL (the default) or a list of student IDs for whom one wishes to generate growth and achievement plots. 
@@ -41,13 +42,16 @@ growthAchievementPlot(
         A vector of percentiles that achievement (i.e., status) percentiles will be depicted across the range of grades.
         }
         \item{gaPlot.show.scale.transformations}{
-        A boolean arguments (defaults to TRUE) indicating whether to show the scale as a vertical axis if a scale transformation is applied to the supplied data.
+        A Boolean arguments (defaults to TRUE) indicating whether to show the scale as a vertical axis if a scale transformation is applied to the supplied data.
         }
 	\item{gaPlot.grade_range}{
 	The grade range for which to demonstrate plot. If missing, function uses supplied state to derive grade range.	
 	}
 	\item{gaPlot.max.order.for.progression}{
 	The maximum coefficient matrix order to use for each progression. Default is NULL which utilizes the maximum order available with the coefficient matrices.
+	}
+	\item{gaPlot.start.points}{
+	Either 'Achievement Level Cuts' or 'Achievement Percentiles' defining where the growth percentiles trajectories will start in the growth achievement plots.
 	}
         \item{state}{
         A two letter acronym for the state associated with the supplied data.

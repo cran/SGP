@@ -14,9 +14,9 @@ studentGrowthPercentiles(panel.data,
                          panel.data.vnames,
                          additional.vnames.to.return=NULL,
                          grade.progression,
-                         content.area.progression,
+                         content_area.progression,
                          year.progression,
-                         year.progression.lags,
+                         year_lags.progression,
                          num.prior,
                          max.order.for.percentile=NULL,
                          subset.grade,                                     
@@ -36,16 +36,20 @@ studentGrowthPercentiles(panel.data,
                          convert.0and100=TRUE,                                   
                          sgp.quantiles="Percentiles",
                          sgp.loss.hoss.adjustment=NULL,
+                         sgp.cohort.size=NULL,
                          percuts.digits=0,                                  
                          isotonize=TRUE,                                 
                          convert.using.loss.hoss=TRUE,                
                          goodness.of.fit=TRUE,
+			 goodness.of.fit.minimum.n=NULL,
                          return.prior.scale.score=TRUE,
                          return.prior.scale.score.standardized=TRUE,
                          return.norm.group.identifier=TRUE,
+                         return.norm.group.scale.scores=NULL,
                          print.time.taken=TRUE,
                          parallel.config=NULL,
 			 calculate.simex=NULL,
+			 sgp.percentiles.set.seed=314159,
 			 verbose.output=FALSE)
 }
 
@@ -53,7 +57,7 @@ studentGrowthPercentiles(panel.data,
   \item{panel.data}{REQUIRED. Object of class list, data.frame, or matrix containing longitudinal student data in wide format. If supplied as part of a list, data should be 
   contained in \code{panel.data$Panel_Data}. Data must be formatted so that student ID is the first variable/column, student grade/time variables for each time period, 
   from earliest to most recent, are the next variables/columns, and student scale score variables for each year, from earliest to latest, are the remaining 
-  variables/columns. See \code{\link{sgpData}} for an exemplar data set. NOTE: The column position of the variables IS IMPORTANT, NOT the names of the variables. 
+  variables/columns. See \code{\link[SGPdata]{sgpData}} for an exemplar data set. NOTE: The column position of the variables IS IMPORTANT, NOT the names of the variables. 
   }
   \item{sgp.labels}{REQUIRED. A list, \code{sgp.labels}, of the form  \code{list(my.year= ,} \cr 
   \code{my.subject= )} or \code{list(my.year= , my.subject= , my.extra.label)}. The user-specified values are used to save the student growth percentiles, 
@@ -71,12 +75,12 @@ studentGrowthPercentiles(panel.data,
   in the supplied panel.data would be removed.  The argument can also be combined with an appropriate \code{panel.data.vnames} argument to remove a year of data would analyze students 
   progressing from 7 to 8 to 10. 
   }
-  \item{content.area.progression}{Character vector of content area names of same length as grade.progression to be provided if not all identical to 'my.subject' in sgp.labels list.  Vector will be used to populate the @Content_Areas slot of the splineMatrix class coefficient matrices.  If missing, 'sgp.labels$my.subject' is repeated in a vector length equal to grade.progression.
+  \item{content_area.progression}{Character vector of content area names of same length as grade.progression to be provided if not all identical to 'my.subject' in sgp.labels list.  Vector will be used to populate the @Content_Areas slot of the splineMatrix class coefficient matrices.  If missing, 'sgp.labels$my.subject' is repeated in a vector length equal to grade.progression.
   }
   \item{year.progression}{Character vector of years associated with grade and content area progressions. If missing then the year.progression is assumed to end in 'my.year' provided in
 sgp.labels and be of the same length as grade.progression.  Vector will be used to populate the @Years slot of the splineMatrix class coefficient matrices.
   }
-  \item{year.progression.lags}{A numeric vector indicating the time lags/span between observations in the columns supplied to 'studentGrowthPercentiles'. The default, NULL, allows the function
+  \item{year_lags.progression}{A numeric vector indicating the time lags/span between observations in the columns supplied to 'studentGrowthPercentiles'. The default, NULL, allows the function
 to calculate the lags/differences based upon the supplied years.
   }
   \item{num.prior}{Number of prior scores one wishes to use in the analysis. Defaults to \code{num.panels-1}. 
@@ -141,6 +145,8 @@ to calculate the lags/differences based upon the supplied years.
   }
   \item{sgp.loss.hoss.adjustment}{Argument to control whether SGP is calculated using which.max for values associated with the hoss embedded in SGPstateData. Providing two letter state acronym utilizes this adjustment whereas supply NULL (the default) uses no adjustment. 
   }
+  \item{sgp.cohort.size}{Argument to control the minimum cohort size used to calculate SGPs and associated coefficient matrices. NULL (the default) uses no restriction.  If not NULL, argument should be an integer value. 
+  }
   \item{percuts.digits}{Argument specifying how many digits (defaults to 2) to print percentile cuts (if asked for) with.
   }
   \item{isotonize}{Boolean argument (defaults to TRUE) indicating whether quantile regression results are isotonized to prevent quantile crossing following the 
@@ -154,7 +160,9 @@ to calculate the lags/differences based upon the supplied years.
    Goodness of fit results are grid.grobs stored in \code{panel.data$Goodness_of_Fit} \cr   
    \code{$my.subject.my.year} where \code{my.subject} and \code{my.year} are provided by \code{sgp.labels}.
   }
-  \item{return.prior.scale.score}{Boolean argument (default to TRUE) indicating whether to include the prior scale score in the SGP data output. Useful for examining relationship between prior 
+  \item{goodness.of.fit.minimum.n}{Integer argument (defaults to 250) indicating the minimum number of observations necessary before goodness of fit plots are constructed."
+  }
+  \item{return.prior.scale.score}{Boolean argument (defaults to TRUE) indicating whether to include the prior scale score in the SGP data output. Useful for examining relationship between prior 
    achievement and student growth.
   }
   \item{return.prior.scale.score.standardized}{Boolean argument (default to TRUE) indicating whether to include the standardized prior scale score in the SGP data output. 
@@ -162,13 +170,19 @@ Useful for examining relationship between prior achievement and student growth.
   }
   \item{return.norm.group.identifier}{Boolean argument (default to TRUE) indicating whether to include the content areas and years that form students' specific norm group in the SGP data output.
   }
+  \item{return.norm.group.scale.scores}{Boolean argument (defaults. to NULL) indicating whether to return a comma separated character vector of the scores associated with the SGP_NORM_GROUP to
+  which the student belongs.
+  }
   \item{print.time.taken}{Boolean argument (defaults to TRUE) indicating whether to print message indicating information on studentGrowthPercentile analysis and time taken.
   }
   \item{parallel.config}{parallel configuration argument allowing for parallel analysis by 'tau'. Defaults to NULL.
   }
-  \item{calculate.simex}{A character state acronymn or list including state/csem variable, simulation.iterations, lambda and extrapolation method. Defaults to NULL, no simex calculations performed.
+  \item{calculate.simex}{A character state acronymn or list including state/csem variable, simulation.iterations, simulation.sample.size, lambda and extrapolation method. 
+  Defaults to NULL, no simex calculations performed.
   }
-  \item{verbose.output}{A boolean argument indicating whether the function should output verbose diagnostic messages.
+  \item{sgp.percentiles.set.seed}{An integer (or NULL) argument indicating whether to set.seed to make analyses fully reproducible. To turn off, set argument to NULL. Default is 314159.
+  }
+  \item{verbose.output}{A Boolean argument indicating whether the function should output verbose diagnostic messages.
   }
 } 
 
@@ -200,13 +214,13 @@ Koenker, R. (2005). \emph{Quantile regression}. Cambridge: Cambridge University 
 
 \author{Damian W. Betebenner \email{dbetebenner@nciea.org} and Adam Van Iwaarden \email{vaniwaarden@colorado.edu}}
 
-\seealso{\code{\link{studentGrowthProjections}}, \code{\link{sgpData}}, \code{\link{sgpData_LONG}}, \code{\link{SGPstateData}}}
+\seealso{\code{\link{studentGrowthProjections}}, \code{\link[SGPdata]{sgpData}}, \code{\link[SGPdata]{sgpData_LONG}}, \code{\link{SGPstateData}}}
 
 
 \examples{
-\dontrun{
 ## Calculate 4th grade student growth percentiles using included sgpData
 
+require(SGPdata)
 sgp_g4 <- studentGrowthPercentiles(panel.data=sgpData,
                 sgp.labels=list(my.year=2013, my.subject="Reading"),
                 percentile.cuts=c(1,35,65,99),
@@ -222,6 +236,7 @@ sgp_g4_v2 <- studentGrowthPercentiles(panel.data=sgpData,
 
 identical(sgp_g4$SGPercentiles, sgp_g4_v2$SGPercentiles)
 
+\dontrun{
 ## Established state Knots and Boundaries are available in the supplied SGPstateData
 ## file and used by supplying the appropriate two letter state acronym.
  

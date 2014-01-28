@@ -2,7 +2,7 @@
 \alias{baselineSGP}
 \title{Analyze student data to produce student growth percentiles and coefficient matrices from a baseline (i.e. multiple cohort) norm group}
 \description{
-  Utility function/exemplar used to produce student growth percentiles using long formatted data like that provided by \code{\link{prepareSGP}}. Used as part of \code{\link{analyzeSGP}} for baseline referenced student growth percentile analyses.
+Utility function/exemplar used to produce student growth percentiles using long formatted data like that provided by \code{\link{prepareSGP}}. Used as part of \code{\link{analyzeSGP}} for baseline referenced student growth percentile analyses.
 }
 
 \usage{
@@ -17,12 +17,14 @@
 	sgp.percentiles.baseline.max.order=3,
 	return.matrices.only=FALSE,
 	calculate.baseline.sgps=TRUE,
+	calculate.baseline.simex=NULL,
 	goodness.of.fit.print=TRUE,
+	parallel.config=NULL,
 	...)
 }
 
 \arguments{
-  \item{sgp_object}{An object of class \code{SGP} containing long formatted data in the \code{Data} (from \code{\link{prepareSGP}}) slot. 
+  \item{sgp_object}{An object of class \code{SGP} containing long formatted data in the \code{@Data} (from \code{\link{prepareSGP}}) slot. 
   }
   \item{state}{Acronym indicating state associated with the data for access to embedded knot and boundaries.
   }
@@ -45,7 +47,11 @@ To utilize the maximum matrix order, set to NULL.
   }
   \item{calculate.baseline.sgps}{Boolean variable indicating whether the function will calculate baseline referenced student growth percentiles from baseline referenced coefficient matrices. Defaults to TRUE.
   }
+  \item{calculate.baseline.simex}{A list including state/csem variable, simulation.iterations, lambda and extrapolation method. Defaults to NULL, no simex calculations performed.  Alternatively, setting the argument to TRUE sets the list up with state=state, lambda=seq(0,2,0.5), simulation.iterations=50, simex.sample.size=25000, extrapolation="linear" and save.matrices=TRUE.
+  }
   \item{goodness.of.fit.print}{Boolean variable indicating whether the function will export goodness of fit plots if baseline referenced student growth percentiles are calculated. Defaults to TRUE.
+  }
+  \item{parallel.config}{parallel configuration argument allowing for parallel analysis by 'tau'. Defaults to NULL.
   }
   \item{...}{Arguments to be passed internally to \code{\link{studentGrowthPercentiles}} for finer control over SGP calculations.
   }
@@ -60,7 +66,8 @@ To utilize the maximum matrix order, set to NULL.
 
 \examples{
 \dontrun{
-##  Calculate baseline referenced SGPs (using coefficient matrices embedded in SGPstateData)
+##  Calculate baseline referenced SGPs 
+## (using coefficient matrices embedded in SGPstateData)
 
 Demonstration_SGP <- prepareSGP(sgpData_LONG)
 Demonstration_SGP <-  baselineSGP(Demonstration_SGP)
@@ -70,10 +77,14 @@ Demonstration_SGP <-  baselineSGP(Demonstration_SGP)
 
 SGPstateData[["DEMO"]][["Baseline_splineMatrix"]] <- NULL
 Demonstration_SGP <- prepareSGP(sgpData_LONG)
-DEMO_Baseline_Matrices <- baselineSGP(Demonstration_SGP, return.matrices.only=TRUE, calculate.baseline.sgps=FALSE)
+DEMO_Baseline_Matrices <- baselineSGP(
+				Demonstration_SGP, 
+				return.matrices.only=TRUE, 
+				calculate.baseline.sgps=FALSE)
 
 
-## Calculate baseline referenced coefficient matrices and baseline referenced SGPs with 4 years of data
+## Calculate baseline referenced coefficient matrices and 
+## baseline referenced SGPs with 4 years of data
 
 SGPstateData[["DEMO"]][["Baseline_splineMatrix"]] <- NULL
 
