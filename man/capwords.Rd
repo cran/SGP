@@ -2,7 +2,7 @@
 \alias{capwords}
 \title{Function for converting all caps to mixed case. Useful in data cleaning.}
 \description{
-The function capwords converts characters to mixed case character as intelligently as possible.
+The function capwords converts characters to mixed case character as intelligently as possible and leading/trailing spaces.
 }
 
 \usage{
@@ -24,7 +24,6 @@ capwords(x,
 \author{Damian W. Betebenner \email{dbetebenner@nciea.org}}
 
 \examples{
-\dontrun{
 capwords("TEST") ## Test
 capwords("TEST1 TEST2") ## Test1 Test2
 capwords("O'NEIL") ## O'Neil
@@ -41,7 +40,6 @@ sapply(test.vector, capwords)
 test.factor <- factor(paste("TEST", rep(letters[1:10], each=50)))
 levels(test.factor) <- sapply(levels(test.factor), capwords)
 levels(test.factor)
-}  
 }
 
 \keyword{documentation}

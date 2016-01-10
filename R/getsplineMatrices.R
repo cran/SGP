@@ -10,10 +10,11 @@ function(
 	return.multiple.matrices=FALSE,
 	my.matrix.order=NULL,
 	my.matrix.highest.order=NULL,
+	my.matrix.time.dependency=NULL,
 	what.to.return="MATRICES") {
 
 	Matrix_TF <- Order <- Grade <- NULL
-
+	if (is.null(my.exact.grade.progression.sequence)) my.exact.grade.progression.sequence <- FALSE
 
 	### Utility functions
 
@@ -25,7 +26,8 @@ function(
 			tmp.df[i,1] <- identical(my.matrix@Content_Areas[[1]], tail(my.matrix.content_area.progression, my.order[i]+1)) & 
 					identical(my.matrix@Grade_Progression[[1]], as.character(tail(my.matrix.grade.progression, my.order[i]+1))) & 
 					identical(my.matrix@Time[[1]], as.character(tail(my.matrix.time.progression, my.order[i]+1))) &
-					identical(my.matrix@Time_Lags[[1]], as.integer(tail(my.matrix.time.progression.lags, my.order[i])))
+					identical(all.equal(as.numeric(my.matrix@Time_Lags[[1]]), as.numeric(tail(my.matrix.time.progression.lags, my.order[i]))), TRUE) &
+					identical(names(my.matrix@Version[['Matrix_Information']][['SGPt']][['VARIABLES']]), names(my.matrix.time.dependency))
 			tmp.df[i,2] <-	my.order[i]
 			tmp.df[i,3] <- tail(my.matrix@Grade_Progression[[1]], 1)
 		}

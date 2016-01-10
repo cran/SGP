@@ -6,7 +6,7 @@ function(list_1,
 
 	if (is.null(names(list_1))) return(list_2)
 	if (!is.null(names(list_2))) {
-		for (j in c("Coefficient_Matrices", "Cutscores", "Goodness_of_Fit", "Knots_Boundaries", "SGPercentiles", "SGProjections", "Simulated_SGPs", "Error_Reports")) {
+		for (j in c("Coefficient_Matrices", "Cutscores", "Goodness_of_Fit", "Knots_Boundaries", "Linkages", "SGPercentiles", "SGProjections", "Simulated_SGPs", "Error_Reports")) {
 			list_1[[j]] <- c(list_1[[j]], list_2[[j]])[!duplicated(names(c(list_1[[j]], list_2[[j]])))]
 		}
 
@@ -16,7 +16,7 @@ function(list_1,
 			if (all(names(list_2[[j]]) %in% names(list_1[[j]]))) {
 				for (k in names(list_2[[j]])) { # merging list_2 in with list_1, so use it here
 					if (!identical(list_1[[j]][[k]], list_2[[j]][[k]])) { # keeps it from copying first set of results
-						list_1[[j]][[k]] <- rbind.fill(list_1[[j]][[k]], list_2[[j]][[k]])
+						list_1[[j]][[k]] <- rbindlist(list(list_1[[j]][[k]], list_2[[j]][[k]]), fill=TRUE)
 					}
 				}
 			}
@@ -47,7 +47,7 @@ function(list_1,
 
 		j <- "Coefficient_Matrices"
 		for (k in names(list_2[[j]])) {
-			if (!length(grep("SIMEX", k)) > 0) {
+			if (!grepl("SIMEX", k)) {
 				if (!identical(list_1[[j]][[k]], list_2[[j]][[k]])) {
 					list_1[[j]][[k]] <- unique.splineMatrix(c(list_1[[j]][[k]], list_2[[j]][[k]]))
 				}

@@ -2,10 +2,10 @@
 \alias{combineSGP}
 \title{Combine student data and SGP results}
 \description{
-  Utility function/exemplar used to merge student long data with results from student growth percentiles and/or student growth projections calculations. Default values of this
-  function are designed to be used following use of other utility functions: \code{\link{prepareSGP}} and \code{\link{analyzeSGP}}. Function is integrated with cutscores embedded in
-  \code{\link{SGPstateData}} to calculate growth-to-standard targets associated with catch-up/keep-up to proficient status and/or move-up/stay-up to advanced status as well as the scale scores
-  associated with these targets.
+  Utility function that merges student long data in the @Data slot with results from student growth percentiles and/or student growth projections calculations. 
+Default values of this function are designed to be used following use of other utility functions: \code{\link{prepareSGP}} and \code{\link{analyzeSGP}}.
+Function is integrated with cutscores embedded in \code{\link{SGPstateData}} to calculate growth-to-standard SGP targets and their associated scale scores
+with catch-up/keep-up to proficient status and/or move-up/stay-up to advanced status as well as the scale scores associated with these targets.
 }
 
 \usage{
@@ -20,15 +20,18 @@ combineSGP(sgp_object,
 	sgp.projections.lagged=TRUE,
         sgp.projections.lagged.baseline=TRUE,
 	sgp.target.scale.scores=FALSE,
+	sgp.target.scale.scores.only=FALSE,
 	sgp.target.content_areas=NULL,
 	max.sgp.target.years.forward=3,
 	update.all.years=FALSE,
 	sgp.config=NULL,
+	sgp.percentiles.equated=FALSE,
+	SGPt=NULL,
 	parallel.config=NULL)
 }
 
 \arguments{
-  \item{sgp_object}{A list containing both \code{@Data} (from \code{prepareSGP}) and \code{@SGP} (from \code{analyzeSGP}) slots. 
+  \item{sgp_object}{An object of class SGP containing slots \code{@Data} (from \code{prepareSGP}) and \code{@SGP} (from \code{analyzeSGP}). 
   }
   \item{state}{Acronym for which state is to be used for the lagged projections and growth to standard analyses. Function will try to guess state name from passed \code{sgp_object} is missing.
   }
@@ -49,7 +52,9 @@ student growth percentile results.
   }
   \item{sgp.projections.lagged.baseline}{A Boolean variable indicating whether to combine lagged baseline student growth projections and calculate catch-up/keep-up move-up/stay-up values.
   }
-  \item{sgp.target.scale.scores}{A Boolean variable indicating whether targets from calculated scale scores should be calculated following target calculation.
+  \item{sgp.target.scale.scores}{A Boolean variable indicating whether scale scores from calculated SGP targets should be calculated.
+  }
+  \item{sgp.target.scale.scores.only}{A Boolean variable indicating whether combineSGP should skip merging and only calculate scale scores from calculated SGP targets. Default is FALSE.
   }
   \item{sgp.target.content_areas}{A Boolean variable indicating whether content area associated with SGP targets should be calculated.
   }
@@ -60,6 +65,11 @@ re-merge all available data.
   }
   \item{sgp.config}{Argument (defaults to NULL) passed utilized only for target scale score calculation. If targets for end of course tests are required, user must specify configurations
   directly. See code from \code{\link{testSGP}} number 3 for an example. 
+  }
+  \item{sgp.percentiles.equated}{Boolean variable indicating whether equated percentiles are being merged. If scale score targets are being calculated, linkages will be passed to scale score targets
+for calculation.
+  }
+  \item{SGPt}{Argument used to pass SGPt configuration to \code{getTargetScaleScore} for \code{\link{studentGrowthProjections}} calculation of scale score targets.
   }
   \item{parallel.config}{Parallel configuration only used when 'sgp.target.scale.scores' is set to TRUE. Default is NULL consistent with no targets being calculated. To utilize parallel processing
   in the calculation of SGP scale score targets user must specify a list designating a backend (e.g, BACKEND='PARALLEL') and a number of workers (e.g., 'WORKERS=list(SGP_SCALE_SCORE_TARGETS=4)').

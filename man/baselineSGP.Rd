@@ -11,15 +11,17 @@ Utility function/exemplar used to produce student growth percentiles using long 
         years=NULL,
         content_areas=NULL,
         grades=NULL,
+	exclude.years=NULL,
 	sgp.config=NULL,
 	sgp.baseline.config=NULL,
 	sgp.baseline.panel.years=NULL,
 	sgp.percentiles.baseline.max.order=3,
 	return.matrices.only=FALSE,
 	calculate.baseline.sgps=TRUE,
-	calculate.baseline.simex=NULL,
+	calculate.simex.baseline=NULL,
 	goodness.of.fit.print=TRUE,
 	parallel.config=NULL,
+	SGPt=NULL,
 	...)
 }
 
@@ -34,6 +36,8 @@ Utility function/exemplar used to produce student growth percentiles using long 
   }
   \item{grades}{A vector indicating which grades to calculate baseline referenced student growth percentiles. 
   }
+  \item{exclude.years}{A vector indicating which years to exclude from the calculations? 
+  }
   \item{sgp.config}{If \code{years}, \code{content_areas}, and \code{grades} are missing, user can directly specify a list containing three vectors: \code{baseline.content.areas}, \code{baseline.panel.years}, and \code{baseline.grade.sequences}. This advanced option is helpful for analysis of non-traditional grade progressions and other special cases. See \code{\link{analyzeSGP}} for use cases.
   }
   \item{sgp.baseline.config}{A list containing three vectors: \code{sgp.content.areas}, \code{sgp.panel.years}, \code{sgp.grade.sequences} indicating how baseline student growth percentile analyses are to be conducted. In most cases this value will be calculated by default within the function but can be specified directly for advanced use cases. See source code for more detail on this configuration option.
@@ -47,11 +51,13 @@ To utilize the maximum matrix order, set to NULL.
   }
   \item{calculate.baseline.sgps}{Boolean variable indicating whether the function will calculate baseline referenced student growth percentiles from baseline referenced coefficient matrices. Defaults to TRUE.
   }
-  \item{calculate.baseline.simex}{A list including state/csem variable, simulation.iterations, lambda and extrapolation method. Defaults to NULL, no simex calculations performed.  Alternatively, setting the argument to TRUE sets the list up with state=state, lambda=seq(0,2,0.5), simulation.iterations=50, simex.sample.size=25000, extrapolation="linear" and save.matrices=TRUE.
+  \item{calculate.simex.baseline}{A list including state/csem variable, csem.data.vnames, csem.loss.hoss, simulation.iterations, lambda and extrapolation method. Defaults to NULL, no simex calculations performed.  Alternatively, setting the argument to TRUE sets the list up with state=state, lambda=seq(0,2,0.5), simulation.iterations=50, simex.sample.size=25000, extrapolation="linear" and save.matrices=TRUE.
   }
   \item{goodness.of.fit.print}{Boolean variable indicating whether the function will export goodness of fit plots if baseline referenced student growth percentiles are calculated. Defaults to TRUE.
   }
   \item{parallel.config}{parallel configuration argument allowing for parallel analysis by 'tau'. Defaults to NULL.
+  }
+  \item{SGPt}{Argument supplied to generate time dependent SGPs. Defaults to NULL/FALSE.
   }
   \item{...}{Arguments to be passed internally to \code{\link{studentGrowthPercentiles}} for finer control over SGP calculations.
   }
@@ -88,7 +94,7 @@ DEMO_Baseline_Matrices <- baselineSGP(
 
 SGPstateData[["DEMO"]][["Baseline_splineMatrix"]] <- NULL
 
-sgpData_LONG_4_YEAR <- subset(sgpData_LONG, YEAR!="2012_2013")
+sgpData_LONG_4_YEAR <- subset(sgpData_LONG, YEAR!="2013_2014")
 
 Demonstration_SGP <- prepareSGP(sgpData_LONG_4_YEAR)
 Demonstration_SGP <- baselineSGP(Demonstration_SGP)

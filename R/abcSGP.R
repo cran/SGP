@@ -1,4 +1,4 @@
-`abcSGP` <- 
+`abcSGP` <-
 function(sgp_object,
 	state=NULL,
 	steps=c("prepareSGP", "analyzeSGP", "combineSGP", "summarizeSGP", "visualizeSGP", "outputSGP"),
@@ -6,7 +6,8 @@ function(sgp_object,
 	content_areas=NULL,
 	grades=NULL,
 	prepareSGP.var.names=NULL,
-	sgp.percentiles=TRUE, 
+	prepareSGP.create.additional.variables=FALSE,
+	sgp.percentiles=TRUE,
 	sgp.projections=TRUE,
 	sgp.projections.lagged=TRUE,
 	sgp.percentiles.baseline=TRUE,
@@ -15,9 +16,11 @@ function(sgp_object,
 	sgp.use.my.coefficient.matrices=NULL,
 	sgp.minimum.default.panel.years=NULL,
 	sgp.target.scale.scores=FALSE,
+	sgp.target.scale.scores.only=FALSE,
 	simulate.sgps=TRUE,
 	calculate.simex=NULL,
 	calculate.simex.baseline=NULL,
+	goodness.of.fit.print=TRUE,
 	parallel.config=NULL,
 	save.intermediate.results=FALSE,
 	save.old.summaries=FALSE,
@@ -28,7 +31,12 @@ function(sgp_object,
 	data_supplementary=NULL,
 	confidence.interval.groups=NULL,
 	plot.types=c("bubblePlot", "studentGrowthPlot", "growthAchievementPlot"),
-	verbose.output=FALSE) {
+	outputSGP.output.type=c("LONG_Data", "LONG_FINAL_YEAR_Data", "WIDE_Data", "INSTRUCTOR_Data"),
+	verbose.output=FALSE,
+	sgp.sqlite = NULL,
+	sgp.percentiles.equated=NULL,
+	sgp.percentiles.equating.method=NULL,
+	SGPt=NULL) {
 
         started.at <- proc.time()
 	message(paste("\nStarted abcSGP", date()), "\n")
@@ -46,7 +54,12 @@ function(sgp_object,
 	### prepareSGP ###
 
 	if ("prepareSGP" %in% steps) {
-		sgp_object <- prepareSGP(sgp_object, data_supplementary=data_supplementary, state=state, var.names=prepareSGP.var.names)
+		sgp_object <- prepareSGP(
+				sgp_object,
+				data_supplementary=data_supplementary,
+				state=state,
+				var.names=prepareSGP.var.names,
+				create.additional.variables=prepareSGP.create.additional.variables)
 	        if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}
 
@@ -57,17 +70,23 @@ function(sgp_object,
 
         ### Check for consistency between simulate.sgps and existence of CSEMs ###
 
-		if (simulate.sgps & is.null(SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
+		if (simulate.sgps & is.null(SGP::SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
         	        message("\tCSEMs are required in SGPstateData to simulate SGPs for confidence interval calculations. Confidence intervals will not be calculated.")
 			simulate.sgps <- FALSE
 		}
 
-		if (is.null(sgp.minimum.default.panel.years) & !is.null(SGPstateData[[state]][["SGP_Configuration"]][['sgp.minimum.default.panel.years']])) {
-			sgp.minimum.default.panel.years <- SGPstateData[[state]][["SGP_Configuration"]][['sgp.minimum.default.panel.years']]
-		} 
-		if (is.null(sgp.minimum.default.panel.years) & is.null(SGPstateData[[state]][["SGP_Configuration"]][['sgp.minimum.default.panel.years']])) {
-			sgp.minimum.default.panel.years <- 3
-		} 
+		if (is.null(sgp.minimum.default.panel.years) & !is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][['sgp.minimum.default.panel.years']])) {
+			sgp.minimum.default.panel.years <- SGP::SGPstateData[[state]][["SGP_Configuration"]][['sgp.minimum.default.panel.years']]
+		}
+
+		if (is.null(sgp.minimum.default.panel.years) & is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][['sgp.minimum.default.panel.years']])) {
+			if (length(unique(sgp_object@Data$YEAR))==2) {
+				sgp.minimum.default.panel.years <- 2
+				message("\tNOTE: Only two years of data present. Minimum default of 3 years of panel data for SGP analyses changed to 2. Please confirm this is consistent with analyses you wish to perform.")
+			} else {
+				sgp.minimum.default.panel.years <- 3
+			}
+		}
 
 		sgp_object <- analyzeSGP(
 			sgp_object=sgp_object,
@@ -87,8 +106,13 @@ function(sgp_object,
 			simulate.sgps=simulate.sgps,
 			calculate.simex=calculate.simex,
 			calculate.simex.baseline=calculate.simex.baseline,
+			goodness.of.fit.print=goodness.of.fit.print,
 			parallel.config=parallel.config,
-			verbose.output=verbose.output)
+			verbose.output=verbose.output,
+			sgp.sqlite=sgp.sqlite,
+			sgp.percentiles.equated=sgp.percentiles.equated,
+			sgp.percentiles.equating.method=sgp.percentiles.equating.method,
+			SGPt=SGPt)
 
                 if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}
@@ -109,7 +133,9 @@ function(sgp_object,
 			sgp.projections.lagged=sgp.projections.lagged,
 			sgp.projections.lagged.baseline=sgp.projections.lagged.baseline,
 			sgp.target.scale.scores=sgp.target.scale.scores,
+			sgp.target.scale.scores.only=sgp.target.scale.scores.only,
 			sgp.config=sgp.config,
+			SGPt=SGPt,
 			parallel.config=parallel.config)
 
                 if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
@@ -122,10 +148,10 @@ function(sgp_object,
 		sgp_object <- summarizeSGP(
 			sgp_object=sgp_object,
 			state=state,
-			years=years, 
-			content_areas=content_areas, 
-			sgp.summaries=sgp.summaries, 
-			summary.groups=summary.groups, 
+			years=years,
+			content_areas=content_areas,
+			sgp.summaries=sgp.summaries,
+			summary.groups=summary.groups,
 			confidence.interval.groups=confidence.interval.groups,
 			parallel.config=parallel.config,
 			save.old.summaries=save.old.summaries)
@@ -158,6 +184,7 @@ function(sgp_object,
 		outputSGP(
 			sgp_object=sgp_object,
 			state=state,
+			output.type=outputSGP.output.type,
 			outputSGP_SUMMARY.years=years,
 			outputSGP_SUMMARY.content_areas=content_areas,
 			outputSGP_INDIVIDUAL.years=years,
@@ -168,6 +195,6 @@ function(sgp_object,
 
 	### Print finish and return SGP object
 
-        message(paste("Finished abcSGP", date(), "in", timetaken(started.at), "\n"))
+        message(paste("Finished abcSGP", date(), "in", convertTime(timetaken(started.at)), "\n"))
 	return(sgp_object)
 } ## END abcSGP Function

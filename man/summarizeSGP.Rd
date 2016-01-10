@@ -18,18 +18,18 @@ summarizeSGP(sgp_object,
            projection.years.for.target=3,
            save.old.summaries=FALSE,
 	   highest.level.summary.grouping="STATE",
-           parallel.config=NULL) 
+           parallel.config=NULL)
 }
 
 \arguments{
-  \item{sgp_object}{A list containing long formatted data in the \code{@Data} slot. If summaries of student growth percentiles are requested, those quantities must first be produced (possibly by first using \code{\link{analyzeSGP}}) and subsequently combined with the \code{@Data} data (possibly with \code{\link{combineSGP}}).
+  \item{sgp_object}{An object of class SGP containing long formatted data in the \code{@Data} slot. If summaries of student growth percentiles are requested, those quantities must first be produced (possibly by first using \code{\link{analyzeSGP}}) and subsequently combined with the \code{@Data} data (possibly with \code{\link{combineSGP}}).
   }
   \item{state}{Acronym indicating state associated with the summaries for access to assessment program information embedded in \code{SGPstateData}.
   }
-  \item{years}{A vector indicating year(s) in which to produce summary tables associated with student growth percentile and percentile growth trajectory/projection analyses. If missing the
+  \item{years}{A character vector indicating year(s) in which to produce summary tables associated with student growth percentile and percentile growth trajectory/projection analyses. If missing the
 function will use the data to calculate years and produce summaries for the most recent three years.
   }
-  \item{content_areas}{A vector indicating content area(s) in which to produce student growth percentiles and/or student growth projections/trajectories. 
+  \item{content_areas}{A character vector indicating content area(s) in which to produce student growth percentiles and/or student growth projections/trajectories. 
 If missing the function will use the data to infer the content area(s) available for analyses.
   }
   \item{sgp.summaries}{A list giving the summaries requested for each group analyzed based upon the \code{summary.group} argument. The default (produced internal to summarizeSGP) summaries include:
@@ -88,7 +88,7 @@ overwrites previous (e.g., last year's summaries) summaries.
 }
  \item{parallel.config}{A named list with, at a minimum, two elements indicating 1) the BACKEND package to be used for parallel computation and 2) the WORKERS list to specify the number of processors to be used in each major analysis.  The BACKEND element can be set = to \code{FOREACH} or \code{PARALLEL}.  Please consult the manuals and vignettes for information of these packages!  The \code{\link{analyzeSGP}} help page contains more thorough explanation and examples of the \code{parallel.config} setup. 
 
-TYPE is a third element of the \code{parallel.config} list that provides necessary information when using FOREACH or PARALLEL packages as the backend. With BACKEND="FOREACH",  the TYPE element specifies the flavor of 'foreach' backend.  As of version 1.0-1.0, only "doParallel" is supported.  TYPE=NA (default) produces summaries sequentially.  If BACKEND = "PARALLEL", the \code{parallel} package will be used.  This package combines deprecated parallel packages \code{snow} and \code{multicore}.  Using the "snow" implementation of \code{parallel} the function will create a cluster object based on the TYPE element specified and the number of workers requested (see WORKERS list description below).  The TYPE element indicates the users preferred cluster type (either "SOCK" for socket cluster of "MPI" for an OpenMPI cluster). If Windows is the operating system, this "snow" implementation must be use and the TYPE element must = "SOCK".  Defaults are assigned based on operating system if TYPE is missing based on system OS.  Unix/Mac OS defaults to the "multicore" to avoid worker node prescheduling and appears to be more efficient in these operating systems. 
+TYPE is a third element of the \code{parallel.config} list that provides necessary information when using FOREACH or PARALLEL packages as the backend. With BACKEND="FOREACH",  the TYPE element specifies the flavor of 'foreach' backend.  As of version 1.0-1.0, only "doParallel" is supported.  TYPE=NA (default) produces summaries sequentially.  If BACKEND = "PARALLEL", the \code{parallel} package will be used.  This package combines deprecated parallel packages \code{snow} and \code{multicore}.  Using the "snow" implementation of \code{parallel} the function will create a cluster object based on the TYPE element specified and the number of workers requested (see WORKERS list description below).  The TYPE element indicates the users preferred cluster type (either "PSOCK" for socket cluster of "MPI" for an OpenMPI cluster). If Windows is the operating system, this "snow" implementation must be used and the TYPE element must = "PSOCK".  Defaults are assigned based on operating system if TYPE is missing based on system OS.  Unix/Mac OS defaults to the "multicore" to avoid worker node pre-scheduling and appears to be more efficient in these operating systems. 
 
 The WORKERS element is a list with SUMMARY specifying the number of processors (nodes) desired or available.  For example, SUMMARY=2 may be used on a dual core machine to use both cores available. (NOTE: choice of the number of cores is a balance between the number of processors available and the amount of RAM a system has; each system will be different and may require some adjustment).
 
@@ -120,11 +120,11 @@ Demonstration_SGP <- summarizeSGP(Demonstration_SGP)
 ###  Example uses of the parallel.config argument
 
 ##  Windows users  must use the parallel package and R version >= 2.13:
-#  Note the number of workers is 8, and SOCK type cluster is used.
+#  Note the number of workers is 8, and PSOCK type cluster is used.
 #  This example is would be good for a single workstation with 8 cores.
 	. . .
 	parallel.config=list(
-		BACKEND="PARALLEL", TYPE="SOCK",
+		BACKEND="PARALLEL", TYPE="PSOCK",
 		WORKERS=list(SUMMARY=2))
 	. . .
 

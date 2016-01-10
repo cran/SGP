@@ -15,6 +15,7 @@
 		bPlot.prior.achievement=TRUE, 
 		bPlot.draft=FALSE,
 		bPlot.demo=FALSE,
+		bPlot.output ="PDF",
 		bPlot.format="print",
 		bPlot.folder="Visualizations/bubblePlots") {
 
@@ -29,9 +30,9 @@
 
 	# State stuff
 
-	if (state %in% c(state.abb, "DEMO")) {
-		state.name.label <- c(state.name, "DEMONSTRATION")[state==c(state.abb, "DEMO")]
-		test.abbreviation.label <- SGPstateData[[state]][["Assessment_Program_Information"]][["Assessment_Abbreviation"]]
+	if (state %in% c(datasets::state.abb, "DEMO")) {
+		state.name.label <- c(datasets::state.name, "DEMONSTRATION")[state==c(datasets::state.abb, "DEMO")]
+		test.abbreviation.label <- SGP::SGPstateData[[state]][["Assessment_Program_Information"]][["Assessment_Abbreviation"]]
 	} else {
 		state.name.label <- test.abbreviation.label <- state
 	}
@@ -86,20 +87,20 @@
 	names.merge <- function(tmp.data, bPlot.anonymize) {
 		if (!"INSTRUCTOR_NUMBER" %in% names(tmp.data) & !"SCHOOL_NUMBER" %in% names(tmp.data) & "DISTRICT_NUMBER" %in% names(tmp.data)) {
 			tmp.names <- unique(data.table(sgp_object@Data[!is.na(DISTRICT_NUMBER), 
-				list(DISTRICT_NUMBER, DISTRICT_NAME, SCHOOL_NUMBER, SCHOOL_NAME)], key="DISTRICT_NUMBER")) # Keep other institution NUMBER to iterate over in some plots
+				list(DISTRICT_NUMBER, DISTRICT_NAME, SCHOOL_NUMBER, SCHOOL_NAME, YEAR)], key=c("DISTRICT_NUMBER", "YEAR"))) # Keep other institution NUMBER to iterate over in some plots
 			if (bPlot.anonymize) {
 				tmp.names$DISTRICT_NAME <- paste("District", as.numeric(as.factor(tmp.names$DISTRICT_NUMBER)))
 			}
-			setkey(tmp.data, DISTRICT_NUMBER)
+			setkey(tmp.data, DISTRICT_NUMBER, YEAR)
 		}
 		
 		if (!"INSTRUCTOR_NUMBER" %in% names(tmp.data) & "SCHOOL_NUMBER" %in% names(tmp.data) & !"DISTRICT_NUMBER" %in% names(tmp.data)) {
 			tmp.names <- unique(data.table(sgp_object@Data[!is.na(SCHOOL_NUMBER), 
-				list(DISTRICT_NUMBER, DISTRICT_NAME, SCHOOL_NUMBER, SCHOOL_NAME)], key="SCHOOL_NUMBER")) # Keep other institution NUMBER to iterate over in some plots
+				list(DISTRICT_NUMBER, DISTRICT_NAME, SCHOOL_NUMBER, SCHOOL_NAME, YEAR)], key=c("SCHOOL_NUMBER", "YEAR"))) # Keep other institution NUMBER to iterate over in some plots
 			if (bPlot.anonymize) {
 				tmp.names$SCHOOL_NAME <- paste("School", as.numeric(as.factor(tmp.names$SCHOOL_NUMBER)))
 			}
-			setkey(tmp.data, SCHOOL_NUMBER)
+			setkey(tmp.data, SCHOOL_NUMBER, YEAR)
 		}
 		
 		if ("INSTRUCTOR_NUMBER" %in% names(tmp.data)) { #Add both school and district number regardless of 
@@ -353,7 +354,7 @@ if (1 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_COLOR="deeppink2",
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 			bubble_plot_configs.BUBBLE_TIPS="TRUE",
-			bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+			bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 			bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -367,7 +368,7 @@ if (1 %in% bPlot.styles) {
 		} ## End loop over content_area.iter
 		} ## End loop over year.iter
 
-		message(paste("\tFinished bubblePlot Style 1", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 1", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 } ## END bubblePlot style 1
 
@@ -482,7 +483,7 @@ if (2 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_COLOR=NULL,
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 			bubble_plot_configs.BUBBLE_TIPS="TRUE",
-			bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+			bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 			bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -497,7 +498,7 @@ if (2 %in% bPlot.styles) {
 		} ## End loop over year.iter
 		} ## End loop over bPlot.levels.iter
 
-		message(paste("\tFinished bubblePlot Style 2", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 2", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 } ## END bubblePlot style 2
 
@@ -601,7 +602,7 @@ if (3 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_COLOR=NULL,
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 			bubble_plot_configs.BUBBLE_TIPS="TRUE",
-			bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+			bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 			bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -615,7 +616,7 @@ if (3 %in% bPlot.styles) {
 		} ## End loop over content_area.iter
 		} ## End loop over year.iter
 
-		message(paste("\tFinished bubblePlot Style 3", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 3", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 } ## END bubblePlot style 3
 
@@ -699,7 +700,7 @@ if (10 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_COLOR="deeppink2",
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 			bubble_plot_configs.BUBBLE_TIPS="TRUE",
-			bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+			bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 			bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -713,7 +714,7 @@ if (10 %in% bPlot.styles) {
 		} ## End loop over content_area.iter
 		} ## End loop over year.iter
 
-		message(paste("\tFinished bubblePlot Style 10", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 10", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 } ## END bubblePlot style 10
 
@@ -833,7 +834,7 @@ if (10 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_COLOR=NULL,
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 			bubble_plot_configs.BUBBLE_TIPS="TRUE",
-			bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+			bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 			bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -850,7 +851,7 @@ if (10 %in% bPlot.styles) {
 		} ## End loop over year.iter
 		} ## End loop over bPlot.levels.iter
 
-		message(paste("\tFinished bubblePlot Style 11", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 11", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 } ## END bubblePlot style 11
 
@@ -934,7 +935,7 @@ if (20 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_COLOR="deeppink2",
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 			bubble_plot_configs.BUBBLE_TIPS="TRUE",
-			bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+			bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 			bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -948,7 +949,7 @@ if (20 %in% bPlot.styles) {
 		} ## End loop over content_area.iter
 		} ## End loop over year.iter
 
-		message(paste("\tFinished bubblePlot Style 20", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 20", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 } ## END bubblePlot style 20
 
@@ -1054,7 +1055,7 @@ if (21 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_COLOR=NULL,
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 			bubble_plot_configs.BUBBLE_TIPS="TRUE",
-			bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+			bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 			bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -1068,7 +1069,7 @@ if (21 %in% bPlot.styles) {
 		} ## End loop over content_area.iter
 		} ## End loop over year.iter
 
-		message(paste("\tFinished bubblePlot Style 21", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 21", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 } ## END bubblePlot style 21
 
@@ -1179,7 +1180,7 @@ if (22 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_COLOR=NULL,
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 			bubble_plot_configs.BUBBLE_TIPS="TRUE",
-			bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+			bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 			bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -1194,7 +1195,7 @@ if (22 %in% bPlot.styles) {
 		} ## End loop over content_area.iter
 		} ## End loop over year.iter
 
-		message(paste("\tFinished bubblePlot Style 22", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 22", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 } ## END bubblePlot style 22
 
@@ -1276,7 +1277,7 @@ if (22 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_COLOR="deeppink2",
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 			bubble_plot_configs.BUBBLE_TIPS="TRUE",
-			bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+			bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 			bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -1292,7 +1293,7 @@ if (22 %in% bPlot.styles) {
 		} ## End loop over school_number.iter
 		} ## End loop over year.iter
 
-		message(paste("\tFinished bubblePlot Style 50", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 50", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 	} ## END bubblePlot style 50
 
@@ -1374,7 +1375,7 @@ if (22 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_COLOR="deeppink2",
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 			bubble_plot_configs.BUBBLE_TIPS="TRUE",
-			bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+			bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 			bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -1389,7 +1390,7 @@ if (22 %in% bPlot.styles) {
 		} ## End loop over content_area.iter
 		} ## End loop over year.iter
 
-		message(paste("\tFinished bubblePlot Style 53", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 53", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 	} ## END bubblePlot style 53
 
@@ -1527,7 +1528,7 @@ if (22 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_COLOR=NULL,
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 			bubble_plot_configs.BUBBLE_TIPS="TRUE",
-			bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+			bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 			bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -1537,7 +1538,7 @@ if (22 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_PLOT_PATH=file.path(bPlot.folder, year.iter, "Instructor", "Style_55", 
 				paste("District", district_number.iter, sep="_"), bPlot.levels.iter),
 			bubble_plot_pdftk.CREATE_CATALOG=FALSE)
-			} # END if(...)
+			} # END if (...)
 		} ## END loop over y.variable.iter
 		} ## END loop over levels.iter
 		} ## End loop over district_number.iter
@@ -1545,7 +1546,7 @@ if (22 %in% bPlot.styles) {
 		} ## End loop over year.iter
 		} ## End loop over bPlot.levels.iter
 
-		message(paste("\tFinished bubblePlot Style 55", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 55", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 	} ## END bubblePlot style 55
 
@@ -1629,7 +1630,7 @@ if (22 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_COLOR="deeppink2",
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 			bubble_plot_configs.BUBBLE_TIPS="TRUE",
-			bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+			bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 			bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -1645,7 +1646,7 @@ if (22 %in% bPlot.styles) {
 		} ## End loop over content_area.iter
 		} ## End loop over year.iter
 
-		message(paste("\tFinished bubblePlot Style 57", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 57", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 	} ## END bubblePlot style 57
 
@@ -1781,7 +1782,7 @@ if (22 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_COLOR=NULL,
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 			bubble_plot_configs.BUBBLE_TIPS="TRUE",
-			bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+			bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 			bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="TRUE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -1799,7 +1800,7 @@ if (22 %in% bPlot.styles) {
 		} ## End loop over year.iter
 		} ## End loop over bPlot.levels.iter
 
-		message(paste("\tFinished bubblePlot Style 59", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 59", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 } ## END bubblePlot style 59
 
@@ -1827,8 +1828,8 @@ if (22 %in% bPlot.styles) {
 		### Utility functions
 
 		get.my.cutscore.year <- function(state, content_area, year) {
-			tmp.cutscore.years <- sapply(strsplit(names(SGPstateData[[state]][["Achievement"]][["Cutscores"]])[
-				grep(content_area, names(SGPstateData[[state]][["Achievement"]][["Cutscores"]]))], "[.]"), function(x) x[2])
+			tmp.cutscore.years <- sapply(strsplit(names(SGP::SGPstateData[[state]][["Achievement"]][["Cutscores"]])[
+				grep(content_area, names(SGP::SGPstateData[[state]][["Achievement"]][["Cutscores"]]))], "[.]"), function(x) x[2])
 			if (any(!is.na(tmp.cutscore.years))) {
 				if (year %in% tmp.cutscore.years) {
 					return(paste(content_area, year, sep="."))
@@ -1908,7 +1909,7 @@ if (22 %in% bPlot.styles) {
 
 		tmp.bPlot.data <- tmp.bPlot.data.1[SCHOOL_NUMBER==tmp.unique.schools[school.iter] & !is.na(SGP) & !is.na(SCALE_SCORE)]
 
-		for (grade.iter in intersect(SGPstateData[[state]][["Student_Report_Information"]][["Grades_Reported"]][[content_area.iter]],
+		for (grade.iter in intersect(SGP::SGPstateData[[state]][["Student_Report_Information"]][["Grades_Reported"]][[content_area.iter]],
 			sort(unique(tmp.bPlot.data$GRADE)))) { 
 				
 		bPlot.data <- subset(tmp.bPlot.data, GRADE==grade.iter)
@@ -1930,10 +1931,10 @@ if (22 %in% bPlot.styles) {
 
 		my.content_area <- get.my.cutscore.year(state, content_area.iter, as.character(year.iter))
 		tmp.y.range <- extendrange(c(bPlot.data[["SCALE_SCORE"]],
-			SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]]), f=0.1)
-		tmp.loss.hoss <- SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area.iter]][[paste("loss.hoss", grade.iter, sep="_")]]
+			SGP::SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]]), f=0.1)
+		tmp.loss.hoss <- SGP::SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area.iter]][[paste("loss.hoss", grade.iter, sep="_")]]
 		tmp.y.ticks <- sort(c(max(tmp.loss.hoss[1], tmp.y.range[1]), min(tmp.loss.hoss[2], tmp.y.range[2]),
-			SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]])) 
+			SGP::SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]])) 
 
 		# Get median SGP for grade, school, content area combination
 
@@ -1999,12 +2000,12 @@ if (22 %in% bPlot.styles) {
 			bubble_plot_configs.BUBBLE_X_TICKS_SIZE=c(rep(0.7, 5), 1, rep(0.7, 5)),
 			bubble_plot_configs.BUBBLE_Y_TICKS=tmp.y.ticks,
 			bubble_plot_configs.BUBBLE_Y_BANDS=tmp.y.ticks,
-			bubble_plot_configs.BUBBLE_Y_BAND_LABELS=SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]],
+			bubble_plot_configs.BUBBLE_Y_BAND_LABELS=SGP::SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]],
 			bubble_plot_configs.BUBBLE_SUBSET_INCREASE=0.00,
 			bubble_plot_configs.BUBBLE_COLOR="blue",
 			bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 			bubble_plot_configs.BUBBLE_TIPS="TRUE",
-			bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+			bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 			bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 			bubble_plot_configs.BUBBLE_PLOT_LEGEND="FALSE",
 			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -2022,7 +2023,7 @@ if (22 %in% bPlot.styles) {
 		} ## END content_area.iter loop
 		} ## END year.iter loop
 
-		message(paste("\tFinished bubblePlot Style 100", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 100", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 	} ## END if bubblePlot style 100
 
@@ -2052,8 +2053,8 @@ if (22 %in% bPlot.styles) {
 
 			if (bPlot.demo) {
 				tmp.ids <- list()
-				tmp.grades.reported <- SGPstateData[[state]][["Student_Report_Information"]][["Grades_Reported"]][[content_area.iter]][-1]
-				tmp.grades.reported <- tmp.grades.reported[tmp.grades.reported %in% unique(slot.data)["VALID_CASE"][["GRADE"]]]
+				tmp.grades.reported <- SGP::SGPstateData[[state]][["Student_Report_Information"]][["Grades_Reported"]][[content_area.iter]][-1]
+				tmp.grades.reported <- as.character(tmp.grades.reported[tmp.grades.reported %in% unique(slot.data)["VALID_CASE"][["GRADE"]]])
 				for (i in seq_along(tmp.grades.reported)) {
 					tmp.ids[[i]] <- as.character(sample(unique(slot.data[SJ("VALID_CASE", year.iter, content_area.iter, tmp.grades.reported[i])][['ID']]), 30))
 				}
@@ -2071,9 +2072,8 @@ if (22 %in% bPlot.styles) {
 				if (!"INSTRUCTOR_NUMBER" %in% names(sgp_object@Data_Supplementary)) {
 					stop("\tNOTE: Indvidividual level Instructor bubble plots require an INSTRUCTOR_NUMBER lookup table embedded in @Data_Supplementary")
 				}
-				tmp.bPlot.data.1.long <- data.table(sgp_object@Data_Supplementary[['INSTRUCTOR_NUMBER']][,VALID_CASE:="VALID_CASE"],
-								key=c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))[
-									slot.data[SJ("VALID_CASE", year.iter, content_area.iter, my.iters$tmp.districts[district.iter])], nomatch=0]
+				tmp.bPlot.data.1.long <- data.table(slot.data[SJ("VALID_CASE", year.iter, content_area.iter, my.iters$tmp.districts[district.iter])],
+                                                                key=c("ID", "CONTENT_AREA", "YEAR"))[sgp_object@Data_Supplementary$INSTRUCTOR_NUMBER, nomatch=0]
 			}
 
 			setkeyv(tmp.bPlot.data.1.long, "INSTRUCTOR_NUMBER")
@@ -2089,7 +2089,7 @@ if (22 %in% bPlot.styles) {
 		
 				if (dim(bPlot.data)[1] > 0) {
 		
-				for (grade.iter in intersect(SGPstateData[[state]][["Student_Report_Information"]][["Grades_Reported"]][[content_area.iter]],
+				for (grade.iter in intersect(SGP::SGPstateData[[state]][["Student_Report_Information"]][["Grades_Reported"]][[content_area.iter]],
 					sort(unique(bPlot.data$GRADE)))) { ### Loop over unique grades levels for instructor (usually only one)
 			
 			# Anonymize district, school and student names (if requested)
@@ -2108,10 +2108,10 @@ if (22 %in% bPlot.styles) {
 	
 				my.content_area <- get.my.cutscore.year(state, content_area.iter, as.character(bPlot.labels$y.year)) 
 				tmp.y.range <- extendrange(c(bPlot.data[["SCALE_SCORE"]], 
-					SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]]), f=0.1)
-				tmp.loss.hoss <- SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area.iter]][[paste("loss.hoss", grade.iter, sep="_")]]
+					SGP::SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]]), f=0.1)
+				tmp.loss.hoss <- SGP::SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area.iter]][[paste("loss.hoss", grade.iter, sep="_")]]
 				tmp.y.ticks <- sort(c(max(tmp.loss.hoss[1], tmp.y.range[1]), min(tmp.loss.hoss[2], tmp.y.range[2]),
-					SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]])) 
+					SGP::SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]])) 
 	
 			# Get median SGP for grade, school, content area combination
 	
@@ -2163,12 +2163,12 @@ if (22 %in% bPlot.styles) {
 					bubble_plot_configs.BUBBLE_X_TICKS_SIZE=c(rep(0.7, 5), 1, rep(0.7, 5)),
 					bubble_plot_configs.BUBBLE_Y_TICKS=tmp.y.ticks,
 					bubble_plot_configs.BUBBLE_Y_BANDS=tmp.y.ticks,
-					bubble_plot_configs.BUBBLE_Y_BAND_LABELS=SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]],
+					bubble_plot_configs.BUBBLE_Y_BAND_LABELS=SGP::SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]],
 					bubble_plot_configs.BUBBLE_SUBSET_INCREASE=0.00,
 					bubble_plot_configs.BUBBLE_COLOR="blue",
 					bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 					bubble_plot_configs.BUBBLE_TIPS="TRUE",
-					bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+					bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 					bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 					bubble_plot_configs.BUBBLE_PLOT_LEGEND="FALSE",
 					bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -2188,7 +2188,7 @@ if (22 %in% bPlot.styles) {
 			} ## END content_area.iter loop
 			} ## END year.iter loop
 
-		message(paste("\tFinished bubblePlot Style 150", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 150", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 	} ## END if bubblePlot style 150
 
@@ -2220,8 +2220,8 @@ if (22 %in% bPlot.styles) {
 
 			if (bPlot.demo) {
 				tmp.ids <- list()
-				tmp.grades.reported <- SGPstateData[[state]][["Student_Report_Information"]][["Grades_Reported"]][[content_area.iter]][-1]
-				tmp.grades.reported <- tmp.grades.reported[tmp.grades.reported %in% unique(slot.data)["VALID_CASE"][["GRADE"]]]
+				tmp.grades.reported <- SGP::SGPstateData[[state]][["Student_Report_Information"]][["Grades_Reported"]][[content_area.iter]][-1]
+				tmp.grades.reported <- as.character(tmp.grades.reported[tmp.grades.reported %in% unique(slot.data)["VALID_CASE"][["GRADE"]]])
 				for (i in seq_along(tmp.grades.reported)) {
 					tmp.ids[[i]] <- as.character(sample(unique(slot.data[SJ("VALID_CASE", year.iter, content_area.iter, tmp.grades.reported[i])][['ID']]), 30))
 				}
@@ -2239,7 +2239,7 @@ if (22 %in% bPlot.styles) {
 					stop("\tNOTE: Indvidividual level Instructor bubble plots require an INSTRUCTOR_NUMBER lookup table embedded in @Data_Supplementary")
 				}
 				tmp.bPlot.data.1.long <- data.table(slot.data[SJ("VALID_CASE", year.iter, content_area.iter, my.iters$tmp.districts[district.iter])],
-								key=c("ID", "CONTENT_AREA", "YEAR"))[sgp_object@Data_Supplementary, nomatch=0]
+								key=c("ID", "CONTENT_AREA", "YEAR"))[sgp_object@Data_Supplementary$INSTRUCTOR_NUMBER, nomatch=0]
 			}
 		
 			tmp.unique.schools <- my.iters$tmp.schools[my.iters$tmp.schools %in% unique(tmp.bPlot.data.1.long$SCHOOL_NUMBER)]
@@ -2278,10 +2278,10 @@ if (22 %in% bPlot.styles) {
 
 			my.content_area <- get.my.cutscore.year(state, content_area.iter, as.character(bPlot.labels$y.year)) 
 			tmp.y.range <- extendrange(c(bPlot.data[["SCALE_SCORE"]], 
-				SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]]), f=0.1)
-			tmp.loss.hoss <- SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area.iter]][[paste("loss.hoss", grade.iter, sep="_")]]
+				SGP::SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]]), f=0.1)
+			tmp.loss.hoss <- SGP::SGPstateData[[state]][["Achievement"]][["Knots_Boundaries"]][[content_area.iter]][[paste("loss.hoss", grade.iter, sep="_")]]
 			tmp.y.ticks <- sort(c(max(tmp.loss.hoss[1], tmp.y.range[1]), min(tmp.loss.hoss[2], tmp.y.range[2]),
-				SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]])) 
+				SGP::SGPstateData[[state]][["Achievement"]][["Cutscores"]][[my.content_area]][[paste("GRADE", grade.iter, sep="_")]])) 
 
 		# Get median SGP for grade, school, content area combination
 		# Report 'Official' Median.  Should be the same as median(bPlot.data$SGP, na.rm=TRUE).  Use that if NULL for some reason (prevents error)
@@ -2342,12 +2342,12 @@ if (22 %in% bPlot.styles) {
 				bubble_plot_configs.BUBBLE_X_TICKS_SIZE=c(rep(0.7, 5), 1, rep(0.7, 5)),
 				bubble_plot_configs.BUBBLE_Y_TICKS=tmp.y.ticks,
 				bubble_plot_configs.BUBBLE_Y_BANDS=tmp.y.ticks,
-				bubble_plot_configs.BUBBLE_Y_BAND_LABELS=SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]],
+				bubble_plot_configs.BUBBLE_Y_BAND_LABELS=SGP::SGPstateData[[state]][["Achievement"]][["Levels"]][["Labels"]],
 				bubble_plot_configs.BUBBLE_SUBSET_INCREASE=0.00,
 				bubble_plot_configs.BUBBLE_COLOR="blue",
 				bubble_plot_configs.BUBBLE_SUBSET_ALPHA=list(Transparent=0.3, Opaque=0.9),
 				bubble_plot_configs.BUBBLE_TIPS="TRUE",
-				bubble_plot_configs.BUBBLE_PLOT_DEVICE="PDF",
+				bubble_plot_configs.BUBBLE_PLOT_DEVICE=bPlot.output,
 				bubble_plot_configs.BUBBLE_PLOT_FORMAT=bPlot.format,
 				bubble_plot_configs.BUBBLE_PLOT_LEGEND="FALSE",
 				bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
@@ -2367,7 +2367,7 @@ if (22 %in% bPlot.styles) {
 		} ## END content_area.iter loop
 		} ## END year.iter loop
 
-		message(paste("\tFinished bubblePlot Style 153", date(), "in", timetaken(started.at), "\n"))
+		message(paste("\tFinished bubblePlot Style 153", date(), "in", convertTime(timetaken(started.at)), "\n"))
 
 	} ## END if bubblePlot style 153
 

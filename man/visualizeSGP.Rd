@@ -27,6 +27,7 @@ visualizeSGP(
            bPlot.prior.achievement=TRUE, 
            bPlot.draft=FALSE,
            bPlot.demo=FALSE,
+           bPlot.output="PDF",
            bPlot.format="print",
            bPlot.folder="Visualizations/bubblePlots",
            sgPlot.save.sgPlot.data=FALSE,
@@ -39,6 +40,8 @@ visualizeSGP(
            sgPlot.reports.by.instructor=FALSE,
            sgPlot.students=NULL,
            sgPlot.reports.by.student=FALSE,
+           sgPlot.reports.group.vars=
+		list(DISTRICT_NUMBER="DISTRICT_NUMBER", SCHOOL_NUMBER="SCHOOL_NUMBER"),
            sgPlot.header.footer.color="#4CB9CC",
            sgPlot.front.page=NULL,
            sgPlot.folder="Visualizations/studentGrowthPlots",
@@ -54,6 +57,7 @@ visualizeSGP(
            sgPlot.zip=TRUE,
            sgPlot.output.format="PDF",
 	   sgPlot.year.span=5,
+           sgPlot.plot.test.transition=TRUE,
            gaPlot.years=NULL,
            gaPlot.content_areas=NULL,
            gaPlot.students=NULL,
@@ -67,7 +71,7 @@ visualizeSGP(
 
 \arguments{
   \item{sgp_object}{An object of class SGP containing long formatted data in the \code{@Data} slot that will be used for the production of student growth 
-  and achievement plots and system growth and achievement plots, summary data from \code{\link{summarizeSGP}} in the \code{Summary} slot for bubble plots.  
+  and achievement plots and system growth and achievement plots, summary data from \code{\link{summarizeSGP}} in the \code{Summary} slot for bubble plots.  Alternatively, a properly formatted WIDE data set can be provided for production of student growth plots.  Such data sets are produced from an SGP object when the sgPlot.save.sgPlot.data argument is set to TRUE.  
   }
   \item{plot.types}{A character vector indicating what types of plots to construct. Currently available plots include \code{\link{bubblePlot}}, 
   \code{\link{studentGrowthPlot}}, and \code{\link{growthAchievementPlot}}.
@@ -112,6 +116,8 @@ function will produce plots for all available instructors provided in the data w
   }
   \item{bPlot.demo}{A Boolean argument (defaults to FALSE) indicating whether to produce demo student level plots (styles 150 and/or 153) for instructors. 
   }
+  \item{bPlot.output}{Argument indicating the desired type of output format for bubble plots. Either 'PDF' (default) or 'PNG'.
+  }
   \item{bPlot.format}{Either "print" or "presentation" indicating whether to optimize the plot for print form (light background) or presentation form (dark background).
   }
   \item{bPlot.folder}{Character vector indicating where \code{\link{bubblePlot}}s should be placed. Default folder is "Visualizations/bubblePlots".
@@ -144,6 +150,8 @@ provided the function produces \code{\link{studentGrowthPlot}}s for ALL students
   }
   \item{sgPlot.students}{A vector of student \code{ID}s indicating which students to produce \code{\link{studentGrowthPlot}}s for. If missing the function will 
   use \emph{all} available students in the data to produce \code{\link{studentGrowthPlot}}s. 
+  }
+  \item{sgPlot.reports.group.vars}{A list of variables used to group student reports. Default is \code{list(DISTRICT_NUMBER='DISTRICT_NUMBER', SCHOOL_NUMBER='SCHOOL_NUMBER')}
   }
   \item{sgPlot.reports.by.student}{A Boolean variable indicating whether the reports should be collated as single reports in a single folder or deposited into a 
   \code{district/school/grade folder} hierarchy. The default is FALSE which puts the reports into their appropriate \code{district/school/grade} slot. 
@@ -188,6 +196,9 @@ provided the function produces \code{\link{studentGrowthPlot}}s for ALL students
   }
   \item{sgPlot.year.span}{Integer argument (defaults to 5) indicating the number of years to display for the pdf student growth plot.
   }
+  \item{sgPlot.plot.test.transition}{Boolean argument (defaults to TRUE) indicating whether test transition data will be used IF it's available. Setting to FALSE ignore previous 
+  test transition data, which would indicate a desire to 'forget the past'.
+  }
   \item{gaPlot.years}{A vector indicating the year(s) for which to produce \code{\link{growthAchievementPlot}}s. If missing the function will use the last year available 
   in the data to produce the \code{\link{growthAchievementPlot}}s.
   }
@@ -211,7 +222,7 @@ provided the function produces \code{\link{studentGrowthPlot}}s for ALL students
   }
  \item{parallel.config}{A named list with, at a minimum, two elements indicating 1) the BACKEND package to be used for parallel computation and 2) the WORKERS list to specify the number of processors to be used in each major analysis.  The BACKEND element can be set = to \code{FOREACH} or \code{PARALLEL}.  Please consult the manuals and vignettes for information of these packages!  The \code{\link{analyzeSGP}} help page contains more thorough explanation and examples of the \code{parallel.config} setup. 
 
-TYPE is a third element of the \code{parallel.config} list that provides necessary information when using FOREACH or PARALLEL packages as the backend. With BACKEND="FOREACH",  the TYPE element specifies the flavor of 'foreach' backend.  As of version 1.0-1.0, only "doParallel" is supported.  TYPE=NA (default) produces summaries sequentially.  If BACKEND = "PARALLEL", the \code{parallel} package will be used.  This package combines deprecated parallel packages \code{snow} and \code{multicore}.  Using the "snow" implementation of \code{parallel} the function will create a cluster object based on the TYPE element specified and the number of workers requested (see WORKERS list description below).  The TYPE element indicates the users preferred cluster type (either "SOCK" for socket cluster of "MPI" for an OpenMPI cluster). If Windows is the operating system, this "snow" implementation must be use and the TYPE element must = "SOCK".  Defaults are assigned based on operating system if TYPE is missing based on system OS.  Unix/Mac OS defaults to the "multicore" to avoid worker node prescheduling and appears to be more efficient in these operating systems. 
+TYPE is a third element of the \code{parallel.config} list that provides necessary information when using FOREACH or PARALLEL packages as the backend. With BACKEND="FOREACH",  the TYPE element specifies the flavor of 'foreach' backend.  As of version 1.0-1.0, only "doParallel" is supported.  TYPE=NA (default) produces summaries sequentially.  If BACKEND = "PARALLEL", the \code{parallel} package will be used.  This package combines deprecated parallel packages \code{snow} and \code{multicore}.  Using the "snow" implementation of \code{parallel} the function will create a cluster object based on the TYPE element specified and the number of workers requested (see WORKERS list description below).  The TYPE element indicates the users preferred cluster type (either "PSOCK" for socket cluster of "MPI" for an OpenMPI cluster). If Windows is the operating system, this "snow" implementation must be used and the TYPE element must = "PSOCK".  Defaults are assigned based on operating system if TYPE is missing based on system OS.  Unix/Mac OS defaults to the "multicore" to avoid worker node pre-scheduling and appears to be more efficient in these operating systems. 
 
 The WORKERS element is a list with GA_PLOTS (growth achievement plots) and SG_PLOTS (student growth plots) specifying the number of processors to be used.  NOTE: choice of the number of cores is a balance between the number of processors available and the amount of RAM a system has; each system will be different and may require some adjustment.
 

@@ -13,10 +13,13 @@ studentGrowthPlot(Scale_Scores,
 	Grades,
 	Content_Areas,
 	Cuts,
+	Plotting_Cuts,
 	SGP_Targets,
 	SGP_Scale_Score_Targets,
+	Plotting_SGP_Scale_Score_Targets,
 	Cutscores,
-	Report_Parameters) 
+	Years,
+	Report_Parameters)
 }
 \arguments{
 	\item{Scale_Scores}{
@@ -44,20 +47,29 @@ studentGrowthPlot(Scale_Scores,
 	\item{Cuts}{
 		A list of cuts scores for NY1, NY2, and NY3.
 	}
+	\item{Plotting_Cuts}{
+		A list of plotting cuts scores for NY1, NY2, and NY3. Plotting cuts are identical to Cuts for states with a vertical scale and are transformed for non-vertical scale states.
+	}
 	\item{SGP_Targets}{
 		A list of CUKU, CUKU_Current, MUSU, MUSU_Current targets.
 	}
 	\item{SGP_Scale_Score_Targets}{
 		A list of CUKU, CUKU_Current, MUSU, MUSU_Current scale score targets.
 	}
+	\item{Plotting_SGP_Scale_Score_Targets}{
+		A list of CUKU, CUKU_Current, MUSU, MUSU_Current scale score targets for plotting that are transformed when no vertical scale exists.
+	}
 	\item{Cutscores}{
 		A data.frame of long formatted achievement level cutscores.
+	}
+	\item{Years}{
+		A vector of years corresponding to supplied scale scores.
 	}
 	\item{Report_Parameters}{
 		A list containing arguments: \code{Current_Year}, \code{Content_Area}, \code{State}, \code{Denote_Content_Area}, \code{SGP_Targets}, and \code{Configuration}.
 	}
 }
-\details{Function currently used as part of SGP package to produce student growth charts for states. Function is usally called from the higher level function \code{\link{visualizeSGP}} which
+\details{Function currently used as part of SGP package to produce student growth charts for states. Function is usually called from the higher level function \code{\link{visualizeSGP}} which
 allows for the creation of a student growth plot catalog for each school with student reports organized by grade and student name.} 
 \value{Returns a student growth plot graphical object that is usually exported in either PDF or PNG format.}
 \author{Damian W. Betebenner \email{dbetebenner@nciea.org}}

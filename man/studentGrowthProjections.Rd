@@ -23,13 +23,21 @@ studentGrowthProjections(panel.data,
                          achievement.level.prior.vname=NULL,
                          performance.level.cutscores, 
                          calculate.sgps=TRUE,
-                         convert.0and100=TRUE,    
-                         projection.unit="YEAR",       
-                         percentile.trajectory.values=NULL, 
+                         convert.0and100=TRUE,
+                         trajectories.chunk.size=50000,
+                         sgp.projections.equated=NULL, 
+                         projection.unit="YEAR",
+                         projection.unit.label=NULL,
+                         percentile.trajectory.values=NULL,
+                         return.percentile.trajectory.values=NULL,
+                         return.projection.group.identifier=NULL,
+                         return.projection.group.scale.scores=NULL,
+                         return.projection.group.dates=NULL,
                          isotonize=TRUE,
                          lag.increment=0,
 			 sgp.exact.grade.progression=FALSE,
                          projcuts.digits=NULL,
+                         SGPt=NULL,
                          print.time.taken=TRUE)
 }
 
@@ -106,15 +114,32 @@ studentGrowthProjections(panel.data,
   \item{convert.0and100}{Boolean argument (defaults to TRUE) indicating whether conversion of growth percentiles of 0 and 100 to growth percentiles
     of 1 and 99, respectively, occurs. The default produces growth percentiles ranging from 1 to 99.
   }
+  \item{trajectories.chunk.size}{To enhance speed, large data sets are broken up into smaller data sets before trajectories and cuts are calculated. The default chunk.size is 50,000 and is utilized
+  when data sets of over 150 percent of the \code{trajectory.chunk.size} are passed to \code{.get.percentile.trajectories} and \code{.get.trajectories.and.cuts}.  
+  }
+  \item{sgp.projections.equated}{A list (defaults to NULL) specifying the Year and Linkages associated with the equating used for projection purposes.
+  }
   \item{projection.unit}{Argument specifying the units in which the projections/trajectories and cuts are reported. Either \code{"GRADE"}, the default, or 
   \code{"YEAR"}.
   }       
+  \item{projection.unit.label}{Argument specifying the label associated with the units in which the projections/trajectories and cuts are reported. Defaults to NULL utilizing the value associated
+	with the argument supplied to \code{projection.unit}. 
+  }       
   \item{percentile.trajectory.values}{An integer argument with values ranging from 1 to 100 that returns a vector of percentile trajectory cuts (default is NULL, 
   no percentile trajectory values returned).  The returned values are the lower bound for the interval associated with the percentile(s) requested. For example, by specifying
-  'percentile.trajectory.values=1' the user would receive the conditional .005 quantile associated with each student's distribution.
+  'percentile.trajectory.values=1' the user would receive the conditional .005 quantile associated with each student's distribution. Supplied values can also be a vector of targets
+  that will return Scale Scores associated with those targets.
+  }
+  \item{return.percentile.trajectory.values}{A Boolean variable indicating whether to return the percentile trajectory values when they are supplied as targets via panel.data. Default is NULL/FALSE.
+  }
+  \item{return.projection.group.identifier}{A Boolean variable indicating whether to return the projection group identifier to distinguish different projection trajectories. Defaults to NULL/FALSE.
+  }
+  \item{return.projection.group.scale.scores}{A Boolean variable indicating whether to return the projection group scale scores for each student. Defaults to NULL/FALSE.
+  }
+  \item{return.projection.group.dates}{A Boolean variable indicating whether to return the projection group dates associated with the students' scale scores. Defaults to NULL/FALSE.
   }
   \item{isotonize}{Boolean argument (defaults to TRUE) indicating whether quantile regression results are isotonized to prevent quantile crossing following 
-  the methods derived by Dette & Volgushev (2008).
+  the methods derived by Chernozhukov, Fernandez-Val and Glichon (2010).
   }
   \item{lag.increment}{A non-negative integer (defaults to 0) indicating the lag associated with the data supplied for projections. Only relevant if Cutscores or Knots and Boundaries are year dependent. 
   }
@@ -122,7 +147,9 @@ studentGrowthProjections(panel.data,
   }
   \item{projcuts.digits}{The number of digits (defaults to NULL/0) percentile trajectories (if requested) are formatted.
   }
-  \item{print.time.taken}{Boolean argument (defaults to TRUE) indicating whether to print message indicating information on studentGrowthProjection analysis and time taken.
+  \item{SGPt}{Character vector indicating the name of the 'DATE' variable to be used for time dependent student growth projection calculations. Defaults to NULL, non-time-dependent SGP calculations.
+  }
+  \item{print.time.taken}{Boolean argument (defaults to TRUE) indicating whether to print message indicating information on \code{studentGrowthProjections} analysis and time taken.
   }
 }
 
@@ -132,6 +159,9 @@ The data frame contains projections/trajectories for each performance level cut-
 }
 
 \references{
+Shang, Y., VanIwaarden, A., & Betebenner, D. W. (2015). Covariate measurement error correction for Student Growth 
+Percentiles using the SIMEX method. Educational Measurement: Issues and Practice, 34(1):4-14.
+
 Betebenner, D. W. (2012). Growth, standards, and accountability. In G. J. Cizek,
 \emph{Setting Performance Standards: Foundations, Methods & Innovations. 2nd Edition} (pp. 439-450).
 New York: Routledge.
@@ -142,8 +172,8 @@ Educational Measurement: Issues and Practice, 28(4):42-51.
 Betebenner, D. W. (2008). Toward a normative understanding of student growth. In K. E. Ryan & 
 L. A. Shepard (Eds.), \emph{The Future of Test Based Accountability} (pp. 155-170). New York: Routledge.
 
-Dette, H. & Volgushev, S. (2008). Non-crossing non-parametric estimates of quantile curves. Journal of the Royal Statistical Society B, 
-70(3), 609-627.
+Chernozhukov, V., Fernandez-Val, I. and Galichon, A. (2010),
+Quantile and Probability Curves Without Crossing. Econometrica, 78: 1093-1125.
 }
 
 \author{Damian W. Betebenner \email{dbetebenner@nciea.org} and Adam Van Iwaarden \email{vaniwaarden@colorado.edu}}
@@ -157,15 +187,15 @@ Dette, H. & Volgushev, S. (2008). Non-crossing non-parametric estimates of quant
 
 \examples{
 \dontrun{
-## First calculate SGPs for 2013
+## First calculate SGPs for 2014
 my.grade.sequences <- list(3:4, 3:5, 3:6, 3:7, 4:8)
 my.sgpData <- list(Panel_Data = sgpData)
 
 for (i in seq_along(my.grade.sequences)) {
-     my.sgpData <- studentGrowthPercentiles(panel.data=my.sgpData,
-                     sgp.labels=list(my.year=2013, my.subject="Reading"),
-                     use.my.knots.boundaries="DEMO",
-                     grade.progression=my.grade.sequences[[i]])
+	my.sgpData <- studentGrowthPercentiles(panel.data=my.sgpData,
+		sgp.labels=list(my.year=2014, my.subject="Reading"),
+		use.my.knots.boundaries="DEMO",
+		grade.progression=my.grade.sequences[[i]])
 }
 
 ## Calculate Growth Projections
@@ -173,18 +203,19 @@ for (i in seq_along(my.grade.sequences)) {
 my.grade.progressions <- list(3, 3:4, 3:5, 3:6, 4:7)
 
 for (i in seq_along(my.grade.progressions)) {
-     my.sgpData <- studentGrowthProjections(panel.data=my.sgpData,
-                      sgp.labels=list(my.year=2013, my.subject="Reading"),
-                      projcuts.digits=0,
-                      projection.unit="GRADE",
-                      performance.level.cutscores="DEMO",
-                      percentile.trajectory.values=c(25, 50, 75),
-                      grade.progression=my.grade.progressions[[i]])
+	my.sgpData <- studentGrowthProjections(panel.data=my.sgpData,
+		sgp.labels=list(my.year=2014, my.subject="Reading"),
+		projcuts.digits=0,
+		projection.unit="GRADE",
+		performance.level.cutscores="DEMO",
+		percentile.trajectory.values=c(25, 50, 75),
+		grade.progression=my.grade.progressions[[i]])
 }
 
 ##  Save the Student Growth Projections Results to a .csv file:
-write.csv(my.sgpData$SGProjections$READING.2013, 
-file= "2013_Reading_SGProjections.csv", row.names=FALSE, quote=FALSE)
+
+write.csv(my.sgpData$SGProjections$READING.2014, 
+file= "2014_Reading_SGProjections.csv", row.names=FALSE, quote=FALSE)
 }  
 }
 

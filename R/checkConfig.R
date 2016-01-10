@@ -15,7 +15,7 @@ function(my.config,
 					my.config[[i]][['sgp.projection.grade.sequences']][!is.na(my.config[[i]][['sgp.projection.grade.sequences']])]
 				tmp.min <- min(length(my.config[[i]][['sgp.content.areas']]), length(my.config[[i]][['sgp.projection.grade.sequences']]))
 				my.config[[i]][['sgp.projection.grade.sequences']] <- tail(as.character(my.config[[i]][['sgp.projection.grade.sequences']]), tmp.min)
-			}
+			} else my.config[[i]][['sgp.projection.grade.sequences']] <- NA
 
 			if (length(my.config[[i]][['sgp.content.areas']]) != length(my.config[[i]][['sgp.grade.sequences']])) {
 				tmp.min <- min(length(my.config[[i]][['sgp.content.areas']]), length(my.config[[i]][['sgp.grade.sequences']]))
@@ -29,7 +29,7 @@ function(my.config,
 	if (config.type=="Baseline") {
 
 		if (!all(unlist(sapply(lapply(my.config, names),
-			function(x) x %in% c("sgp.baseline.content.areas", "sgp.baseline.panel.years", "sgp.baseline.grade.sequences", "sgp.baseline.grade.sequences.lags", "sgp.baseline.panel.years.within"))))) {
+			function(x) x %in% c("sgp.baseline.content.areas", "sgp.baseline.panel.years", "sgp.baseline.grade.sequences", "sgp.baseline.grade.sequences.lags", "sgp.baseline.panel.years.within", "sgp.baseline.exclude.sequences"))))) {
 				stop("Please specify an appropriate list of SGP function labels (sgp.baseline.config).  See help page for details.")
 		}       
 
