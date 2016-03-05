@@ -36,10 +36,12 @@ function(sgp_object,
 	sgp.sqlite = NULL,
 	sgp.percentiles.equated=NULL,
 	sgp.percentiles.equating.method=NULL,
+	sgp.percentiles.calculate.sgps=TRUE,
 	SGPt=NULL) {
 
         started.at <- proc.time()
-	message(paste("\nStarted abcSGP", date()), "\n")
+	messageSGP(paste("\nStarted abcSGP", date()), "\n")
+	messageSGP(match.call())
 
 	names.type <- names.provided <- names.output <- NULL
 
@@ -71,7 +73,7 @@ function(sgp_object,
         ### Check for consistency between simulate.sgps and existence of CSEMs ###
 
 		if (simulate.sgps & is.null(SGP::SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
-        	        message("\tCSEMs are required in SGPstateData to simulate SGPs for confidence interval calculations. Confidence intervals will not be calculated.")
+        	        messageSGP("\tCSEMs are required in SGPstateData to simulate SGPs for confidence interval calculations. Confidence intervals will not be calculated.")
 			simulate.sgps <- FALSE
 		}
 
@@ -82,7 +84,7 @@ function(sgp_object,
 		if (is.null(sgp.minimum.default.panel.years) & is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][['sgp.minimum.default.panel.years']])) {
 			if (length(unique(sgp_object@Data$YEAR))==2) {
 				sgp.minimum.default.panel.years <- 2
-				message("\tNOTE: Only two years of data present. Minimum default of 3 years of panel data for SGP analyses changed to 2. Please confirm this is consistent with analyses you wish to perform.")
+				messageSGP("\tNOTE: Only two years of data present. Minimum default of 3 years of panel data for SGP analyses changed to 2. Please confirm this is consistent with analyses you wish to perform.")
 			} else {
 				sgp.minimum.default.panel.years <- 3
 			}
@@ -112,6 +114,7 @@ function(sgp_object,
 			sgp.sqlite=sgp.sqlite,
 			sgp.percentiles.equated=sgp.percentiles.equated,
 			sgp.percentiles.equating.method=sgp.percentiles.equating.method,
+			sgp.percentiles.calculate.sgps=sgp.percentiles.calculate.sgps,
 			SGPt=SGPt)
 
                 if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
@@ -195,6 +198,6 @@ function(sgp_object,
 
 	### Print finish and return SGP object
 
-        message(paste("Finished abcSGP", date(), "in", convertTime(timetaken(started.at)), "\n"))
+        messageSGP(paste("Finished abcSGP", date(), "in", convertTime(timetaken(started.at)), "\n"))
 	return(sgp_object)
 } ## END abcSGP Function

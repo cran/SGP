@@ -33,13 +33,15 @@ function(what_sgp_object=NULL,
 	SGPt=NULL,
 	sgp.percentiles.equated=NULL,
 	sgp.percentiles.equating.method=NULL,
+	sgp.percentiles.calculate.sgps=TRUE,
 	fix.duplicates=NULL,
 	...) {
 
 	SGPstateData <- SGP::SGPstateData ### Needed due to possible assignment of values to SGPstateData
 
 	started.at <- proc.time()
-	message(paste("\nStarted updateSGP", date()), "\n")
+	messageSGP(paste("\nStarted updateSGP", date()), "\n")
+	messageSGP(match.call())
 
 
 	### Create state (if NULL) from sgp_object (if possible)
@@ -164,6 +166,7 @@ function(what_sgp_object=NULL,
 					SGPt=SGPt,
 					sgp.percentiles.equated=sgp.percentiles.equated,
 					sgp.percentiles.equating.method=sgp.percentiles.equating.method,
+					sgp.percentiles.calculate.sgps=sgp.percentiles.calculate.sgps,
 					parallel.config=parallel.config,
 					...
 					)
@@ -233,6 +236,7 @@ function(what_sgp_object=NULL,
 						SGPt=SGPt,
 						sgp.percentiles.equated=sgp.percentiles.equated,
 						sgp.percentiles.equating.method=sgp.percentiles.equating.method,
+						sgp.percentiles.calculate.sgps=sgp.percentiles.calculate.sgps,
 						parallel.config=parallel.config,
 						...)
 
@@ -279,6 +283,7 @@ function(what_sgp_object=NULL,
 							SGPt=SGPt,
 							sgp.percentiles.equated=sgp.percentiles.equated,
 							sgp.percentiles.equating.method=sgp.percentiles.equating.method,
+							sgp.percentiles.calculate.sgps=sgp.percentiles.calculate.sgps,
 							parallel.config=parallel.config,
 							...)
 
@@ -435,12 +440,13 @@ function(what_sgp_object=NULL,
 							SGPt=SGPt,
 							sgp.percentiles.equated=sgp.percentiles.equated,
 							sgp.percentiles.equating.method=sgp.percentiles.equating.method,
+							sgp.percentiles.calculate.sgps=sgp.percentiles.calculate.sgps,
 							parallel.config=parallel.config,
 							...)
 
 				### Print finish and return SGP object
 
-				message(paste("Finished updateSGP", date(), "in", convertTime(timetaken(started.at)), "\n"))
+				messageSGP(paste("Finished updateSGP", date(), "in", convertTime(timetaken(started.at)), "\n"))
 				return(what_sgp_object)
 			} ### END if else (!is.null(sgp.use.my.coefficient.matrices))
 		} ### END if (overwrite.existing.data)
