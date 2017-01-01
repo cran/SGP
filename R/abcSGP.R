@@ -17,6 +17,8 @@ function(sgp_object,
 	sgp.minimum.default.panel.years=NULL,
 	sgp.target.scale.scores=FALSE,
 	sgp.target.scale.scores.only=FALSE,
+	sgp.test.cohort.size=NULL,
+	return.sgp.test.results=FALSE,
 	simulate.sgps=TRUE,
 	calculate.simex=NULL,
 	calculate.simex.baseline=NULL,
@@ -33,14 +35,15 @@ function(sgp_object,
 	plot.types=c("bubblePlot", "studentGrowthPlot", "growthAchievementPlot"),
 	outputSGP.output.type=c("LONG_Data", "LONG_FINAL_YEAR_Data", "WIDE_Data", "INSTRUCTOR_Data"),
 	verbose.output=FALSE,
-	sgp.sqlite = NULL,
+	sgp.sqlite = FALSE,
 	sgp.percentiles.equated=NULL,
 	sgp.percentiles.equating.method=NULL,
 	sgp.percentiles.calculate.sgps=TRUE,
+	get.cohort.data.info=FALSE,
 	SGPt=NULL) {
 
-        started.at <- proc.time()
-	messageSGP(paste("\nStarted abcSGP", date()), "\n")
+    started.at <- proc.time()
+	messageSGP(paste("\nStarted abcSGP", prettyDate()), "\n")
 	messageSGP(match.call())
 
 	names.type <- names.provided <- names.output <- NULL
@@ -82,7 +85,7 @@ function(sgp_object,
 		}
 
 		if (is.null(sgp.minimum.default.panel.years) & is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][['sgp.minimum.default.panel.years']])) {
-			if (length(unique(sgp_object@Data$YEAR))==2) {
+			if (uniqueN(sgp_object@Data$YEAR)==2) {
 				sgp.minimum.default.panel.years <- 2
 				messageSGP("\tNOTE: Only two years of data present. Minimum default of 3 years of panel data for SGP analyses changed to 2. Please confirm this is consistent with analyses you wish to perform.")
 			} else {
@@ -105,6 +108,8 @@ function(sgp_object,
 			sgp.use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
 			sgp.minimum.default.panel.years=sgp.minimum.default.panel.years,
 			sgp.config=sgp.config,
+			sgp.test.cohort.size=sgp.test.cohort.size,
+			return.sgp.test.results=return.sgp.test.results,
 			simulate.sgps=simulate.sgps,
 			calculate.simex=calculate.simex,
 			calculate.simex.baseline=calculate.simex.baseline,
@@ -115,6 +120,7 @@ function(sgp_object,
 			sgp.percentiles.equated=sgp.percentiles.equated,
 			sgp.percentiles.equating.method=sgp.percentiles.equating.method,
 			sgp.percentiles.calculate.sgps=sgp.percentiles.calculate.sgps,
+			get.cohort.data.info=get.cohort.data.info,
 			SGPt=SGPt)
 
                 if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
@@ -198,6 +204,6 @@ function(sgp_object,
 
 	### Print finish and return SGP object
 
-        messageSGP(paste("Finished abcSGP", date(), "in", convertTime(timetaken(started.at)), "\n"))
+        messageSGP(paste("Finished abcSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
 	return(sgp_object)
 } ## END abcSGP Function

@@ -10,7 +10,7 @@ function(
 	output.format="PDF",
 	color.scale="reds.and.blues") {
 
-	VALID_CASE <- CONTENT_AREA <- YEAR <- SCALE_SCORE_PRIOR <- ACHIEVEMENT_LEVEL_PRIOR <- NULL
+	VALID_CASE <- CONTENT_AREA <- YEAR <- SCALE_SCORE_PRIOR <- ACHIEVEMENT_LEVEL_PRIOR <- GRADE <- NULL
 
 	### Create state (if NULL) from sgp_object (if possible)
 
@@ -54,19 +54,19 @@ function(
 			} else tmp.plot.name <- sapply(plot.name, function(f) paste(rev(gsub("/", "_", strsplit(as.character(f), "; ")[[1]])), collapse=";"))
 
 			if ("PDF" %in% output.format) {
-				pdf(file=paste(file.path, "/", tmp.plot.name, ".pdf", sep=""), width=my.width, height=my.height)
+				pdf(file=paste0(file.path, "/", tmp.plot.name, ".pdf"), width=my.width, height=my.height)
 				grid.draw(.goodness.of.fit(content_area.year.grade.data, content_area, year, grade, color.scale=color.scale,
 					with.prior.achievement.level=with.prior.achievement.level, content_areas_prior=content_areas_prior, years_prior))
 				dev.off()
 			}
 			if ("PNG" %in% output.format) {
-				Cairo(file=paste(file.path, "/", tmp.plot.name, ".png", sep=""), width=my.width, height=my.height, units="in", dpi=144, pointsize=10.5, bg="transparent")
+				Cairo(file=paste0(file.path, "/", tmp.plot.name, ".png"), width=my.width, height=my.height, units="in", dpi=144, pointsize=10.5, bg="transparent")
 				grid.draw(.goodness.of.fit(content_area.year.grade.data, content_area, year, grade, color.scale=color.scale,
 					with.prior.achievement.level=with.prior.achievement.level, content_areas_prior=content_areas_prior, years_prior))
 				dev.off()
 			}
 			if ("SVG" %in% output.format) {
-				CairoSVG(file=paste(file.path, "/", tmp.plot.name, ".svg", sep=""), width=my.width, height=my.height, dpi=72, pointsize=10.5, bg="transparent")
+				CairoSVG(file=paste0(file.path, "/", tmp.plot.name, ".svg"), width=my.width, height=my.height, dpi=72, pointsize=10.5, bg="transparent")
 				grid.draw(.goodness.of.fit(content_area.year.grade.data, content_area, year, grade, color.scale=color.scale,
 					with.prior.achievement.level=with.prior.achievement.level, content_areas_prior=content_areas_prior, years_prior))
 				dev.off()
@@ -104,7 +104,7 @@ function(
 				if (loss.rows > 1) tmp.tbl[2, 3] <- ifelse(x[2, 3] > 14.9, "#FFFFB3", "#B4EEB4")  #  Warning flag for anything greater than 15% in 2nd row, 3rd column
 				tmp.tbl[1, 4:12] <- ifelse(x[1, 4:12] > 0, "#EBCDDE", "#FFFFFF")
 				if (loss.rows > 1) tmp.tbl[loss.rows, 4:12] <- ifelse(x[loss.rows, 4:12] > 0, "#FFFFB3", "#FFFFFF")
-				
+
 				# HOSS
 				tmp.tbl[(loss.rows+1):loss_hoss.rows, 12] <- lh_palette[findInterval(x[(loss.rows+1):loss_hoss.rows, 12], seq(0, 100, 10), all.inside = TRUE)]
 				tmp.tbl[(loss.rows+1):loss_hoss.rows, 11] <- lh_palette[findInterval(x[(loss.rows+1):loss_hoss.rows, 11]/hoss.remainder, seq(-1, 1, 0.2), all.inside = TRUE)]
@@ -112,7 +112,7 @@ function(
 				if (hoss.rows > 1) tmp.tbl[(loss.rows+1), 10] <- ifelse(x[(loss.rows+1), 10] > 14.9, "#FFFFB3", "#B4EEB4") # Warning flag for anything greater than 5% in top row, 3rd column
 				tmp.tbl[loss_hoss.rows, 1:9] <- ifelse(x[loss_hoss.rows, 1:9] > 0, "#EBCDDE", "#FFFFFF")
 				if (hoss.rows > 1) tmp.tbl[(loss.rows+1), 1:9] <- ifelse(x[(loss.rows+1), 1:9] > 0, "#FFFFB3", "#FFFFFF")
-				
+
 				tmp.tbl[is.na(tmp.tbl)] <- lh_palette[9]
 				tmp.cell.color <- as.vector(tmp.tbl)
 			}
@@ -197,11 +197,11 @@ function(
 			tmp.list[[i]] <- quantile(data1$SGP[tmp.cuts==i], probs=ppoints(1:500))
 		}
 
-		pct <- 50/dim(tmp.data.final)[1] # Take Top/Bottom 50 kids to find LOSS/HOSS
+		if ((tmp.n <- dim(tmp.data.final)[1]) > 50) pct <- 50/tmp.n else pct <- 0.9999 # Take Top/Bottom 50 kids to find LOSS/HOSS
 
 		loss_hoss.data <- rbindlist(list(
-			data.table(data1)[, list(SCALE_SCORE, SGP)][which(SCALE_SCORE <= quantile(SCALE_SCORE, probs = pct, na.rm = T)),][, LH := "LOSS"],
-			data.table(data1)[, list(SCALE_SCORE, SGP)][which(SCALE_SCORE >= quantile(SCALE_SCORE, probs=1-pct, na.rm = T)),][, LH := "HOSS"]))
+			data.table(data1)[, list(SCALE_SCORE, SGP)][which(SCALE_SCORE <= quantile(SCALE_SCORE, probs = pct, na.rm = T)),][, LH:="LOSS"],
+			data.table(data1)[, list(SCALE_SCORE, SGP)][which(SCALE_SCORE >= quantile(SCALE_SCORE, probs=1-pct, na.rm = T)),][, LH:="HOSS"]))
 		setkey(loss_hoss.data, SCALE_SCORE, LH)
 		if (length(unique(loss_hoss.data[LH=="HOSS"][["SCALE_SCORE"]])) > 1) hoss.rows <- 2 else hoss.rows <- 1
 		if (length(unique(loss_hoss.data[LH=="LOSS"][["SCALE_SCORE"]])) > 1) loss.rows <- 2 else loss.rows <- 1
@@ -247,7 +247,7 @@ function(
 			data1[['ACHIEVEMENT_LEVEL_PRIOR']] <- ordered(data1[['ACHIEVEMENT_LEVEL_PRIOR']], levels=tmp.prior.achievement.levels)
 			tmp.prior.achievement.level.percentages <- table(data1[['ACHIEVEMENT_LEVEL_PRIOR']])/(dim(data1)[1])
 			tmp.prior.achievement.level.colors <- rev(diverge_hcl(length(tmp.prior.achievement.level.percentages)))
-			tmp.prior.achievement.level.percentages.labels <- paste("(", round(100*table(data1[['ACHIEVEMENT_LEVEL_PRIOR']])/(dim(data1)[1]), digits=1), "%)", sep="")
+			tmp.prior.achievement.level.percentages.labels <- paste0("(", round(100*table(data1[['ACHIEVEMENT_LEVEL_PRIOR']])/(dim(data1)[1]), digits=1), "%)")
 			tmp.prior.achievement.level.base.points <- cumsum(tmp.prior.achievement.level.percentages)+(seq_along(tmp.prior.achievement.level.percentages)-1)/100
 			tmp.prior.achievement.level.centers <- tmp.prior.achievement.level.base.points-tmp.prior.achievement.level.percentages/2
 			tmp.prior.achievement.level.quantiles <- tapply(data1[['SGP']], data1[['ACHIEVEMENT_LEVEL_PRIOR']], quantile, probs=1:9/10, simplify=FALSE)
@@ -276,23 +276,23 @@ function(
 		if (with.prior.achievement.level) {
 
 			gof.grob <- gTree(childrenvp=layout.vp,
-				name=paste(content_area, ".", year, ".GRADE.", grade, sep=""),
+				name=paste0(content_area, ".", year, ".GRADE.", grade),
 				children=gList(gTree(vp="layout",
 				childrenvp=components,
-				name=paste("CHILDREN.", content_area, ".", year, ".GRADE.", grade, sep=""),
+				name=paste0("CHILDREN.", content_area, ".", year, ".GRADE.", grade),
 					children=gList(
 
 			### title
 
 				roundrectGrob(gp=gpar(fill="grey95"), vp="title", r=unit(3, "mm")),
 				textGrob(x=0.5, y=0.65, "Student Growth Percentile Goodness-of-Fit Descriptives", gp=gpar(cex=1.75), vp="title"),
-				textGrob(x=0.5, y=0.35, paste(pretty_year(year), " ", sub(' +$', '', capwords(paste(content_area, my.extra.label))),
-					", Grade ", grade, " (N = ", format(dim(data1)[1], big.mark=","), ")", sep=""), vp="title", gp=gpar(cex=1.2)),
+				textGrob(x=0.5, y=0.35, paste0(pretty_year(year), " ", sub(' +$', '', capwords(paste(content_area, my.extra.label))),
+					", Grade ", grade, " (N = ", format(dim(data1)[1], big.mark=","), ")"), vp="title", gp=gpar(cex=1.2)),
 
 			### prior_achievement_level
 
 				roundrectGrob(width=0.98, r=unit(2, "mm"), vp="prior_achievement_level"),
-				textGrob(x=unit(-22, "native"), y=unit(1.15, "native"), paste("SGP Deciles by Prior Achievement Level (", capwords(content_areas_prior), ")", sep=""), just="left", gp=gpar(cex=1.2), vp="prior_achievement_level"),
+				textGrob(x=unit(-22, "native"), y=unit(1.15, "native"), paste0("SGP Deciles by Prior Achievement Level (", capwords(content_areas_prior), ")"), just="left", gp=gpar(cex=1.2), vp="prior_achievement_level"),
 				rectGrob(x=rep(50, length(tmp.prior.achievement.level.base.points)), y=tmp.prior.achievement.level.base.points,
 					width=rep(100, length(tmp.prior.achievement.level.base.points)), height=tmp.prior.achievement.level.percentages,
 					just=c("center", "top"), vp="prior_achievement_level", default.units="native",
@@ -336,9 +336,9 @@ function(
 				roundrectGrob(width=0.98, r=unit(2, "mm"), vp="table"),
 				rectGrob(x=rep(1:10, each=dim(tmp.table)[1]), y=rep(10:(10-dim(tmp.table)[1]+1),10), width=1, height=1, default.units="native",
 					gp=gpar(col="black", fill=tmp.colors), vp="table"),
-				textGrob(x=0.35, y=10:(10-dim(tmp.table)[1]+1), paste(c("1st", "2nd", "3rd", paste(4:dim(tmp.table)[1], "th", sep="")),
+				textGrob(x=0.35, y=10:(10-dim(tmp.table)[1]+1), paste(c("1st", "2nd", "3rd", paste0(4:dim(tmp.table)[1], "th")),
 					dimnames(tmp.table)[[1]], sep="/"), just="right", gp=gpar(cex=0.7), default.units="native", vp="table"),
-				textGrob(x=10.65, y=10:(10-dim(tmp.table)[1]+1), paste("(", tmp.cuts.percentages, "%)", sep=""), just="left", gp=gpar(cex=0.7),
+				textGrob(x=10.65, y=10:(10-dim(tmp.table)[1]+1), paste0("(", tmp.cuts.percentages, "%)"), just="left", gp=gpar(cex=0.7),
 					default.units="native", vp="table"),
 				textGrob(x=-2.5, y=5.5, "Prior Scale Score Decile/Range", gp=gpar(cex=0.8), default.units="native", rot=90, vp="table"),
 				textGrob(x=1:10, y=10.8, dimnames(tmp.table)[[2]], gp=gpar(cex=0.7), default.units="native", rot=45, just="left", vp="table"),
@@ -367,18 +367,18 @@ function(
 
 		} else {
 			gof.grob <- gTree(childrenvp=layout.vp,
-				name=paste(content_area, ".", year, ".GRADE.", grade, sep=""),
+				name=paste0(content_area, ".", year, ".GRADE.", grade),
 				children=gList(gTree(vp="layout",
 				childrenvp=components,
-				name=paste("CHILDREN.", content_area, ".", year, ".GRADE.", grade, sep=""),
+				name=paste0("CHILDREN.", content_area, ".", year, ".GRADE.", grade),
 					children=gList(
 
 			### title
 
 				roundrectGrob(gp=gpar(fill="grey95"), vp="title", r=unit(3, "mm")),
 				textGrob(x=0.5, y=0.65, "Student Growth Percentile Goodness-of-Fit Descriptives", gp=gpar(cex=1.75), vp="title"),
-				textGrob(x=0.5, y=0.35, paste(pretty_year(year), " ", sub(' +$', '', capwords(paste(content_area, my.extra.label))),
-					", Grade ", grade, " (N = ", format(dim(data1)[1], big.mark=","), ")", sep=""), vp="title", gp=gpar(cex=1.2)),
+				textGrob(x=0.5, y=0.35, paste0(pretty_year(year), " ", sub(' +$', '', capwords(paste(content_area, my.extra.label))),
+					", Grade ", grade, " (N = ", format(dim(data1)[1], big.mark=","), ")"), vp="title", gp=gpar(cex=1.2)),
 
 				### LOSS/HOSS table
 
@@ -404,9 +404,9 @@ function(
 				roundrectGrob(width=0.98, r=unit(2, "mm"), vp="table"),
 				rectGrob(x=rep(1:10, each=dim(tmp.table)[1]), y=rep(10:(10-dim(tmp.table)[1]+1),10), width=1, height=1, default.units="native",
 					gp=gpar(col="black", fill=tmp.colors), vp="table"),
-				textGrob(x=0.35, y=10:(10-dim(tmp.table)[1]+1), paste(c("1st", "2nd", "3rd", paste(4:dim(tmp.table)[1], "th", sep="")),
+				textGrob(x=0.35, y=10:(10-dim(tmp.table)[1]+1), paste(c("1st", "2nd", "3rd", paste0(4:dim(tmp.table)[1], "th")),
 					dimnames(tmp.table)[[1]], sep="/"), just="right", gp=gpar(cex=0.7), default.units="native", vp="table"),
-				textGrob(x=10.65, y=10:(10-dim(tmp.table)[1]+1), paste("(", tmp.cuts.percentages, "%)", sep=""), just="left", gp=gpar(cex=0.7),
+				textGrob(x=10.65, y=10:(10-dim(tmp.table)[1]+1), paste0("(", tmp.cuts.percentages, "%)"), just="left", gp=gpar(cex=0.7),
 					default.units="native", vp="table"),
 				textGrob(x=-2.5, y=5.5, "Prior Scale Score Decile/Range", gp=gpar(cex=0.8), default.units="native", rot=90, vp="table"),
 				textGrob(x=1:10, y=10.8, dimnames(tmp.table)[[2]], gp=gpar(cex=0.7), default.units="native", rot=45, just="left", vp="table"),
@@ -454,20 +454,20 @@ function(
 	### Get arguments
 
 	if (is.null(years)) {
-		years <- unique(tmp.data[!is.na(tmp.data[[use.sgp]]),][['YEAR']])
+		years <- unique(na.omit(tmp.data, cols=use.sgp), by="YEAR")[['YEAR']]
 	}
 
 	if (is.null(content_areas)) {
-		content_areas <- unique(tmp.data[!is.na(tmp.data[[use.sgp]]),][['CONTENT_AREA']])
+		content_areas <- unique(na.omit(tmp.data, cols=use.sgp), by="CONTENT_AREA")[['CONTENT_AREA']]
 	}
 
 	setkey(tmp.data, VALID_CASE, YEAR, CONTENT_AREA)
 
 	for (years.iter in years) {
 		for (content_areas.iter in content_areas) {
-			tmp.data_1 <- tmp.data[data.table("VALID_CASE", years.iter, content_areas.iter)][, intersect(variables.to.get, names(tmp.data)), with=FALSE]
+			tmp.data_1 <- tmp.data[list("VALID_CASE", years.iter, content_areas.iter)][, intersect(variables.to.get, names(tmp.data)), with=FALSE]
 			if (is.null(grades)) {
-				grades <- sort(unique(tmp.data_1[!is.na(tmp.data_1[[use.sgp]]),][['GRADE']]))
+				grades <- sort(unique(na.omit(tmp.data_1, cols=use.sgp), by="GRADE")[['GRADE']])
 			}
 
 			if (all(grades=="EOCT")) { # use grade progression norm groups for EOCT subjects
@@ -480,12 +480,12 @@ function(
 			for (grades.iter in grades) {
 				for (norm.group.iter in tmp.norm.group) {
 					if (all(is.na(tmp.norm.group))) {
-						tmp.data.final <- tmp.data_1[tmp.data_1[['GRADE']]==grades.iter & !is.na(tmp.data_1[[use.sgp]]) & !is.na(SCALE_SCORE_PRIOR),]
+						tmp.data.final <- na.omit(tmp.data_1[GRADE==grades.iter], cols=c(use.sgp, "SCALE_SCORE_PRIOR"))
 					} else {
-						tmp.data.final <- tmp.data_1[!is.na(tmp.data_1[[use.sgp]]) & !is.na(SCALE_SCORE_PRIOR) & grepl(norm.group.iter, tmp.data_1[[norm.group.var]]),]
+						tmp.data.final <- na.omit(tmp.data_1[grepl(norm.group.iter, get(norm.group.var))], cols=c(use.sgp, "SCALE_SCORE_PRIOR"))
 					}
 					## Set up more rigorous search for prior achievement.
-					if ("ACHIEVEMENT_LEVEL_PRIOR" %in% names(tmp.data.final) && !all(is.na(tmp.data.final[['ACHIEVEMENT_LEVEL_PRIOR']]))) {
+					if ("ACHIEVEMENT_LEVEL_PRIOR" %in% names(tmp.data.final) && any(!is.na(tmp.data.final[['ACHIEVEMENT_LEVEL_PRIOR']]))) {
 						tmp.prior.ach <- TRUE
 					} else {
 						tmp.prior.ach <- FALSE
@@ -497,7 +497,7 @@ function(
 						if (is.null(content_areas_prior) | anyNA(content_areas_prior)) {
 							if (!is.na(norm.group.iter)) {
 								tmp.content_areas_prior <- gsub("_EOCT", "", strsplit(tail(strsplit(norm.group.iter, ";")[[1]], 2)[1], "/")[[1]][2])
-							} else tmp.content_areas_prior <- content_areas.iter 
+							} else tmp.content_areas_prior <- content_areas.iter
 						} else tmp.content_areas_prior <- content_areas_prior
 						if ("YEAR_PRIOR" %in% names(tmp.data.final)) years_prior <- tmp.data.final[["YEAR_PRIOR"]][1] else years_prior <- NA
 						if (!is.na(norm.group.iter)) norm.group.iter <- gsub("MATHEMATICS", "MATH", norm.group.iter)

@@ -58,7 +58,7 @@ function(linkage.data,
 
     linkage.data <- linkage.data[YEAR==x.axis.year & !is.na(get(linkage.var.name))]
     content_areas.for.linkage <- unique(linkage.data[['CONTENT_AREA']])
-    unique.content.by.grade <- lapply(content_areas.for.linkage, function(x) sort(unique(linkage.data[CONTENT_AREA==x]$GRADE)))
+    unique.content.by.grade <- lapply(content_areas.for.linkage, function(x) sort(unique(linkage.data[CONTENT_AREA==x][['GRADE']])))
     names(unique.content.by.grade) <- content_areas.for.linkage
 
     for (content_area.iter in names(unique.content.by.grade)) {
@@ -87,7 +87,7 @@ function(linkage.data,
     			bubble_plot_labels.BUBBLE_TIPS_LINES=NULL,
     			bubble_plot_labels.BUBBLE_TITLES=NULL,
     			bubble_plot_titles.MAIN=paste(capwords(equating.method), "Linkage"),
-    			bubble_plot_titles.SUB1=paste(capwords(content_area.iter), ", Grade ", grade.iter, sep=""),
+    			bubble_plot_titles.SUB1=paste0(capwords(content_area.iter), ", Grade ", grade.iter),
     			bubble_plot_titles.SUB2=paste(x.axis.year, "to", y.axis.year),
     			bubble_plot_titles.LEGEND1="",
     			bubble_plot_titles.LEGEND2_P1=NULL,
@@ -107,7 +107,7 @@ function(linkage.data,
     			bubble_plot_configs.BUBBLE_PLOT_TITLE="TRUE",
     			bubble_plot_configs.BUBBLE_PLOT_BACKGROUND_LABELS=NULL,
     			bubble_plot_configs.BUBBLE_PLOT_EXTRAS=c(x.axis.cut.text, y.axis.cut.text),
-    			bubble_plot_configs.BUBBLE_PLOT_NAME=paste(toupper(equating.method), "_", conversion.type, "_", content_area.iter, "_GRADE_", grade.iter, ".pdf", sep=""),
+    			bubble_plot_configs.BUBBLE_PLOT_NAME=paste0(toupper(equating.method), "_", conversion.type, "_", content_area.iter, "_GRADE_", grade.iter, ".pdf"),
     			bubble_plot_configs.BUBBLE_PLOT_PATH=file.path("Data", paste("Linkages", year.for.equate, sep="_"), "Figures"),
     			bubble_plot_pdftk.CREATE_CATALOG=FALSE)
         }

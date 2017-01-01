@@ -22,9 +22,12 @@ analyzeSGP(sgp_object,
          sgp.projections.lagged.baseline.max.order=3,
          sgp.projections.max.forward.progression.years=3,
          sgp.projections.max.forward.progression.grade=NULL,
+         sgp.projections.use.only.complete.matrices=NULL,
          sgp.minimum.default.panel.years=NULL,
          sgp.use.my.coefficient.matrices=NULL,
          sgp.use.my.sgp_object.baseline.coefficient.matrices=NULL,
+         sgp.test.cohort.size=NULL,
+         return.sgp.test.results=FALSE,
          simulate.sgps=TRUE,
          calculate.simex=NULL,
          calculate.simex.baseline=NULL,
@@ -39,7 +42,7 @@ analyzeSGP(sgp_object,
          print.other.gp=NULL,
          sgp.projections.projection.unit="YEAR",
          get.cohort.data.info=FALSE,
-         sgp.sqlite=NULL,
+         sgp.sqlite=FALSE,
          sgp.percentiles.equated=NULL,
          sgp.percentiles.equating.method=NULL,
          sgp.percentiles.calculate.sgps=TRUE,
@@ -85,6 +88,9 @@ Default is 3.  To utilize the maximum matrix order, set to NULL.
   }
   \item{sgp.projections.max.forward.progression.grade}{Integer indicating the maximum grade forward that cohort based projections will be established for. Default is NULL, the highest grade.
   }
+  \item{sgp.projections.use.only.complete.matrices}{Boolean argument (defaults to TRUE/NULL) indicating whether to produce projections
+  only when a complete set of coefficient matrices is available.
+  }
   \item{sgp.minimum.default.panel.years}{Integer indicating the minimum number of panels years to use for default sgp analyses. Default value is NULL (converted to 3) years of data.
   }
   \item{sgp.use.my.coefficient.matrices}{Argument, defaults to NULL, indicating whether to use coefficient matrices embedded in argument supplied to 'sgp_object' to calculate student growth
@@ -92,6 +98,11 @@ Default is 3.  To utilize the maximum matrix order, set to NULL.
   }
   \item{sgp.use.my.sgp_object.baseline.coefficient.matrices}{Argument, defaults to NULL (FALSE), indicating whether to utilize baseline matrices embedded in supplied \code{sgp_object} and not
   utilize baseline matrices embedded in \code{SGPstateData}.
+  }
+  \item{sgp.test.cohort.size}{Integer indicating the maximum number of students sampled from the full cohort to use in the calculation of student growth percentiles.  Intended to be used
+  as a test of the desired analyses to be run. The default, NULL, uses no restrictions (no tests are performed, and analyses use the entire cohort of students).
+  }
+  \item{return.sgp.test.results}{Boolean variable passed to \code{\link{studentGrowthPercentiles}} indicating whether the results from the cohort sample subset (if specified using the above argument) should be returned for inspection. Defaults to FALSE.  If TRUE, only the sample subset of the data used will be returned in the SGP object's @Data slot. Alternatively, user can supply the character "ALL_DATA" to the argument to return the entire original data.
   }
   \item{simulate.sgps}{Boolean variable indicating whether to simulate SGP values for students based on test-specific Conditional Standard Errors of Measurement (CSEM).  Test CSEM data must be available for simulation and included in \code{SGPstateData}.  This argument must be set to TRUE for confidence interval construction. Defaults to TRUE.
   }
@@ -135,8 +146,8 @@ Example use cases are provided below.
   \item{get.cohort.data.info}{A Boolean argument (defaults to FALSE) indicating whether a summary of all cohorts to be submitted to the \code{\link{studentGrowthPercentiles}} and
   \code{\link{studentGrowthProjections}} functions should be performed prior to analysis.
   }
- \item{sgp.sqlite}{A Boolean argument (defaults to NULL) indicating whether a SQLite database file of the essential SGP data should be created from the \code{@Data} slot and subsequently used to extract data subsets for analysis with \code{\link{studentGrowthPercentiles}} and
-  \code{\link{studentGrowthProjections}} functions.  The default, NULL, allows for an test of the size of the \code{@Data} object.  If greater than 1 GB \code{sgp.sqlite} is set to TRUE internally.  When TRUE, this step can take some time but can also substantially reduce the amount of RAM memory required to conduct analyses.  If set to TRUE the \code{tmp_data} directory and file "TMP_SGP_Data.sqlite" will be created.  This tmp_data directory and file are deleted by default although one may keep them if the argument is specified as the character "KEEP".  However, if an existing database of that name exists, it will be deleted and a new version created.
+ \item{sgp.sqlite}{A Boolean argument (defaults to FALSE) indicating whether a SQLite database file of the essential SGP data should be created from the \code{@Data} slot and subsequently used to extract data subsets for analysis with \code{\link{studentGrowthPercentiles}} and
+  \code{\link{studentGrowthProjections}} functions.  If the size of the \code{@Data} object is greater than 1 GB \code{sgp.sqlite} is set to TRUE internally.  When TRUE, this can substantially reduce the amount of RAM memory required to conduct analyses.  If set to TRUE the file "TMP_SGP_Data.sqlite" will be created in the R temporary directory (see\code{?tempdir} for information).  This file is deleted by default although one may keep it if the argument is specified as the character "KEEP".
  }
   \item{sgp.percentiles.equated}{A Boolean argument (defaults to NULL/FALSE) indicating whether equating should be used on the most recent year of test data provided. Equating allows for student growth
 projections to be calculated in across assessment transitions where the scale for the assessment changes.

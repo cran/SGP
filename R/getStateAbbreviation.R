@@ -4,8 +4,8 @@ function(
 	SGPfunction=NULL,
 	type="Abbreviation") {
 
-	my.state.abbreviations <- c(setdiff(datasets::state.abb, "MA"), "ABQ", "AOB", "ATI", rep("DEMO", 2), "GUA", "MA_MCAS", "MA_PARCC", "MA", "NCSC_SD", "RLI_UK", "RLI", "WIDA_CO", "WIDA_MA", "WIDA_MI", "WIDA_NV", "WIDA") ### NOTE: Add abbreviations ALPHABETICALLY
-	my.state.names <- c(setdiff(datasets::state.name, "Massachusetts"), "Albuquerque", "AOB", "ATI", "DEMONSTRATION", "SGPDATA LONG", "Guatemala", "Massachusetts MCAS", "Massachusetts PARCC", "Massachusetts", "NCSC_SD", "RLI UK", "RLI", "WIDA CO", "WIDA MA", "WIDA MI", "WIDA NV", "WIDA") ### NOTE: Add state names ALPHABETICALLY - need compound abbreviations/names first (e.g. WIDA_CO before WIDA)
+	my.state.abbreviations <- c(setdiff(datasets::state.abb, c("MA", "WA")), "ABQ", "AOB", "ATI", "CO_ORIGINAL", rep("DEMO", 2), "GUA", "MA_MCAS", "MA_PARCC", "MA", "MA_ORIGINAL", "NCSC_SD", "NJ_ORIGINAL", "PARCC", "RI_ORIGINAL", "RLI_UK", "RLI", "WIDA_CO", "WIDA_GA", "WIDA_MA", "WIDA_MI", "WIDA_NV", "WIDA", "DC", "WA") ### NOTE: Add abbreviations ALPHABETICALLY
+	my.state.names <- c(setdiff(datasets::state.name, c("Massachusetts", "Washington")), "Albuquerque", "AOB", "ATI", "Colorado", "DEMONSTRATION", "SGPDATA LONG", "Guatemala", "Massachusetts MCAS", "Massachusetts PARCC", "Massachusetts", "Massachusetts", "NCSC SD", "New Jersey", "PARCC", "Rhode Island", "RLI UK", "RLI", "WIDA CO", "WIDA GA", "WIDA MA", "WIDA MI", "WIDA NV", "WIDA", "WASHINGTON DC", "WASHINGTON") ### NOTE: Add state names ALPHABETICALLY - need compound abbreviations/names first (e.g. WIDA_CO before WIDA)
 	if (type=="Abbreviation") {
 		tmp.name.position <- sapply(my.state.names, function(x) regexpr(toupper(x), supplied.name))
 	} else {
@@ -19,9 +19,9 @@ function(
 			}
 		} else {
 			if (!is.null(SGPfunction)) {
-				message(paste("\tNOTE: Use of the higher level '", SGPfunction, "' function requires extensive metadata embedded in the 'SGPstateData' list object.\n\tEither supply the two letter state acronymn as an argument or name the object supplied as 'sgp_object' using the entire state name (e.g., 'Colorado_SGP').\n\tIf your state's meta-data is not a part of the package, please add your state's data to 'SGPstateData' by examining a state that is currently embedded in https://github.com/CenterForAssessment/SGPstateData/blob/master/SGPstateData.R.\n\tPlease contact the package administrator with further questions.", sep=""))
+				message(paste0("\tNOTE: Use of the higher level '", SGPfunction, "' function requires extensive metadata embedded in the 'SGPstateData' list object.\n\tEither supply the two letter state acronymn as an argument or name the object supplied as 'sgp_object' using the entire state name (e.g., 'Colorado_SGP').\n\tIf your state's meta-data is not a part of the package, please add your state's data to 'SGPstateData' by examining a state that is currently embedded in https://github.com/CenterForAssessment/SGPstateData/blob/master/SGPstateData.R.\n\tPlease contact the package administrator with further questions."))
 			} else {
-				message(paste("\tNOTE: Either supply the two letter state acronymn as an argument or name the object supplied as 'sgp_object' using the entire state name (e.g., 'Colorado_SGP').\n\tIf your state's meta-data is not a part of the package, please add your state's data to 'SGPstateData' by examining state that is currently embedded in https://github.com/CenterForAssessment/SGPstateData/blob/master/SGPstateData.R.\n\tPlease contact the package administrator with further questions.", sep=""))
+				message(paste0("\tNOTE: Either supply a state/organization acronymn as an argument or name the object supplied as 'sgp_object' using the entire state name (e.g., 'Colorado_SGP').\n\tIf your state's meta-data is not a part of the package, please add your state's data to 'SGPstateData' by examining state that is currently embedded in https://github.com/CenterForAssessment/SGPstateData/blob/master/SGPstateData.R.\n\tPlease contact the package administrator with further questions."))
 			}
 		}
 } ### END getStateAbbreviation

@@ -10,14 +10,14 @@ function(tmp.data.for.equate,
 
 	### Define variables
 
-	tmp.unique.years <- unique(tmp.data.for.equate$YEAR)
+	tmp.unique.years <- unique(tmp.data.for.equate[['YEAR']])
 
 	if (conversion.type=="NEW_TO_OLD") {
 		tmp.years.for.equate <- tmp.unique.years[tmp.unique.years >= tmp.year.for.equate]
 	} else {
 		tmp.years.for.equate <- tmp.unique.years[tmp.unique.years < tmp.year.for.equate]
 	}
-	if (paste("SCALE_SCORE_EQUATED", equating.method, conversion.type, sep="_") %in% names(tmp.data.for.equate)) tmp.data.for.equate[,paste("SCALE_SCORE_EQUATED", equating.method, conversion.type, sep="_"):=NULL, with=FALSE]
+	if (paste("SCALE_SCORE_EQUATED", equating.method, conversion.type, sep="_") %in% names(tmp.data.for.equate)) tmp.data.for.equate[,paste("SCALE_SCORE_EQUATED", equating.method, conversion.type, sep="_"):=NULL]
 
 
 	### Create scale.score.concordance lookup
@@ -27,10 +27,10 @@ function(tmp.data.for.equate,
 		for (j.iter in names(equate.list[[i.iter]])) {
 			j <- unlist(strsplit(j.iter, "_"))[2]
 			tmp.data.for.equate[YEAR %in% tmp.years.for.equate & CONTENT_AREA==i & GRADE==j,
-				paste("SCALE_SCORE_EQUATED", toupper(equating.method), conversion.type, sep="_"):=equate.list[[paste(i, tmp.year.for.equate, sep=".")]][[paste("GRADE", j, sep="_")]][[toupper(equating.method)]][[conversion.type]][['interpolated_function']](SCALE_SCORE), with=FALSE]
+				paste("SCALE_SCORE_EQUATED", toupper(equating.method), conversion.type, sep="_"):=equate.list[[paste(i, tmp.year.for.equate, sep=".")]][[paste("GRADE", j, sep="_")]][[toupper(equating.method)]][[conversion.type]][['interpolated_function']](SCALE_SCORE)]
 		}
 	}
-	tmp.data.for.equate[!YEAR %in% tmp.years.for.equate, paste("SCALE_SCORE_EQUATED", toupper(equating.method), conversion.type, sep="_") := SCALE_SCORE, with=FALSE]
+	tmp.data.for.equate[!YEAR %in% tmp.years.for.equate, paste("SCALE_SCORE_EQUATED", toupper(equating.method), conversion.type, sep="_"):=SCALE_SCORE]
 
 	return(tmp.data.for.equate)
 } ### END convertScaleScore function

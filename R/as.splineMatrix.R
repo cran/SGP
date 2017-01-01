@@ -1,4 +1,4 @@
-`as.splineMatrix` <- 
+`as.splineMatrix` <-
 function(matrix_argument,
 	matrix_argument_name,
 	content_area=NULL,
@@ -13,8 +13,8 @@ function(matrix_argument,
 			if (class(matrix_argument)=="matrix") tmp.matrix <- matrix_argument else tmp.matrix <- matrix_argument@.Data
 
 			rn <- rownames(tmp.matrix)[-1]
-			rn <- gsub("\"", "'", rn) 
-	
+			rn <- gsub("\"", "'", rn)
+
 			rn.knots <- strsplit(rn, "knots = ",)
 			rn.knots <- unique(sapply(rn.knots, function(x) strsplit(x[2], ", Boundary.")))
 			rn.knots2 <- sapply(rn.knots, function(x) strsplit(x, "knots_"))
@@ -44,7 +44,7 @@ function(matrix_argument,
 
 			knots <- list()
 			for (i in seq_along(rn.knots)) {
-				knots[[i]] <- eval(parse(text=paste(tmp.label, rn.knots[[i]], sep="")))
+				knots[[i]] <- eval(parse(text=paste0(tmp.label, rn.knots[[i]])))
 			}
 			names(knots) <- paste("knots", sapply(rn.knots2, function(x) x[1]), sep="_")
 
@@ -53,7 +53,7 @@ function(matrix_argument,
 
 			boundaries <- list()
 			for (i in seq_along(rn.bounds)) {
-				boundaries[[i]] <- eval(parse(text=paste(tmp.label, rn.bounds[i], sep="")))
+				boundaries[[i]] <- eval(parse(text=paste0(tmp.label, rn.bounds[i])))
 			}
 			names(boundaries) <- paste("boundaries", sapply(rn.bounds2, function(x) x[1]), sep="_")
 
@@ -92,24 +92,24 @@ function(matrix_argument,
 
 			### Version
 
-			version <- list(SGP_Package_Version=as.character(packageVersion("SGP")), Date_Prepared=date())
+			version <- list(SGP_Package_Version=as.character(packageVersion("SGP")), Date_Prepared=prettyDate())
 
 
 			### Create new splineMatrix
 
-			new("splineMatrix", 
-				.Data=tmp.matrix, 
-				Knots=knots, 
-				Boundaries=boundaries, 
-				Content_Areas=list(content_areas), 
+			new("splineMatrix",
+				.Data=tmp.matrix,
+				Knots=knots,
+				Boundaries=boundaries,
+				Content_Areas=list(content_areas),
 				Grade_Progression=list(grade_progression),
 				Time=list(time),
-				Time_Lags=list(time_lags), 
+				Time_Lags=list(time_lags),
 				Version=version)
 
 		} ### END if class(matrix_argument)=="matrix"
 
-	
+
 		### splineMatrix case ###
 
 		if (class(matrix_argument)=="splineMatrix") {
@@ -168,21 +168,21 @@ function(matrix_argument,
 
 			### Version
 
-			version <- list(SGP_Package_Version=as.character(packageVersion("SGP")), Date_Prepared=date())
+			version <- list(SGP_Package_Version=as.character(packageVersion("SGP")), Date_Prepared=prettyDate())
 
 
 			### Create new splineMatrix
 
-			new("splineMatrix", 
-				.Data=tmp.matrix, 
-				Knots=knots, 
-				Boundaries=boundaries, 
-				Content_Areas=list(content_areas), 
+			new("splineMatrix",
+				.Data=tmp.matrix,
+				Knots=knots,
+				Boundaries=boundaries,
+				Content_Areas=list(content_areas),
 				Grade_Progression=list(grade_progression),
 				Time=list(time),
-				Time_Lags=list(time_lags), 
+				Time_Lags=list(time_lags),
 				Version=version)
 
 		} ### END if class(matrix_argument)=="splineMatrix"
-	
+
 } ### END as.splineMatrix

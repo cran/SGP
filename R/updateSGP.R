@@ -13,23 +13,26 @@ function(what_sgp_object=NULL,
 	sgp.percentiles.baseline=TRUE,
 	sgp.projections.baseline=TRUE,
 	sgp.projections.lagged.baseline=TRUE,
+	sgp.test.cohort.size=NULL,
+	return.sgp.test.results=FALSE,
 	simulate.sgps=TRUE,
-	save.old.summaries=TRUE,
+	save.old.summaries=NULL,
 	save.intermediate.results=TRUE,
 	calculate.simex=NULL,
 	calculate.simex.baseline=NULL,
 	sgp.use.my.coefficient.matrices=NULL,
 	sgp.target.scale.scores=FALSE,
 	sgp.target.scale.scores.only=FALSE,
-	overwrite.existing.data=FALSE,
+	overwrite.existing.data=TRUE,
 	update.old.data.with.new=TRUE,
+	output.updated.data=TRUE,
 	sgPlot.demo.report=TRUE,
 	plot.types=c("bubblePlot", "studentGrowthPlot", "growthAchievementPlot"),
 	outputSGP.output.type=c("LONG_Data", "LONG_FINAL_YEAR_Data", "WIDE_Data", "INSTRUCTOR_Data"),
 	sgp.config=NULL,
 	goodness.of.fit.print=TRUE,
 	parallel.config=NULL,
-	sgp.sqlite=NULL,
+	sgp.sqlite=FALSE,
 	SGPt=NULL,
 	sgp.percentiles.equated=NULL,
 	sgp.percentiles.equating.method=NULL,
@@ -40,7 +43,7 @@ function(what_sgp_object=NULL,
 	SGPstateData <- SGP::SGPstateData ### Needed due to possible assignment of values to SGPstateData
 
 	started.at <- proc.time()
-	messageSGP(paste("\nStarted updateSGP", date()), "\n")
+	messageSGP(paste("\nStarted updateSGP", prettyDate()), "\n")
 	messageSGP(match.call())
 
 
@@ -53,7 +56,7 @@ function(what_sgp_object=NULL,
 
 	if (!is.null(calculate.simex) | !is.null(calculate.simex.baseline)) {
 		if (is.null(SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
-			message("\tNOTE: CSEMs are required in 'SGPstateData' (either as a data.frame of CSEMs or as a variable name of CSEMsin @Data) to produce SIMEX corrected SGPs. SIMEX corrected SGPs will NOT be calculated.")
+			messageSGP("\tNOTE: CSEMs are required in 'SGPstateData' (either as a data.frame of CSEMs or as a variable name of CSEMsin @Data) to produce SIMEX corrected SGPs. SIMEX corrected SGPs will NOT be calculated.")
 			calculate.simex <- calculate.simex.baseline <- NULL
 		}
 	}
@@ -71,6 +74,9 @@ function(what_sgp_object=NULL,
 			calculate.simex.baseline <- list(csem.data.vnames=csem.variable, lambda=seq(0,2,0.5), simulation.iterations=75, simex.sample.size=5000, extrapolation="linear", save.matrices=TRUE, simex.use.my.coefficient.matrices = TRUE)
 		} else 	calculate.simex.baseline <- list(state=state, lambda=seq(0,2,0.5), simulation.iterations=75, simex.sample.size=5000, extrapolation="linear", save.matrices=TRUE, simex.use.my.coefficient.matrices = TRUE)
 	}
+
+	if (is.null(save.old.summaries) && overwrite.existing.data) save.old.summaries <- FALSE else save.old.summaries <- TRUE
+	
 
 	### Utility functions
 
@@ -156,6 +162,8 @@ function(what_sgp_object=NULL,
 					sgp.use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
 					calculate.simex = calculate.simex,
 					calculate.simex.baseline=calculate.simex.baseline,
+					sgp.test.cohort.size=sgp.test.cohort.size,
+					return.sgp.test.results=return.sgp.test.results,
 					simulate.sgps = simulate.sgps,
 					sgp.target.scale.scores=sgp.target.scale.scores,
 					sgp.target.scale.scores.only=sgp.target.scale.scores.only,
@@ -173,7 +181,7 @@ function(what_sgp_object=NULL,
 
 		### Print finish and return SGP object
 
-		message(paste("Finished updateSGP", date(), "in", convertTime(timetaken(started.at)), "\n"))
+		messageSGP(paste("Finished updateSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
 		return(sgp_object)
 	} ### END is.null(with_sgp_data_LONG)
 
@@ -192,15 +200,24 @@ function(what_sgp_object=NULL,
 		if (is.null(grades)) update.grades <- sort(unique(tmp_sgp_object@Data["VALID_CASE"]$GRADE)) else update.grades <- grades
 
 		if (overwrite.existing.data) {
-				what_sgp_object@Data <- rbindlist(list(what_sgp_object@Data[which(YEAR!=update.years)], tmp_sgp_object@Data), fill=TRUE)
-				what_sgp_object@SGP[['Goodness_of_Fit']][grep(update.years, names(what_sgp_object@SGP[['Goodness_of_Fit']]))] <- NULL
-				what_sgp_object@SGP[['Linkages']][grep(update.years, names(what_sgp_object@SGP[['Linkages']]))] <- NULL
-				what_sgp_object@SGP[['SGPercentiles']][grep(update.years, names(what_sgp_object@SGP[['SGPercentiles']]))] <- NULL
-				what_sgp_object@SGP[['SGProjections']][grep(update.years, names(what_sgp_object@SGP[['SGProjections']]))] <- NULL
-				what_sgp_object@SGP[['Simulated_SGPs']][grep(update.years, names(what_sgp_object@SGP[['Simulated_SGPs']]))] <- NULL
-				if (is.null(sgp.use.my.coefficient.matrices)) {
-					what_sgp_object@SGP[['Coefficient_Matrices']][grep(update.years, names(what_sgp_object@SGP[['Coefficient_Matrices']]))] <- NULL
-				}
+			what_sgp_object@Data <- rbindlist(list(what_sgp_object@Data[which(YEAR!=update.years)], tmp_sgp_object@Data), fill=TRUE)
+			what_sgp_object@SGP[['Goodness_of_Fit']][grep(update.years, names(what_sgp_object@SGP[['Goodness_of_Fit']]))] <- NULL
+			what_sgp_object@SGP[['Linkages']][grep(update.years, names(what_sgp_object@SGP[['Linkages']]))] <- NULL
+			what_sgp_object@SGP[['SGPercentiles']][grep(update.years, names(what_sgp_object@SGP[['SGPercentiles']]))] <- NULL
+			what_sgp_object@SGP[['SGProjections']][grep(update.years, names(what_sgp_object@SGP[['SGProjections']]))] <- NULL
+			what_sgp_object@SGP[['Simulated_SGPs']][grep(update.years, names(what_sgp_object@SGP[['Simulated_SGPs']]))] <- NULL
+			if (is.null(sgp.use.my.coefficient.matrices)) {
+				what_sgp_object@SGP[['Coefficient_Matrices']][grep(update.years, names(what_sgp_object@SGP[['Coefficient_Matrices']]))] <- NULL
+			}
+			if (!is.null(with_sgp_data_INSTRUCTOR_NUMBER)) {
+				what_sgp_object@Data_Supplementary[['INSTRUCTOR_NUMBER']] <- rbindlist(list(what_sgp_object@Data_Supplementary[['INSTRUCTOR_NUMBER']][which(YEAR!=update.years)], with_sgp_data_INSTRUCTOR_NUMBER), fill=TRUE)
+			}
+
+			if ("YEAR_WITHIN" %in% names(what_sgp_object@Data)) {
+				what_sgp_object@Data[, FIRST_OBSERVATION := NULL]
+				what_sgp_object@Data[, LAST_OBSERVATION := NULL]
+				what_sgp_object <- suppressMessages(prepareSGP(what_sgp_object, state=state, create.additional.variables=FALSE, fix.duplicates=fix.duplicates))
+			}
 
 			if ("HIGH_NEED_STATUS" %in% names(what_sgp_object@Data)) {
 				what_sgp_object@Data[, HIGH_NEED_STATUS := NULL]
@@ -221,11 +238,13 @@ function(what_sgp_object=NULL,
 						sgp.projections.baseline=sgp.projections.baseline,
 						sgp.projections.lagged.baseline=sgp.projections.lagged.baseline,
 						save.intermediate.results=save.intermediate.results,
-						save.old.summaries=save.old.summaries,
+						save.old.summaries=FALSE,
 						sgPlot.demo.report=sgPlot.demo.report,
 						sgp.use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
 						calculate.simex = calculate.simex,
 						calculate.simex.baseline=calculate.simex.baseline,
+						sgp.test.cohort.size=sgp.test.cohort.size,
+						return.sgp.test.results=return.sgp.test.results,
 						simulate.sgps = simulate.sgps,
 						sgp.target.scale.scores=sgp.target.scale.scores,
 						sgp.target.scale.scores.only=sgp.target.scale.scores.only,
@@ -242,17 +261,17 @@ function(what_sgp_object=NULL,
 
 			### Print finish and return SGP object
 
-			message(paste("Finished updateSGP", date(), "in", convertTime(timetaken(started.at)), "\n"))
+			messageSGP(paste("Finished updateSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
 			return(what_sgp_object)
 
-		} else {
+		} else { ### END if (overwrite.existing.data)
 			if (!is.null(sgp.use.my.coefficient.matrices)) {
 				# Extract score histories.  Don't use CONTENT_AREA due to potential use of EOCT course progressions.
 				tmp.long.data <- rbindlist(list(data.table(what_sgp_object@Data, key=c("VALID_CASE", "ID"))[
-					unique(data.table(tmp_sgp_object@Data, key=c("VALID_CASE", "ID"))[,list(VALID_CASE, ID)]), nomatch=0], tmp_sgp_object@Data), fill=TRUE)
+					unique(data.table(tmp_sgp_object@Data, key=c("VALID_CASE", "ID"))[,list(VALID_CASE, ID)], by=c("VALID_CASE", "ID")), nomatch=0], tmp_sgp_object@Data), fill=TRUE)
 				if ("YEAR_WITHIN" %in% names(tmp.long.data)) {
-					tmp.long.data$FIRST_OBSERVATION <- NULL
-					tmp.long.data$LAST_OBSERVATION <- NULL
+					tmp.long.data[, FIRST_OBSERVATION := NULL]
+					tmp.long.data[, LAST_OBSERVATION := NULL]
 				}
 				tmp.sgp_object.update <- prepareSGP(tmp.long.data, state=state, create.additional.variables=FALSE, fix.duplicates=fix.duplicates)
 				tmp.sgp_object.update@SGP$Coefficient_Matrices <- what_sgp_object@SGP$Coefficient_Matrices
@@ -276,6 +295,8 @@ function(what_sgp_object=NULL,
 							sgp.use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
 							calculate.simex=calculate.simex,
 							calculate.simex.baseline=calculate.simex.baseline,
+							sgp.test.cohort.size=sgp.test.cohort.size,
+							return.sgp.test.results=return.sgp.test.results,
 							simulate.sgps=simulate.sgps,
 							sgp.config=sgp.config,
 							goodness.of.fit.print=FALSE,
@@ -304,12 +325,14 @@ function(what_sgp_object=NULL,
 
 				### Output of INTERMEDIATE results including full student history
 
-				dir.create(file.path("Data", "Updated_Data"), recursive=TRUE, showWarnings=FALSE)
-				tmp.file.name <- paste(gsub(" ", "_", toupper(getStateAbbreviation(state, type="name"))), "SGP_Update", paste(update.years, collapse=","), sep="_")
-				assign(tmp.file.name, tmp.sgp_object.update)
-				save(list=tmp.file.name, file=file.path("Data", "Updated_Data", paste(tmp.file.name, "Rdata", sep=".")))
-				outputSGP(tmp.sgp_object.update, state=state, output.type=union(outputSGP.output.type, intersect(outputSGP.output.type, "LONG_FINAL_YEAR_Data")),
-					outputSGP.directory=file.path("Data", "Updated_Data"))
+				if (output.updated.data) {
+					dir.create(file.path("Data", "Updated_Data"), recursive=TRUE, showWarnings=FALSE)
+					tmp.file.name <- paste(gsub(" ", "_", toupper(getStateAbbreviation(state, type="name"))), "SGP_Update", paste(update.years, collapse=","), sep="_")
+					assign(tmp.file.name, tmp.sgp_object.update)
+					save(list=tmp.file.name, file=file.path("Data", "Updated_Data", paste(tmp.file.name, "Rdata", sep=".")))
+					outputSGP(tmp.sgp_object.update, state=state, output.type=union(outputSGP.output.type, intersect(outputSGP.output.type, "LONG_FINAL_YEAR_Data")),
+						outputSGP.directory=file.path("Data", "Updated_Data"))
+				}
 
 				### Merge update with original SGP object
 
@@ -325,7 +348,7 @@ function(what_sgp_object=NULL,
 					for (ca in grep(update.years, names(what_sgp_object@SGP[["SGProjections"]]), value=TRUE)) {
 						tmp_proj <- data.table(what_sgp_object@SGP[["SGProjections"]][[ca]])
 						setkey(tmp_proj)
-						what_sgp_object@SGP[["SGProjections"]][[ca]]<- tmp_proj[!duplicated(tmp_proj)]
+						what_sgp_object@SGP[["SGProjections"]][[ca]]<- tmp_proj[!duplicated(tmp_proj, by=key(tmp_proj))]
 					}
 				}
 
@@ -333,7 +356,7 @@ function(what_sgp_object=NULL,
 					for (ca in grep(update.years, names(what_sgp_object@SGP[["SGPercentiles"]]), value=TRUE)) {
 						tmp_sgp <- data.table(what_sgp_object@SGP[["SGPercentiles"]][[ca]])
 						setkeyv(tmp_sgp, names(tmp_sgp)[grep("ID|SGP|SGP_NORM_GROUP", names(tmp_sgp))])
-						what_sgp_object@SGP[["SGPercentiles"]][[ca]]<- tmp_sgp[!duplicated(tmp_sgp)]
+						what_sgp_object@SGP[["SGPercentiles"]][[ca]] <- tmp_sgp[!duplicated(tmp_sgp, by=key(tmp_sgp))]
 					}
 				}
 
@@ -377,7 +400,7 @@ function(what_sgp_object=NULL,
 
 				### Print finish and return SGP object
 
-				message(paste("Finished updateSGP", date(), "in", convertTime(timetaken(started.at)), "\n"))
+				messageSGP(paste("Finished updateSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
 				return(what_sgp_object)
 			} else {
 				if (update.old.data.with.new) {
@@ -430,6 +453,8 @@ function(what_sgp_object=NULL,
 							sgp.use.my.coefficient.matrices=sgp.use.my.coefficient.matrices,
 							calculate.simex = calculate.simex,
 							calculate.simex.baseline=calculate.simex.baseline,
+							sgp.test.cohort.size=sgp.test.cohort.size,
+							return.sgp.test.results=return.sgp.test.results,
 							simulate.sgps = simulate.sgps,
 							sgp.target.scale.scores=sgp.target.scale.scores,
 							sgp.target.scale.scores.only=sgp.target.scale.scores.only,
@@ -446,7 +471,7 @@ function(what_sgp_object=NULL,
 
 				### Print finish and return SGP object
 
-				messageSGP(paste("Finished updateSGP", date(), "in", convertTime(timetaken(started.at)), "\n"))
+				messageSGP(paste("Finished updateSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
 				return(what_sgp_object)
 			} ### END if else (!is.null(sgp.use.my.coefficient.matrices))
 		} ### END if (overwrite.existing.data)

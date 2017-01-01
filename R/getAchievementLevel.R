@@ -13,7 +13,8 @@ function(sgp_data,
 
 	get.cutscore.label <- function(state, year, content_area) {
 		tmp.cutscore.names <- names(SGP::SGPstateData[[state]][["Achievement"]][["Cutscores"]])
-		tmp.cutscore.years <- sapply(strsplit(tmp.cutscore.names[grep(content_area, tmp.cutscore.names)], "[.]"), function(x) x[2])
+		tmp.cutscore.years <- sapply(strsplit(tmp.cutscore.names[grep(content_area, tmp.cutscore.names)], "[.]"), function(x) paste(x[-1], collapse="."))
+		tmp.cutscore.years[tmp.cutscore.years==""] <- NA
 		if (any(!is.na(tmp.cutscore.years))) {
 			if (year %in% tmp.cutscore.years) {
 				return(paste(content_area, year, sep="."))
@@ -57,7 +58,7 @@ function(sgp_data,
 			tmp.labels <- SGP::SGPstateData[[state]][["Assessment_Program_Information"]][["Assessment_Transition"]][[get.achievement_level.label(state, year)]][["Labels"]][
 				!is.na(SGP::SGPstateData[[state]][["Assessment_Program_Information"]][["Assessment_Transition"]][[get.achievement_level.label(state, year)]][["Proficient"]])]
 		}
-		as.character(factor(findInterval(scale_score, SGP::SGPstateData[[state]][["Achievement"]][["Cutscores"]][[get.cutscore.label(state, year, content_area)]][[paste("GRADE_", grade, sep="")]])+1,
+		as.character(factor(findInterval(scale_score, SGP::SGPstateData[[state]][["Achievement"]][["Cutscores"]][[get.cutscore.label(state, year, content_area)]][[paste0("GRADE_", grade)]])+1,
 			levels=tmp.levels, labels=tmp.labels))
 	}
 
@@ -77,9 +78,9 @@ function(sgp_data,
 		if (is.null(grade)) grade <- sort(unique(sgp_data[['GRADE']][sgp_data[['YEAR']] %in% year & sgp_data[['CONTENT_AREA']] %in% content_area]))
 
 		setkeyv(sgp_data, c("VALID_CASE", "CONTENT_AREA", "YEAR", "GRADE"))
-			sgp_data[sgp_data[CJ("VALID_CASE", content_area, year, grade), which=TRUE, nomatch=0], achievement.level.name :=
-			sgp_data[CJ("VALID_CASE", content_area, year, grade), nomatch=0][, getAchievementLevel_INTERNAL(state, CONTENT_AREA, YEAR, GRADE, get(scale.score.name)),
-				by=list(CONTENT_AREA, YEAR, GRADE)][["V1"]], with=FALSE]
+			sgp_data[sgp_data[CJ("VALID_CASE", content_area, year, grade), which=TRUE, nomatch=0], (achievement.level.name) :=
+			sgp_data[CJ("VALID_CASE", content_area, year, grade), nomatch=0][, getAchievementLevel_INTERNAL(state, CONTENT_AREA[1], YEAR[1], GRADE[1], eval(parse(text=scale.score.name))),
+				by=list(CONTENT_AREA, YEAR, GRADE)][["V1"]]]
 	}
 	return(sgp_data)
 } ### END getAchievementLevel Function

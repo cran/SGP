@@ -53,15 +53,17 @@ function(sgp_object,
 		gaPlot.baseline=NULL,
 		gaPlot.max.order.for.progression=NULL,
 		gaPlot.start.points="Achievement Level Cuts",
+		gaPlot.back.extrapolated.cuts=NULL,
+		gaPlot.SGPt=NULL,
 		gaPlot.folder="Visualizations/growthAchievementPlots",
 		parallel.config=NULL) {
 
 	started.at.visualizeSGP <- proc.time()
-	messageSGP(paste("\nStarted visualizeSGP", date(), "\n"))
+	messageSGP(paste("\nStarted visualizeSGP", prettyDate(), "\n"))
 
 	### Setting variables to NULL to prevent R CMD check warnings
 
-	DISTRICT_NUMBER <- DISTRICT_NAME <- SCHOOL_NUMBER <- SCHOOL_NAME <- YEAR <- CONTENT_AREA <- NULL ## To prevent R CMD check warnings
+	DISTRICT_NUMBER <- DISTRICT_NAME <- SCHOOL_NUMBER <- SCHOOL_NAME <- YEAR <- CONTENT_AREA <- VALID_SGP <- SGP <- SGP_LEVEL <- NULL ## To prevent R CMD check warnings
 	ETHNICITY <- GENDER <- ID <- NULL ## To prevent R CMD check warnings
 	TEST_LEVEL <- SUBJECT_CODE <- SCALE_SCORE <- GRADE <- NULL ## To prevent R CMD check warnings
 	SCHOOL_ENROLLMENT_STATUS <- LAST_NAME <- FIRST_NAME <- NULL ## To prevent R CMD check warnings
@@ -77,12 +79,6 @@ function(sgp_object,
                 state <- getStateAbbreviation(tmp.name, "visualizeSGP")
         }
 
-
-	### Set up parallel.config if NULL
-
-	if (is.null(parallel.config)) {
-		parallel.config = list(BACKEND="PARALLEL", WORKERS=list(GA_PLOTS=1, SG_PLOTS=1))
-	}
 
 	### Utility functions
 
@@ -158,7 +154,7 @@ function(sgp_object,
 	get.object.shell <- function(sgp_object, with_data=TRUE) {
 		tmp.sgp_object <- new("SGP")
 		if (with_data) tmp.sgp_object@Data <- sgp_object@Data
-		tmp.sgp_object@SGP <- sgp_object@SGP[c("Coefficient_Matrices", "Knots_Boundaries")]
+		tmp.sgp_object@SGP <- sgp_object@SGP[c("Coefficient_Matrices", "Knots_Boundaries", "SGProjections")]
 		return(tmp.sgp_object)
 	} ### END get.object.shell
 
@@ -175,7 +171,7 @@ function(sgp_object,
 	if ("bubblePlot" %in% plot.types) {
 
 		started.at <- proc.time()
-		message(paste("Started bubblePlot in visualizeSGP", date(), "\n"))
+		messageSGP(paste("Started bubblePlot in visualizeSGP", prettyDate(), "\n"))
 
 		bubblePlot_Styles(sgp_object=sgp_object,
 			state=state,
@@ -197,7 +193,7 @@ function(sgp_object,
 			bPlot.format=bPlot.format,
 			bPlot.folder=bPlot.folder)
 
-		message(paste("Finished bubblePlot in visualizeSGP", date(), "in", convertTime(timetaken(started.at)), "\n"))
+		messageSGP(paste("Finished bubblePlot in visualizeSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
 	} ## END bubblePlot %in% plot.types
 
 
@@ -208,7 +204,7 @@ function(sgp_object,
 	if ("growthAchievementPlot" %in% plot.types) {
 
 		started.at <- proc.time()
-		message(paste("Started growthAchievementPlot in visualizeSGP", date(), "\n"))
+		messageSGP(paste("Started growthAchievementPlot in visualizeSGP", prettyDate(), "\n"))
 
 		# gaPlot.baseline stuff
 
@@ -219,9 +215,29 @@ function(sgp_object,
 			if (SGP::SGPstateData[[state]][["Growth"]][["System_Type"]] == "Cohort and Baseline Referenced") gaPlot.baseline <- c(TRUE, FALSE)
 		}
 
-		par.start <- startParallel(parallel.config, 'GA_PLOTS')
-
 		gaPlot.sgp_object <- get.object.shell(sgp_object)
+
+		if (is.null(parallel.config)) {
+			gaPlot.list <- get.gaPlot.iter(gaPlot.years, gaPlot.content_areas, gaPlot.students, gaPlot.baseline)
+			for (g in 1:length(gaPlot.list)) {
+				gaPlot.iter <- gaPlot.list[[g]]
+				growthAchievementPlot(
+					gaPlot.sgp_object=gaPlot.sgp_object,
+					gaPlot.students=gaPlot.iter[["ID"]],
+					gaPlot.max.order.for.progression=gaPlot.max.order.for.progression,
+					gaPlot.start.points=gaPlot.start.points,
+					state=state,
+					content_area=gaPlot.iter[["CONTENT_AREA"]],
+					year=gaPlot.iter[["YEAR"]],
+					format=gaPlot.format,
+					baseline=gaPlot.iter[["BASELINE"]],
+					equated=gaPlot.iter[["EQUATED"]],
+					output.format=c("PDF", "PNG"),
+					gaPlot.SGPt=gaPlot.SGPt,
+					output.folder=file.path(gaPlot.folder, gaPlot.iter[["YEAR"]]))
+			}
+		} else {
+		par.start <- startParallel(parallel.config, 'GA_PLOTS')
 
 		if (parallel.config[["BACKEND"]] == "FOREACH") {
 
@@ -239,8 +255,8 @@ function(sgp_object,
 						baseline=gaPlot.iter[["BASELINE"]],
 						equated=gaPlot.iter[["EQUATED"]],
 						output.format=c("PDF", "PNG"),
+						gaPlot.SGPt=gaPlot.SGPt,
 						output.folder=file.path(gaPlot.folder, gaPlot.iter[["YEAR"]]))
-
 			} ## END dopar
 		} else { ## END FOREACH
 
@@ -259,6 +275,7 @@ function(sgp_object,
 						baseline=gaPlot.iter[["BASELINE"]],
 						equated=gaPlot.iter[["EQUATED"]],
 						output.format=c("PDF", "PNG"),
+						gaPlot.SGPt=gaPlot.SGPt,
 						output.folder=file.path(gaPlot.folder, gaPlot.iter[["YEAR"]])))
 			}
 
@@ -277,12 +294,14 @@ function(sgp_object,
 						baseline=gaPlot.iter[["BASELINE"]],
 						equated=gaPlot.iter[["EQUATED"]],
 						output.format=c("PDF", "PNG"),
+						gaPlot.SGPt=gaPlot.SGPt,
 						output.folder=file.path(gaPlot.folder, gaPlot.iter[["YEAR"]]))},
 				mc.cores=par.start$workers, mc.preschedule=FALSE)
 			}
 		}
-		stopParallel(parallel.config, par.start)
-		message(paste("Finished growthAchievementPlot in visualizeSGP", date(), "in", convertTime(timetaken(started.at)), "\n"))
+			stopParallel(parallel.config, par.start)
+		}
+		messageSGP(paste("Finished growthAchievementPlot in visualizeSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
 	} ## END if (growthAchievementPlot %in% plot.types)
 
 
@@ -293,7 +312,13 @@ function(sgp_object,
 if ("studentGrowthPlot" %in% plot.types) {
 
 	started.at <- proc.time()
-	message(paste("Started studentGrowthPlot in visualizeSGP", date(), "\n"))
+	messageSGP(paste("Started studentGrowthPlot in visualizeSGP", prettyDate(), "\n"))
+
+	### Set up parallel.config if NULL
+
+	if (is.null(parallel.config)) {
+		parallel.config = list(BACKEND="PARALLEL", WORKERS=list(SG_PLOTS=1))
+	}
 
 	#### Utility functions
 
@@ -302,7 +327,7 @@ if ("studentGrowthPlot" %in% plot.types) {
 			return(NA)
 		}
 		if (!is.null(tmp.domain <- SGP::SGPstateData[[state]][["Student_Report_Information"]][["Content_Areas_Domains"]][[content_area]])) {
-			if (is.na(as.numeric(grade))) {
+			if (is.character(type.convert(grade, as.is=TRUE))) {
 				tmp.index <- which(SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]][[tmp.domain]] == content_area)
 			} else tmp.index <- which(SGP::SGPstateData[[state]][["SGP_Configuration"]][["grade.projection.sequence"]][[tmp.domain]] == grade)
 			as.character(SGP::SGPstateData[[state]][["SGP_Configuration"]][["grade.projection.sequence"]][[tmp.domain]][tmp.index + increment])
@@ -321,6 +346,28 @@ if ("studentGrowthPlot" %in% plot.types) {
 		} else return(content_area)
 	}
 
+	completeGrade <- function(tmp.table) {
+
+		checkGrades <- function(tmp.data) {
+			tmp.grade.list <- c(SGP::SGPstateData[[state]][['Student_Report_Information']][['Grades_Reported']], SGP::SGPstateData[[state]][['Student_Report_Information']][['Grades_Reported_Domains']])
+			for (content_area.iter in unique(names(tmp.grade.list))) {
+				tmp.content_area.grades <- unique(unlist(tmp.grade.list[which(content_area.iter==names(tmp.grade.list))]))
+				tmp.data[CONTENT_AREA==content_area.iter & !GRADE %in% tmp.content_area.grades, GRADE:=NA]
+			}
+			return(tmp.data)
+		}
+
+	    tmp.table.tf <- tmp.table[,all(is.na(GRADE)), keyby=list(ID, CONTENT_AREA)]
+		if (any(tmp.table.tf[['V1']])) {
+	    	tmp.to.fix <- data.table(tmp.table.tf[V1==TRUE, c("CONTENT_AREA", "ID"), with=FALSE], key=c("ID", "CONTENT_AREA"))
+	    	tmp.to.fix.with <- data.table(tmp.table.tf[V1==FALSE][tmp.to.fix$ID, mult="first"][,c("CONTENT_AREA", "ID"), with=FALSE], key=c("ID", "CONTENT_AREA"))
+			tmp.grades.to.check <- tmp.table[tmp.to.fix.with,c("CONTENT_AREA", "ID", "GRADE"), with=FALSE][,CONTENT_AREA:=tmp.table[tmp.to.fix][['CONTENT_AREA']]]
+			tmp.grades.to.check <- checkGrades(tmp.grades.to.check)
+	    	tmp.table[tmp.to.fix, GRADE:=tmp.grades.to.check[['GRADE']]]
+			tmp.table <- tmp.table[tmp.table[,all(is.na(GRADE)), keyby=list(ID, CONTENT_AREA)][V1==FALSE]]
+		}
+	    return(tmp.table)
+	}
 
 ######################################################################
 ##### DISTINGUISH CASES WHEN WIDE data is or is not provided
@@ -330,7 +377,7 @@ if ("studentGrowthPlot" %in% plot.types) {
 
 		if (is.SGP(sgp_object)) {
 			sgPlot.wide.data <- FALSE
-			slot.data <- copy(sgp_object@Data)
+			slot.data <- copy(sgp_object@Data["VALID_CASE"])
 		} else {
 			if ("JSON" %in% sgPlot.output.format) {
 				stop("\tNOTE: JSON output requires object of class SGP to be passed to visualizeSGP for argument sgp_object")
@@ -375,7 +422,7 @@ if ("studentGrowthPlot" %in% plot.types) {
 				sgPlot.sgp.targets <- c("sgp.projections", "sgp.projections.lagged")
 			}
 		}
-		if (identical(sgPlot.sgp.targets, FALSE)) {
+		if (identical(sgPlot.sgp.targets, FALSE) && !sgPlot.wide.data) {
 			if (length(grep("TARGET_SCALE_SCORES", names(sgp_object@SGP$SGProjections))) > 0 && !is.null(SGP::SGPstateData[[state]][['SGP_Configuration']][['sgPlot.sgp.targets']])) {
 				sgPlot.sgp.targets <- SGP::SGPstateData[[state]][['SGP_Configuration']][['sgPlot.sgp.targets']]
 			} else {
@@ -383,11 +430,11 @@ if ("studentGrowthPlot" %in% plot.types) {
 			}
 		}
 		if (!is.null(sgPlot.sgp.targets) & !sgPlot.baseline && !all(sgPlot.sgp.targets %in% c("sgp.projections", "sgp.projections.lagged"))) {
-			message("\tNOTE: 'sgPlot.sgp.targets' must consist of 'sgp.projections' and/or 'sgp.projections.lagged'.")
+			messageSGP("\tNOTE: 'sgPlot.sgp.targets' must consist of 'sgp.projections' and/or 'sgp.projections.lagged'.")
 			sgPlot.sgp.targets <- NULL
 		}
 		if (!is.null(sgPlot.sgp.targets) & sgPlot.baseline && !all(sgPlot.sgp.targets %in% c("sgp.projections.baseline", "sgp.projections.lagged.baseline"))) {
-			message("\tNOTE: 'sgPlot.sgp.targets' must consist of 'sgp.projections.baseline' and/or 'sgp.projections.lagged.baseline'.")
+			messageSGP("\tNOTE: 'sgPlot.sgp.targets' must consist of 'sgp.projections.baseline' and/or 'sgp.projections.lagged.baseline'.")
 			sgPlot.sgp.targets <- NULL
 		}
 
@@ -410,7 +457,7 @@ if ("studentGrowthPlot" %in% plot.types) {
 		if (!is.null(my.sgp.targets)) sgPlot.sgp.targets.timeframe <- as.numeric(rev(unlist(strsplit(unlist(strsplit(my.sgp.targets[1], "_YEAR"))[1], "_")))[1])
 
 		if (sgPlot.demo.report & sgPlot.wide.data) {
-			message("\tNOTE: Demonstration report is not supported using wide data. Process will proceed with demonstration report production using long data.\n")
+			messageSGP("\tNOTE: Demonstration report is not supported using wide data. Process will proceed with demonstration report production using long data.\n")
 			sgPlot.demo.report <- FALSE
 		}
 
@@ -446,20 +493,20 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 
 			if (is.null(sgPlot.schools) & is.null(sgPlot.districts)) {
 				tmp.districts.and.schools <- unique(data.table(sgp_object[tmp.content_areas_domains],
-					key=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")))[,
+					key=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")), by=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep="."))[,
 					c(paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")), with=FALSE]
 			}
 
 			if (is.null(sgPlot.schools) & !is.null(sgPlot.districts)) {
 				tmp.districts.and.schools <- unique(data.table(sgp_object[CJ(tmp.content_areas_domains, sgPlot.districts)],
-					key=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")))[,
+					key=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")), by=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep="."))[,
 					c(paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")), with=FALSE]
 			}
 
 			if (!is.null(sgPlot.schools) & is.null(sgPlot.districts)) {
 				setkeyv(sgp_object, c("CONTENT_AREA", paste(c("SCHOOL_NUMBER", "DISTRICT_NUMBER"), tmp.last.year, sep=".")))
 				tmp.districts.and.schools <- unique(data.table(sgp_object[CJ(tmp.content_areas_domains, sgPlot.schools)],
-					key=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")))[,
+					key=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")), by=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep="."))[,
 					c(paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")), with=FALSE]
 			}
 
@@ -476,7 +523,7 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 				sgPlot.schools <- unique(c(sgPlot.schools, do.call(c, tmp.list)))
 				setkeyv(sgp_object, c("CONTENT_AREA", paste(c("SCHOOL_NUMBER", "DISTRICT_NUMBER"), tmp.last.year, sep=".")))
 				tmp.districts.and.schools <- unique(data.table(sgp_object[CJ(tmp.content_areas_domains, sgPlot.schools)],
-					key=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")))[,
+					key=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")), by=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep="."))[,
 					c(paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")), with=FALSE]
 				setkeyv(sgp_object, c("CONTENT_AREA", paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")))
 			}
@@ -484,7 +531,7 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 			## Remove NAs (these arise from students without scores in ALL content areas)
 
 			tmp.tf <- with(tmp.districts.and.schools,
-				eval(parse(text=paste("!is.na(DISTRICT_NUMBER.", tmp.last.year, ") & !is.na(SCHOOL_NUMBER.", tmp.last.year, ")", sep=""))))
+				eval(parse(text=paste0("!is.na(DISTRICT_NUMBER.", tmp.last.year, ") & !is.na(SCHOOL_NUMBER.", tmp.last.year, ")"))))
 			tmp.districts.and.schools <- tmp.districts.and.schools[tmp.tf]
 			setnames(tmp.districts.and.schools, c("DISTRICT_NUMBER", "SCHOOL_NUMBER"))
 			tmp.districts.and.schools <- tmp.districts.and.schools.size[tmp.districts.and.schools][order(V1, decreasing=TRUE)][,list(DISTRICT_NUMBER, SCHOOL_NUMBER)]
@@ -499,10 +546,10 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 			setkey(sgp_object, ID)
 			sgPlot.data <- sgp_object[list(sgPlot.students)]
 			tmp.districts.and.schools <- unique(data.table(sgPlot.data,
-				key=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")))[,
+				key=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")), by=paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep="."))[,
 				c(paste(c("DISTRICT_NUMBER", "SCHOOL_NUMBER"), tmp.last.year, sep=".")), with=FALSE]
 			tmp.tf <- with(tmp.districts.and.schools,
-				eval(parse(text=paste("!is.na(DISTRICT_NUMBER.", tmp.last.year, ") & !is.na(SCHOOL_NUMBER.", tmp.last.year, ")", sep=""))))
+				eval(parse(text=paste0("!is.na(DISTRICT_NUMBER.", tmp.last.year, ") & !is.na(SCHOOL_NUMBER.", tmp.last.year, ")"))))
 			tmp.districts.and.schools <- tmp.districts.and.schools[tmp.tf]
 			setnames(tmp.districts.and.schools, c("DISTRICT_NUMBER", "SCHOOL_NUMBER"))
 		}
@@ -547,12 +594,12 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 		tmp.years <- sort(unique(slot.data["VALID_CASE"][["YEAR"]]))
 		tmp.years.filled <- yearIncrement(tmp.years[1], seq(diff(range(as.numeric(sapply(strsplit(tmp.years, "_"), tail, 1))))+1)-1)
 		tmp.years.subset <- tail(tmp.years.filled, sgPlot.year.span)
-		tmp.last.year <- tail(tmp.years.filled, 1)
+		tmp.last.year <- tail(tmp.years.subset, 1)
 	} else {
 		tmp.years <- sort(unique(slot.data["VALID_CASE"][["YEAR"]]))
 		tmp.years.filled <- yearIncrement(tmp.years[1], seq(diff(range(as.numeric(sapply(strsplit(tmp.years, "_"), tail, 1))))+1)-1)
 		tmp.years.subset <- tail(tmp.years.filled[1:which(tmp.years.filled==tail(sort(sgPlot.years), 1))], sgPlot.year.span)
-		tmp.last.year <- tail(tmp.years.filled, 1)
+		tmp.last.year <- tail(tmp.years.subset, 1)
 	}
 
 	#### Content area stuff (NECESSARY regardless of whether sgPlot.students is provided)
@@ -586,9 +633,9 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 						key=c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"))[sgp_object@Data[,district.and.school.variable.names,with=FALSE], nomatch=0]
 
 		if (!is.null(sgPlot.instructors)) {
-			student.teacher.lookup <- subset(student.teacher.lookup, INSTRUCTOR_NUMBER %in% sgPlot.instructors)
+			student.teacher.lookup <- student.teacher.lookup[INSTRUCTOR_NUMBER %in% sgPlot.instructors]
 		} else {
-			student.teacher.lookup <- subset(student.teacher.lookup, !is.na(INSTRUCTOR_NUMBER))
+			student.teacher.lookup <- na.omit(student.teacher.lookup, cols="INSTRUCTOR_NUMBER")
 		}
 
 		if ("INSTRUCTOR_LAST_NAME" %in% names(student.teacher.lookup)) {
@@ -598,7 +645,7 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 			student.teacher.lookup[,INSTRUCTOR_NAME:=paste("Instructor", INSTRUCTOR_NUMBER)]
 		}
 
-		tmp.district.and.schools.instructors <- unique(data.table(student.teacher.lookup, key=long.key)[,district.and.school.variable.names, with=FALSE])
+		tmp.district.and.schools.instructors <- unique(data.table(student.teacher.lookup, key=long.key)[,district.and.school.variable.names, with=FALSE], by=long.key)
 		student.teacher.lookup <- student.teacher.lookup[,list(ID, CONTENT_AREA, INSTRUCTOR_NUMBER, INSTRUCTOR_NAME)]
 		student.teacher.lookup[,CONTENT_AREA_RESPONSIBILITY:=factor(1, levels=0:1, labels=c("Content Area Responsibility: No", "Content Area Responsibility: Yes"))]
 		setnames(student.teacher.lookup, c("INSTRUCTOR_NUMBER", "INSTRUCTOR_NAME"), paste(c("INSTRUCTOR_NUMBER", "INSTRUCTOR_NAME"), tmp.last.year, sep="."))
@@ -636,12 +683,12 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 					GRADE=tmp.grades.reported,
 					CONTENT_AREA_LABELS=names(SGP::SGPstateData[[state]][["Student_Report_Information"]][["Grades_Reported"]])[1], key=key(slot.data))
 			}
-			tmp.grades.content_areas.reported <- unique(slot.data)[,key(slot.data), with=FALSE][tmp.grades.content_areas.reported, nomatch=0]
+			tmp.grades.content_areas.reported <- unique(slot.data, by=key(slot.data))[,key(slot.data), with=FALSE][tmp.grades.content_areas.reported, nomatch=0]
 			for (i in seq(dim(tmp.grades.content_areas.reported)[1])) {
-				tmp.ids[[i]] <- as.character(sample(unique(slot.data[tmp.grades.content_areas.reported[i]]$ID), 10))
+				tmp.ids[[i]] <- as.character(sample(unique(slot.data[tmp.grades.content_areas.reported[i]][['ID']]), 10))
 			}
-			slot.data[,c("SCHOOL_NUMBER", "DISTRICT_NUMBER") := NULL]
-			slot.data[slot.data$ID %in% unique(unlist(tmp.ids)), c("SCHOOL_NUMBER", "DISTRICT_NUMBER") := list(-99L, -999L)]
+			slot.data[,c("SCHOOL_NUMBER", "DISTRICT_NUMBER"):=NULL]
+			slot.data[slot.data$ID %in% unique(unlist(tmp.ids)), c("SCHOOL_NUMBER", "DISTRICT_NUMBER"):=list(-99L, -999L)]
 			tmp.districts.and.schools <- CJ("VALID_CASE", tmp.last.year, tmp.content_areas_domains, -999L, -99L)
 			setnames(tmp.districts.and.schools, c("VALID_CASE", "YEAR", "CONTENT_AREA", "DISTRICT_NUMBER", "SCHOOL_NUMBER"))
 			setkeyv(tmp.districts.and.schools, long.key)
@@ -656,18 +703,18 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 				if (is.null(sgPlot.schools) | is.null(sgPlot.districts)) {
 					tmp.districts.and.schools <- unique(data.table(slot.data[CJ("VALID_CASE", tmp.last.year, tmp.content_areas_domains)][,
 						list(VALID_CASE, YEAR, CONTENT_AREA, DISTRICT_NUMBER, SCHOOL_NUMBER)],
-						key=long.key))
+						key=long.key), by=long.key)
 				}
 				if (is.null(sgPlot.schools) & !is.null(sgPlot.districts)) {
 					tmp.districts.and.schools <- unique(data.table(slot.data[CJ("VALID_CASE", tmp.last.year, tmp.content_areas_domains, sgPlot.districts)][,
 						list(VALID_CASE, YEAR, CONTENT_AREA, DISTRICT_NUMBER, SCHOOL_NUMBER)],
-						key=long.key))
+						key=long.key), by=long.key)
 				}
 				if (!is.null(sgPlot.schools) & is.null(sgPlot.districts)) {
 					setkeyv(slot.data, c("VALID_CASE", "YEAR", "CONTENT_AREA", "SCHOOL_NUMBER", "DISTRICT_NUMBER"))
 					tmp.districts.and.schools <- unique(data.table(slot.data[CJ("VALID_CASE", tmp.last.year, tmp.content_areas_domains, sgPlot.schools)][,
 						list(VALID_CASE, YEAR, CONTENT_AREA, DISTRICT_NUMBER, SCHOOL_NUMBER)],
-						key=long.key))
+						key=long.key), by=long.key)
 					setkeyv(slot.data, long.key)
 				}
 				if (!is.null(sgPlot.schools) & !is.null(sgPlot.districts)) {
@@ -684,7 +731,7 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 					setkeyv(slot.data, c("VALID_CASE", "YEAR", "CONTENT_AREA", "SCHOOL_NUMBER", "DISTRICT_NUMBER"))
 					tmp.districts.and.schools <- unique(data.table(slot.data[CJ("VALID_CASE", tmp.last.year, tmp.content_areas_domains, sgPlot.schools)][,
 							list(VALID_CASE, YEAR, CONTENT_AREA, DISTRICT_NUMBER, SCHOOL_NUMBER)],
-							key=long.key))
+							key=long.key), by=long.key)
 					setkeyv(slot.data, long.key)
 				}
 			}  ## END if else (sgPlot.report.by.instructors)
@@ -705,36 +752,39 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 			tmp.table <- data.table(slot.data[getYearsContentAreasGrades(state, years=tmp.years.subset, content_areas_domains=tmp.content_areas_domains,
 								earliest_year_reported=SGP::SGPstateData[[state]][["Student_Report_Information"]][["Earliest_Year_Reported"]]), nomatch=0],
 				key=c("ID", "CONTENT_AREA", "YEAR", "VALID_CASE"))[CJ(report.ids, tmp.content_areas_domains, tmp.years.subset, "VALID_CASE")]
+			tmp.table <- completeGrade(tmp.table)
 		} else {
 			report.ids <- sgPlot.students
 			setkeyv(slot.data, c("CONTENT_AREA", "GRADE", "YEAR"))
 			tmp.table <- data.table(slot.data[getYearsContentAreasGrades(state, years=tmp.years.subset, content_areas_domains=tmp.content_areas_domains,
 								earliest_year_reported=SGP::SGPstateData[[state]][["Student_Report_Information"]][["Earliest_Year_Reported"]]), nomatch=0],
 				key=c("VALID_CASE", "ID", "CONTENT_AREA", "YEAR"))[CJ("VALID_CASE", report.ids, tmp.content_areas_domains, tmp.years)]
+			tmp.table <- completeGrade(tmp.table)
 			setkeyv(tmp.table, c("VALID_CASE", "YEAR", "CONTENT_AREA", "DISTRICT_NUMBER", "SCHOOL_NUMBER"))
 			tmp.districts.and.schools <- tmp.table[CJ("VALID_CASE", tmp.last.year, tmp.content_areas_domains)][, list(DISTRICT_NUMBER, SCHOOL_NUMBER)]
 		}
 
 	#### Trim tmp.districts.and.schools
 
-		tmp.districts.and.schools <- unique(data.table(tmp.districts.and.schools[,list(DISTRICT_NUMBER, SCHOOL_NUMBER)], key=c("DISTRICT_NUMBER", "SCHOOL_NUMBER")))
-		tmp.districts.and.schools <- subset(tmp.districts.and.schools, !is.na(DISTRICT_NUMBER) & !is.na(SCHOOL_NUMBER))
+		tmp.districts.and.schools <- unique(data.table(tmp.districts.and.schools[,list(DISTRICT_NUMBER, SCHOOL_NUMBER)], key=c("DISTRICT_NUMBER", "SCHOOL_NUMBER")), by=c("DISTRICT_NUMBER", "SCHOOL_NUMBER"))
+		tmp.districts.and.schools <- na.omit(tmp.districts.and.schools, cols=c("DISTRICT_NUMBER", "SCHOOL_NUMBER"))
 		if (!sgPlot.demo.report) tmp.districts.and.schools <- tmp.districts.and.schools.size[tmp.districts.and.schools][order(V1, decreasing=TRUE)][,list(DISTRICT_NUMBER, SCHOOL_NUMBER)]
 
 
 	#### Invalidate bad SGPs (if necessary)
 
 		if ("VALID_SGP" %in% names(tmp.table)) {
-			tmp.table$SGP[tmp.table$VALID_SGP=="INVALID_SGP"] <- NA
-			if ("No SGP Provided" %in% levels(tmp.table$SGP_LEVEL)) {
-				levels(tmp.table$SGP_LEVEL) <- c(levels(tmp.table$SGP_LEVEL), "No SGP Provided")
-				tmp.table$SGP_LEVEL[tmp.table$VALID_SGP=="INVALID_SGP"] <- "No SGP Provided"
+			tmp.table[VALID_SGP=="INVALID_SGP", SGP:=NA]
+			if ("SGP_LEVEL" %in% names(tmp.table)) {
+				setattr(tmp.table$SGP_LEVEL, "levels", unique(c(levels(tmp.table$SGP_LEVEL), "No SGP Provided")))
+				tmp.table[VALID_SGP=="INVALID_SGP", SGP_LEVEL:="No SGP Provided"]
 			}
 		}
 
+
 	#### Create transformed scale scores and Cutscores (NOT necessary if wide data is provided)
 
-		tmp.table[which(is.na(CONTENT_AREA_LABELS)), CONTENT_AREA_LABELS := CONTENT_AREA]
+		tmp.table[which(is.na(CONTENT_AREA_LABELS)), CONTENT_AREA_LABELS:=CONTENT_AREA]
 		setkeyv(tmp.table, c("CONTENT_AREA_LABELS", "YEAR", "GRADE"))
 		if (sgPlot.plot.test.transition) {
 			tmp.list <- transformScaleScore(tmp.table, state, tmp.content_areas_domains, sgp_object@SGP[['Linkages']], slot.data)
@@ -760,9 +810,9 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 			if ("FIRST_NAME" %in% names(tmp.table)) tmp.table[,FIRST_NAME:=NULL]
 			tmp.dt <- tmp.table[,list(ID, ETHNICITY, GENDER)]
 			setkey(tmp.dt, ID)
-			tmp.dt <- tmp.dt[!duplicated(tmp.dt),]
-			tmp.dt[,LAST_NAME := randomNames(gender=tmp.dt$GENDER, ethnicity=tmp.dt$ETHNICITY, which.names="last")]
-			tmp.dt[,FIRST_NAME := randomNames(gender=tmp.dt$GENDER, ethnicity=tmp.dt$ETHNICITY, which.names="first")]
+			tmp.dt <- tmp.dt[!duplicated(tmp.dt, by=key(tmp.dt)),]
+			tmp.dt[,LAST_NAME:=randomNames(gender=tmp.dt$GENDER, ethnicity=tmp.dt$ETHNICITY, which.names="last")]
+			tmp.dt[,FIRST_NAME:=randomNames(gender=tmp.dt$GENDER, ethnicity=tmp.dt$ETHNICITY, which.names="first")]
 
 			names.dt <- tmp.dt[,list(ID, LAST_NAME, FIRST_NAME)]
 			setkey(names.dt, ID)
@@ -770,22 +820,22 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 			setkey(tmp.table, ID)
 			tmp.table <- names.dt[tmp.table]
 			if (sgPlot.demo.report) {
-				tmp.table[,DISTRICT_NAME := as.factor("Sample District")]
-				tmp.table[,SCHOOL_NAME := as.factor("Sample School")]
+				tmp.table[,DISTRICT_NAME:=as.factor("Sample District")]
+				tmp.table[,SCHOOL_NAME:=as.factor("Sample School")]
 			} else {
 				setkey(tmp.table, DISTRICT_NUMBER)
 				tmp.district.number <- data.table(DISTRICT_NUMBER=unique(tmp.table$DISTRICT_NUMBER) %w/o% NA, seq_along(unique(tmp.table$DISTRICT_NUMBER) %w/o% NA),
 					key="DISTRICT_NUMBER")[tmp.table][['V2']]
-				tmp.table[, DISTRICT_NAME := as.character(tmp.table$DISTRICT_NAME)]
-				tmp.table[!is.na(tmp.table$DISTRICT_NUMBER), DISTRICT_NAME := paste("Sample District", tmp.district.number[!is.na(tmp.table$DISTRICT_NUMBER)])]
-				tmp.table[, DISTRICT_NAME := as.factor(tmp.table$DISTRICT_NAME)]
+				tmp.table[, DISTRICT_NAME:=as.character(tmp.table$DISTRICT_NAME)]
+				tmp.table[!is.na(tmp.table$DISTRICT_NUMBER), DISTRICT_NAME:=paste("Sample District", tmp.district.number[!is.na(tmp.table$DISTRICT_NUMBER)])]
+				tmp.table[, DISTRICT_NAME:=as.factor(tmp.table$DISTRICT_NAME)]
 
 				setkey(tmp.table, SCHOOL_NUMBER)
 				tmp.school.number <- data.table(SCHOOL_NUMBER=unique(tmp.table$SCHOOL_NUMBER) %w/o% NA, seq_along(unique(tmp.table$SCHOOL_NUMBER) %w/o% NA),
 					key="SCHOOL_NUMBER")[tmp.table]$V2
-				tmp.table[, SCHOOL_NAME := as.character(tmp.table$SCHOOL_NAME)]
-				tmp.table[!is.na(tmp.table$SCHOOL_NUMBER), SCHOOL_NAME := paste("Sample School", tmp.school.number[!is.na(tmp.table$SCHOOL_NUMBER)])]
-				tmp.table[, SCHOOL_NAME := as.factor(tmp.table$SCHOOL_NAME)]
+				tmp.table[, SCHOOL_NAME:=as.character(tmp.table$SCHOOL_NAME)]
+				tmp.table[!is.na(SCHOOL_NUMBER), SCHOOL_NAME:=paste("Sample School", tmp.school.number[!is.na(SCHOOL_NUMBER)])]
+				tmp.table[, SCHOOL_NAME:=as.factor(tmp.table$SCHOOL_NAME)]
 			}
 		} ## END if (sgPlot.anonymize)
 
@@ -796,13 +846,12 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 		if (!is.null(tmp.sgPlot.id <- SGP::SGPstateData[[state]][["SGP_Configuration"]][["sgPlot.use.alternate.student.id"]])) variables.to.keep <- c(variables.to.keep, tmp.sgPlot.id)
 
 		sgPlot.data <- data.table(tmp.table[,setdiff(variables.to.keep, "VALID_CASE"), with=FALSE], key=c("ID", "CONTENT_AREA", "YEAR"))
-		if (any(duplicated(sgPlot.data))) sgPlot.data <- createUniqueLongData(sgPlot.data)
+		if (any(duplicated(sgPlot.data, by=key(sgPlot.data)))) sgPlot.data <- createUniqueLongData(sgPlot.data)
 		sgPlot.data <- ddcast(sgPlot.data, ID + CONTENT_AREA ~ YEAR,
 			value.var=setdiff(variables.to.keep, c("VALID_CASE", "ID", "CONTENT_AREA", "YEAR")), sep=".")
 		sgPlot.data <- sgPlot.data[,ID:=gsub("_DUPS_[0-9]*", "", ID)]
 
 		variables.to.keep <- c("ID", "CONTENT_AREA", paste("CONTENT_AREA_LABELS", tmp.years.subset, sep="."),
-		# variables.to.keep <- c("ID", "CONTENT_AREA", "CONTENT_AREA_LABELS",
 			paste("LAST_NAME", tmp.last.year, sep="."), paste("FIRST_NAME", tmp.last.year, sep="."), paste("GRADE", tmp.years.subset, sep="."),
 			paste(my.sgp, tmp.years.subset, sep="."), paste("SCALE_SCORE", tmp.years.subset, sep="."), paste("TRANSFORMED_SCALE_SCORE", tmp.years.subset, sep="."),
 			paste("ACHIEVEMENT_LEVEL", tmp.years.subset, sep="."), paste(my.sgp.level, tmp.years.subset, sep="."),
@@ -877,8 +926,8 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 			setkeyv(sgPlot.data, c("CONTENT_AREA", tmp.grade.name))
 			if ("SCALE_SCORE_ACTUAL" %in% names(sgp_object@Data)) {
 				tmp.lookup <- rbindlist(list(
-					sgp_object@Data[YEAR==tmp.last.year, max(SCALE_SCORE_ACTUAL, na.rm=TRUE), by=list(CONTENT_AREA, GRADE, SCALE_SCORE)],
-					sgp_object@Data[YEAR==tmp.last.year, min(SCALE_SCORE_ACTUAL, na.rm=TRUE), by=list(CONTENT_AREA, GRADE)]), fill=TRUE)
+					na.omit(sgp_object@Data, cols="SCALE_SCORE_ACTUAL")[YEAR==tmp.last.year, max(SCALE_SCORE_ACTUAL, na.rm=TRUE), by=list(CONTENT_AREA, GRADE, SCALE_SCORE)],
+					na.omit(sgp_object@Data, cols="SCALE_SCORE_ACTUAL")[YEAR==tmp.last.year, min(SCALE_SCORE_ACTUAL, na.rm=TRUE), by=list(CONTENT_AREA, GRADE)]), fill=TRUE)
 				setnames(tmp.lookup, "V1", "SCALE_SCORE_ACTUAL")
 				setkey(tmp.lookup, CONTENT_AREA, GRADE, SCALE_SCORE, SCALE_SCORE_ACTUAL)
 				for (i in unique(tmp.lookup$CONTENT_AREA)) {
@@ -896,22 +945,24 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 						if (length(grep("CURRENT", proj.iter)) > 0) tmp.increment <- i else tmp.increment <- i-1
 						setnames(sgPlot.data, c(proj.iter, tmp.grade.name), c("TEMP_SCORE", "TEMP_GRADE"))
 						sgPlot.data[, TEMP:=piecewiseTransform(
-										TEMP_SCORE,
-										state,
-										get.next.content_area(TEMP_GRADE[1], CONTENT_AREA[1], tmp.increment),
-										yearIncrement(tmp.last.year, tmp.increment),
-										get.next.grade(TEMP_GRADE[1], CONTENT_AREA[1], tmp.increment),
+										scale_score=TEMP_SCORE,
+										state=state,
+										content_area=get.next.content_area(TEMP_GRADE[1], CONTENT_AREA[1], tmp.increment),
+										year=yearIncrement(tmp.last.year, tmp.increment),
+										grade=get.next.grade(TEMP_GRADE[1], CONTENT_AREA[1], tmp.increment),
 										sgp.projections.equated=sgp.projections.equated,
 										new.cutscores=getNewCutscores(
 											get.next.content_area(TEMP_GRADE[1], CONTENT_AREA[1], tmp.increment),
 											get.next.content_area(TEMP_GRADE[1], CONTENT_AREA[1], tmp.increment),
 											yearIncrement(tmp.last.year, tmp.increment),
 											get.next.grade(TEMP_GRADE[1], CONTENT_AREA[1], tmp.increment),
-											Cutscores)),
+											state,
+											Cutscores),
+										vertical_scale_for_projections=SGP::SGPstateData[[state]][["Student_Report_Information"]][["Vertical_Scale"]][[CONTENT_AREA[1]]]),
 							by=list(CONTENT_AREA, TEMP_GRADE)]
 
 						if ("SCALE_SCORE_ACTUAL" %in% names(sgp_object@Data)) {
-							sgPlot.data[, TEMP_SCORE := get.actual.scores(TEMP_SCORE,
+							na.omit(sgPlot.data, cols="TEMP_SCORE")[, TEMP_SCORE:=get.actual.scores(TEMP_SCORE,
 								get.next.content_area(TEMP_GRADE[1], CONTENT_AREA[1], tmp.increment),
 								get.next.grade(TEMP_GRADE[1], CONTENT_AREA[1], tmp.increment)), by=list(CONTENT_AREA, TEMP_GRADE)]
 						}
@@ -925,8 +976,8 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 
 			if ("SCALE_SCORE_ACTUAL" %in% names(sgp_object@Data)) {
 				tmp.lookup <- rbindlist(list(
-						sgp_object@Data[YEAR==tmp.last.year, max(SCALE_SCORE_ACTUAL, na.rm=TRUE), by=list(CONTENT_AREA, GRADE, SCALE_SCORE)],
-						sgp_object@Data[YEAR==tmp.last.year, min(SCALE_SCORE_ACTUAL, na.rm=TRUE), by=list(CONTENT_AREA, GRADE)]), fill=TRUE)
+						na.omit(sgp_object@Data, cols="SCALE_SCORE_ACTUAL")[YEAR==tmp.last.year, max(SCALE_SCORE_ACTUAL, na.rm=TRUE), by=list(CONTENT_AREA, GRADE, SCALE_SCORE)],
+						na.omit(sgp_object@Data, cols="SCALE_SCORE_ACTUAL")[YEAR==tmp.last.year, min(SCALE_SCORE_ACTUAL, na.rm=TRUE), by=list(CONTENT_AREA, GRADE)]), fill=TRUE)
 				setnames(tmp.lookup, "V1", "SCALE_SCORE_ACTUAL")
 				setkey(tmp.lookup, CONTENT_AREA, GRADE, SCALE_SCORE, SCALE_SCORE_ACTUAL)
 
@@ -938,13 +989,13 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 
 		if (sgPlot.reports.by.instructor) {
 			setkeyv(student.teacher.lookup, c("ID", paste("INSTRUCTOR_NUMBER", tmp.last.year, sep=".")))
-			unique.teacher.lookup <- unique(student.teacher.lookup)[,c("ID", paste(c("INSTRUCTOR_NUMBER", "INSTRUCTOR_NAME"), tmp.last.year, sep=".")), with=FALSE]
+			unique.teacher.lookup <- unique(student.teacher.lookup, by=key(student.teacher.lookup))[,c("ID", paste(c("INSTRUCTOR_NUMBER", "INSTRUCTOR_NAME"), tmp.last.year, sep=".")), with=FALSE]
 			setkey(sgPlot.data, ID); setkey(unique.teacher.lookup)
 			sgPlot.data <- sgPlot.data[unique.teacher.lookup, allow.cartesian=TRUE]
 			tmp.key <- c("ID", paste("INSTRUCTOR_NUMBER", tmp.last.year, sep="."), "CONTENT_AREA")
 			setkeyv(sgPlot.data, tmp.key)
 			sgPlot.data <- data.table(student.teacher.lookup[,c(tmp.key, "CONTENT_AREA_RESPONSIBILITY"), with=FALSE], key=tmp.key)[sgPlot.data]
-			sgPlot.data[['CONTENT_AREA_RESPONSIBILITY']][is.na( sgPlot.data[['CONTENT_AREA_RESPONSIBILITY']])] <- "Content Area Responsibility: No"
+			sgPlot.data[is.na(CONTENT_AREA_RESPONSIBILITY), CONTENT_AREA_RESPONSIBILITY:="Content Area Responsibility: No"]
 		}
 
 	####  Rename alternate student ID if one is to be used ('sgPlot.use.alternate.student.id')
@@ -962,7 +1013,7 @@ if (sgPlot.save.sgPlot.data) {
 	setkey(sgPlot.data, ID)
 	tmp.file.name <- paste(gsub(" ", "_", capwords(getStateAbbreviation(state, type="name"))), "studentGrowthPlot_Data", sep="_")
 	assign(tmp.file.name, sgPlot.data)
-	save(list=tmp.file.name, file=paste(tmp.file.name, ".Rdata", sep=""))
+	save(list=tmp.file.name, file=paste0(tmp.file.name, ".Rdata"))
 }
 
 
@@ -1006,7 +1057,7 @@ if (sgPlot.produce.plots) {
 
 		par.start <- startParallel(parallel.config, 'SG_PLOTS')
 
-		if (par.start$par.type=="FOREACH") {
+		if (parallel.config[["BACKEND"]]=="FOREACH") {
 
 			foreach.options <- parallel.config[["OPTIONS"]] # works fine if NULL
 			foreach(sgPlot.iter=iter(get.sgPlot.iter(tmp.districts.and.schools)), .packages="SGP", .inorder=FALSE,
@@ -1039,7 +1090,7 @@ if (sgPlot.produce.plots) {
 							sgPlot.output.format=sgPlot.output.format,
 							sgPlot.linkages=sgp.projections.equated)
 			} ### END dopar
-		} ### END if FOREACH
+		} else {### END if FOREACH
 
 		if (par.start$par.type=="SNOW") {
 
@@ -1105,17 +1156,17 @@ if (sgPlot.produce.plots) {
 					sgPlot.zip=sgPlot.zip,
 					sgPlot.output.format=sgPlot.output.format,
 					sgPlot.linkages=sgp.projections.equated), mc.cores=par.start$workers, mc.preschedule=FALSE)
-		}  ### END if MULTICORE
+		}}  ### END if MULTICORE
 
 		stopParallel(parallel.config, par.start)
 
 	} # END else Parallel Processing
 } ## END if (sgPlot.produce.plots)
 
-	messageSGP(paste("Finished studentGrowthPlot in visualizeSGP", date(), "in", convertTime(timetaken(started.at)), "\n"))
+	messageSGP(paste("Finished studentGrowthPlot in visualizeSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
 
 } ## END if ("studentGrowthPlot" %in% plot.types)
 
-	messageSGP(paste("Finished visualizeSGP", date(), "in", convertTime(timetaken(started.at.visualizeSGP)), "\n"))
+	messageSGP(paste("Finished visualizeSGP", prettyDate(), "in", convertTime(timetaken(started.at.visualizeSGP)), "\n"))
 
 } ## END visualizeSGP Function

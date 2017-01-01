@@ -27,16 +27,19 @@ updateSGP(
 	sgp.percentiles.baseline=TRUE,
 	sgp.projections.baseline=TRUE,
 	sgp.projections.lagged.baseline=TRUE,
+	sgp.test.cohort.size=NULL,
+	return.sgp.test.results=FALSE,
 	simulate.sgps=TRUE,
-	save.old.summaries=TRUE,
+	save.old.summaries=NULL,
 	save.intermediate.results=TRUE,
 	calculate.simex=NULL,
 	calculate.simex.baseline=NULL,
 	sgp.use.my.coefficient.matrices=NULL,
 	sgp.target.scale.scores=FALSE,
 	sgp.target.scale.scores.only=FALSE,
-	overwrite.existing.data=FALSE,
+	overwrite.existing.data=TRUE,
 	update.old.data.with.new=TRUE,
+	output.updated.data=TRUE,
 	sgPlot.demo.report=TRUE,
 	plot.types=c("bubblePlot", "studentGrowthPlot", "growthAchievementPlot"),
 	outputSGP.output.type=c("LONG_Data",
@@ -46,7 +49,7 @@ updateSGP(
 	sgp.config=NULL,
 	goodness.of.fit.print=TRUE,
 	parallel.config=NULL,
-	sgp.sqlite=NULL,
+	sgp.sqlite=FALSE,
 	SGPt=NULL,
 	sgp.percentiles.equated=NULL,
 	sgp.percentiles.equating.method=NULL,
@@ -87,10 +90,16 @@ If missing the function will use the data to infer all the grade progressions fo
   }
   \item{sgp.projections.lagged.baseline}{Boolean variable indicating whether to calculate lagged baseline student growth projections (if analyzeSGP is included in the 'steps' argument). Defaults to TRUE.
   }
+  \item{sgp.test.cohort.size}{Integer indicating the maximum number of students sampled from the full cohort to use in the calculation of student growth percentiles.  Intended to be used
+  as a test of the desired analyses to be run. The default, NULL, uses no restrictions (no tests are performed, and analyses use the entire cohort of students).
+  }
+  \item{return.sgp.test.results}{Boolean variable passed to \code{\link{analyzeSGP}} and \code{\link{studentGrowthPercentiles}} indicating whether the results from the cohort sample subset (if specified using the above argument) should be returned for inspection. Defaults to FALSE. If TRUE, only the sample subset of the data used will be returned in the SGP object's @Data slot. Alternatively, user can supply the character "ALL_DATA" to the argument to return the entire original data.
+  }
   \item{simulate.sgps}{Boolean variable indicating whether to simulate SGP values for students based on test-specific Conditional Standard Errors of Measurement (CSEM).  Test CSEM data must be available for simulation and included in \code{SGPstateData}.  This argument must be set to TRUE for confidence interval construction. Defaults to TRUE.  This argument is passed to \code{\link{analyzeSGP}}.
   }
-  \item{save.old.summaries}{A Boolean argument (defaults to FALSE which will delete the \code{@Summary} slot before creating new summaries)
-  indicating whether the call to \code{\link{summarizeSGP}} should save existing summaries in the \code{@Summary} slot.
+  \item{save.old.summaries}{A Boolean argument (defaults to NULL/TRUE which will save the \code{@Summary} slot before creating new summaries)
+  indicating whether the call to \code{\link{summarizeSGP}} should save existing summaries in the \code{@Summary} slot. If \code{overwrite.existing.data}
+  is TRUE, \code{save.old.summaries} will default to FALSE unless explictly set to TRUE.
   }
   \item{save.intermediate.results}{A Boolean argument (defaults to FALSE) indicating whether results should be save to the current directory after each step of the analysis.
   }
@@ -107,11 +116,16 @@ If missing the function will use the data to infer all the grade progressions fo
   \item{sgp.target.scale.scores.only}{A Boolean argument (defaults to FALSE/NULL) passed to \code{\link{combineSGP}} indicating whether ONLY to calculate scale scores associated with SGP targets as
   part of the \code{\link{combineSGP}}.
   }
-  \item{overwrite.existing.data}{A Boolean argument (defaults to FALSE) indicating whether updateSGP should overwrite existing data/results from an earlier run as part of updateSGP.
+  \item{overwrite.existing.data}{A Boolean argument (defaults to TRUE) indicating whether updateSGP should overwrite existing data/results from an earlier run as part of updateSGP.
   }
   \item{update.old.data.with.new}{A Boolean argument (defaults to TRUE) indicating whether updateSGP should add new data supplied in argument with_SGP_Data_LONG to existing longitudinal data
   or reduce data set to run analyses on only that which is provided.
   }
+  \item{output.updated.data}{A Boolean argument (defaults to TRUE) indicating whether updateSGP should use \code{\link{outputSGP}} to save the new data added in 
+   \code{with_sgp_data_LONG} separately in a new directory called "Updated_Data".  Only relevant when `overwrite.existing.data is FALSE and 
+   sgp.use.my.coefficient.matrices is TRUE.  Output type controlled by the \code{outputSGP.output.type} argument.
+  }
+
   \item{sgPlot.demo.report}{A Boolean argument (defaults to TRUE) indicating whether updateSGP should produce just the demo student growth plots or those associated with all students in the last year.
   }
   \item{plot.types}{A character vector (defaults to 'c(\code{\link{bubblePlot}}, \code{\link{studentGrowthPlot}}, \code{\link{growthAchievementPlot}})') indicating what plot types to export from \code{\link{visualizeSGP}}.
@@ -127,7 +141,7 @@ If missing the function will use the data to infer all the grade progressions fo
   \item{parallel.config}{Parallel computation configuration passed to \code{\link{abcSGP}}, \code{\link{analyzeSGP}}, \code{\link{combineSGP}}, and \code{\link{summarizeSGP}}. See documentation
   under those functions for details.
   }
-  \item{sgp.sqlite}{A Boolean argument (defaults to NULL) indicating whether a SQLite database file of the essential SGP data should be created from the \code{@Data} slot and subsequently used to extract data subsets for analyses conducted in order to reduce the amount of RAM memory required.  See full argument description in \code{\link{analyzeSGP}}.
+  \item{sgp.sqlite}{A Boolean argument (defaults to FALSE) indicating whether a SQLite database file of the essential SGP data should be created from the \code{@Data} slot and subsequently used to extract data subsets for analyses conducted in order to reduce the amount of RAM memory required.  See full argument description in \code{\link{analyzeSGP}}.
   }
   \item{SGPt}{Argument (defaults to NULL) indicating whether time dependent student growth percentile (SGPt) are calculate.
   }

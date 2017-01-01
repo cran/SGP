@@ -11,14 +11,14 @@ function(tmp.data,
 	if (is.null(equate.interval.digits)) equate.interval.digits <- 0
 
 	current.year <- SGP::SGPstateData[[state]][["Assessment_Program_Information"]][["Assessment_Transition"]][["Year"]]
-	prior.year <- tail(head(sort(unique(tmp.data$YEAR)), -1), 1)
+	prior.year <- tail(head(sort(unique(tmp.data[['YEAR']])), -1), 1)
 	current.year.data <- tmp.data[VALID_CASE=="VALID_CASE" & YEAR==current.year]
 	prior.year.data <- tmp.data[VALID_CASE=="VALID_CASE" & YEAR==prior.year]
 	setkey(current.year.data, CONTENT_AREA, GRADE)
 	setkey(prior.year.data, CONTENT_AREA, GRADE)
-	current.year.uniques <- unique(current.year.data[VALID_CASE=="VALID_CASE"])[,c("CONTENT_AREA", "GRADE"), with=FALSE]
-	prior.year.uniques <- unique(prior.year.data[VALID_CASE=="VALID_CASE"])[,c("CONTENT_AREA", "GRADE"), with=FALSE]
-	content_areas.for.equate <- intersect(unique(current.year.uniques$CONTENT_AREA), unique(prior.year.uniques$CONTENT_AREA))
+	current.year.uniques <- unique(current.year.data[VALID_CASE=="VALID_CASE"], by=key(current.year.data))[,c("CONTENT_AREA", "GRADE"), with=FALSE]
+	prior.year.uniques <- unique(prior.year.data[VALID_CASE=="VALID_CASE"], by=key(prior.year.data))[,c("CONTENT_AREA", "GRADE"), with=FALSE]
+	content_areas.for.equate <- intersect(unique(current.year.uniques[['CONTENT_AREA']]), unique(prior.year.uniques[['CONTENT_AREA']]))
 	unique.content.by.grade <- lapply(content_areas.for.equate, function(x) intersect(current.year.uniques[x]$GRADE, prior.year.uniques[x]$GRADE))
 	names(unique.content.by.grade) <- content_areas.for.equate
 
@@ -31,16 +31,16 @@ function(tmp.data,
 		tmp.knots.boundaries.years <- sapply(strsplit(tmp.knots.boundaries.names, "[.]"), function(x) x[2])
 		if (any(!is.na(tmp.knots.boundaries.years))) {
 			if (year %in% tmp.knots.boundaries.years) {
-				return(paste("[['", content_area, ".", year, "']]", sep=""))
+				return(paste0("[['", content_area, ".", year, "']]"))
 			} else {
 				if (year==sort(c(year, tmp.knots.boundaries.years))[1]) {
-					return(paste("[['", content_area, "']]", sep=""))
+					return(paste0("[['", content_area, "']]"))
 				} else {
-					return(paste("[['", content_area, ".", rev(sort(tmp.knots.boundaries.years))[1], "']]", sep=""))
+					return(paste0("[['", content_area, ".", rev(sort(tmp.knots.boundaries.years))[1], "']]"))
 				}
 			}
 		} else {
-			return(paste("[['", tmp.path.knots.boundaries, "']][['", content_area, "']]", sep=""))
+			return(paste0("[['", tmp.path.knots.boundaries, "']][['", content_area, "']]"))
 		}
 	}
 

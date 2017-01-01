@@ -54,19 +54,19 @@ function(sgp_object,
 			if (convert.to.class=="character") {
 				for (my.variable in my.variables.to.change) {
 					message(paste("\tNOTE:", my.variable, "in", data.slot, "converted from", paste(class(my.data[[my.variable]]), collapse=" "), "to character."))
-					my.data[,my.variable:=as.character(my.data[[my.variable]]), with=FALSE]
+					my.data[,(my.variable):=as.character(my.data[[my.variable]])]
 				}
 			}
 			if (convert.to.class=="numeric") {
 				for (my.variable in my.variables.to.change) {
 					message(paste("\tNOTE:", my.variable, "in", data.slot, "converted from", class(my.data[[my.variable]]), "to numeric."))
-					my.data[,my.variable:=as.numeric(my.data[[my.variable]]), with=FALSE]
+					my.data[,(my.variable):=as.numeric(my.data[[my.variable]])]
 				}
 			}
 			if (convert.to.class=="Date") {
 				for (my.variable in my.variables.to.change) {
 					message(paste("\tNOTE:", my.variable, "in", data.slot, "converted from", class(my.data[[my.variable]]), "to Date assuming YYYY-MM-DD format."))
-					my.data[,my.variable:=as.Date(my.data[[my.variable]]), with=FALSE]
+					my.data[,(my.variable):=as.Date(my.data[[my.variable]])]
 				}
 			}
 		}
@@ -146,9 +146,9 @@ function(sgp_object,
 		} else {
 			achievement.levels <- SGP::SGPstateData[[state]][['Achievement']][['Levels']][['Labels']]
 		}
-		if (!all(sort(unique(sgp_object@Data$ACHIEVEMENT_LEVEL)) %in% achievement.levels)) {
+		if (!all(sort(unique(sgp_object@Data[['ACHIEVEMENT_LEVEL']])) %in% achievement.levels)) {
 			missing.achievement.levels <-
-				sort(unique(sgp_object@Data$ACHIEVEMENT_LEVEL))[!sort(unique(sgp_object@Data$ACHIEVEMENT_LEVEL)) %in% achievement.levels]
+				sort(unique(sgp_object@Data[['ACHIEVEMENT_LEVEL']]))[!sort(unique(sgp_object@Data[['ACHIEVEMENT_LEVEL']])) %in% achievement.levels]
 			message(paste("\tNOTE: Achievement level(s):", paste(missing.achievement.levels, collapse=", "), "in supplied data are not contained in 'SGPstateData'.", collapse=" "))
 		}
 	}
@@ -171,7 +171,7 @@ function(sgp_object,
 
 	names.to.change <- c("SGP_TARGET", "SGP_TARGET_BASELINE", "SGP_TARGET_MOVE_UP_STAY_UP", "SGP_TARGET_BASELINE_MOVE_UP_STAY_UP")
 	for (i in intersect(names(sgp_object@Data), names.to.change)) {
-		message(paste("\tNOTE: Changing name '", i, "' to '", paste(i, "3_YEAR", sep="_"), "' in @Data", sep=""))
+		message(paste0("\tNOTE: Changing name '", i, "' to '", paste(i, "3_YEAR", sep="_"), "' in @Data"))
 		setnames(sgp_object@Data, i, paste(i, "3_YEAR", sep="_"))
 	}
 
@@ -181,7 +181,7 @@ function(sgp_object,
 		tmp.names <- grep("YEAR", names(sgp_object@SGP[['SGProjections']][[i]]), value=TRUE)
 		if (length(grep("CURRENT", tmp.names))!=length(tmp.names)) {
 			setnames(sgp_object@SGP[['SGProjections']][[i]], tmp.names, paste(tmp.names, "CURRENT", sep="_"))
-			message(paste("\tNOTE: Adding '_CURRENT' to non-lagged variable names in @SGP[['SGProjections']][['", i, "']]", sep=""))
+			message(paste0("\tNOTE: Adding '_CURRENT' to non-lagged variable names in @SGP[['SGProjections']][['", i, "']]"))
 		}
 	}
 
