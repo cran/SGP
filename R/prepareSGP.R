@@ -27,7 +27,7 @@ function(data,
 
 	### Configure arguments
 
-	if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][["fix.duplicates"]])) {
+	if (is.null(fix.duplicates) & !is.null(SGPstateData[[state]][["SGP_Configuration"]][["fix.duplicates"]])) {
 		fix.duplicates <- SGPstateData[[state]][["SGP_Configuration"]][["fix.duplicates"]]
 	}
 
@@ -144,7 +144,7 @@ function(data,
 			messageSGP(paste("\tWARNING: @Data keyed by", paste(getKey(data), collapse=", "), "has duplicate cases. Subsequent joins/merges will likely be corrupt."))
 			messageSGP("\tNOTE: Duplicate cases are available in current workspace as 'DUPLICATED_CASES' and saved as 'DUPLICATED_CASES.Rdata'.")
 			assign("DUPLICATED_CASES",
-				data@Data["VALID_CASE"][unique(data@Data["VALID_CASE"][duplicated(data@Data["VALID_CASE"], by=key(data@Data)), c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"), with=FALSE], by=key(data@Data))])
+				data@Data["VALID_CASE"][unique(data@Data["VALID_CASE"][duplicated(data@Data["VALID_CASE"], by=key(data@Data)), c("VALID_CASE", "CONTENT_AREA", "GRADE", "YEAR", "ID"), with=FALSE], by=key(data@Data))])
 			save(DUPLICATED_CASES, file="DUPLICATED_CASES.Rdata")
 		}
 
@@ -187,7 +187,7 @@ function(data,
 		if (is.null(fix.duplicates) && any(duplicated(data["VALID_CASE"], by=key(data)))) {
 			messageSGP(paste("\tWARNING: Data keyed by", paste(getKey(data), collapse=", "), "has duplicate cases. Subsequent joins/merges will be corrupted."))
 			messageSGP("\tNOTE: Duplicate cases are available in current workspace as 'DUPLICATED_CASES' and saved as 'DUPLICATED_CASES.Rdata'.")
-			assign("DUPLICATED_CASES", data["VALID_CASE"][unique(data["VALID_CASE"][duplicated(data["VALID_CASE"], by=key(data)), c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"), with=FALSE], by=key(data))])
+			assign("DUPLICATED_CASES", data["VALID_CASE"][unique(data["VALID_CASE"][duplicated(data["VALID_CASE"], by=key(data)), c("VALID_CASE", "CONTENT_AREA", "GRADE", "YEAR", "ID"), with=FALSE], by=key(data))])
 			save(DUPLICATED_CASES, file="DUPLICATED_CASES.Rdata")
 		}
 
@@ -262,25 +262,19 @@ function(data,
 	} ### end if (create.additional.variables)
 
 	if (!is.null(fix.duplicates)) {
-		if (identical(toupper(fix.duplicates), "KEEP.ALL")) {
+		# if (identical(toupper(fix.duplicates), "KEEP.ALL")) {
 			if (is.SGP(data)) {
 				assign("DUPLICATED_CASES",
-					data@Data["VALID_CASE"][unique(data@Data["VALID_CASE"][duplicated(data@Data["VALID_CASE"], by=getKey(data@Data)), c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"), with=FALSE], by=getKey(data@Data))])
+					data@Data["VALID_CASE"][unique(data@Data["VALID_CASE"][duplicated(data@Data["VALID_CASE"], by=getKey(data@Data)), c("VALID_CASE", "CONTENT_AREA", "GRADE", "YEAR", "ID"), with=FALSE], by=getKey(data@Data))])
 			} else {
-				assign("DUPLICATED_CASES", data["VALID_CASE"][unique(data["VALID_CASE"][duplicated(data["VALID_CASE"], by=getKey(data)), c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID"), with=FALSE], by=getKey(data))])
+				assign("DUPLICATED_CASES", data["VALID_CASE"][unique(data["VALID_CASE"][duplicated(data["VALID_CASE"], by=getKey(data)), c("VALID_CASE", "CONTENT_AREA", "GRADE", "YEAR", "ID"), with=FALSE], by=getKey(data))])
 			}
 			if (dim(DUPLICATED_CASES)[1]!=0) {
-				sgp_object@Data <- createUniqueLongData(sgp_object@Data)
-				messageSGP("\tNOTE: Duplicate cases in current year made UNIQUE. Modified IDs include suffix '_DUPS_***' in @Data.")
-
-				if (!all(unique(DUPLICATED_CASES$YEAR) %in% (tmp.last.year <- tail(sort(unique(sgp_object@Data$YEAR)), 1)))) {
-					setkey(DUPLICATED_CASES, VALID_CASE, CONTENT_AREA, YEAR, ID, GRADE)
-					if (any(duplicated(DUPLICATED_CASES[YEAR!=tmp.last.year], by=key(DUPLICATED_CASES)))) {
-						messageSGP("\tNOTE: Duplicate case modification is only available when duplicates reside in last year of data. Duplicate cases are NOT fixed.")
-					}
-				}
+				messageSGP("\tNOTE: Duplicate cases are present in the data and `fix.duplicates` has been requested.  Required ID modifications will be performed as needed in analyzeSGP.")
+			} else {
+				messageSGP("\tNOTE: The 'fix.duplicates' argument has been requested, but NO duplicate cases are found in the data...")
 			}
-		} ### End KEEP.ALL
+		# } ### End KEEP.ALL  (or TRUE or anything else...)
 	}
 
 	##  Print finish time

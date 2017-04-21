@@ -46,6 +46,7 @@ updateSGP(
 				"LONG_FINAL_YEAR_Data",
 				"WIDE_Data",
 				"INSTRUCTOR_Data"),
+	outputSGP.directory="Data",
 	sgp.config=NULL,
 	goodness.of.fit.print=TRUE,
 	parallel.config=NULL,
@@ -103,9 +104,12 @@ If missing the function will use the data to infer all the grade progressions fo
   }
   \item{save.intermediate.results}{A Boolean argument (defaults to FALSE) indicating whether results should be save to the current directory after each step of the analysis.
   }
-  \item{calculate.simex}{A character state acronym or list including state/csem variable, simulation.iterations, lambda and extrapolation method. Defaults to NULL, no simex calculations performed.  Alternatively, setting the argument to TRUE sets the list up with state=state, lambda=seq(0,2,0.5), simulation.iterations=50, simex.sample.size=25000, extrapolation="linear" and save.matrices=TRUE.  This argument is passed to \code{\link{analyzeSGP}}.
+	\item{calculate.simex}{A character state acronym or list including state/csem variable, csem.data.vnames, csem.loss.hoss, simulation.iterations, lambda and extrapolation method.
+   Returns both SIMEX adjusted SGP (\code{SGP_SIMEX}) as well as the percentile ranked SIMEX SGP (\code{RANK_SIMEX}) values as suggested by Castellano and McCaffrey (2017).
+   Defaults to NULL, no simex calculations performed.  Alternatively, setting the argument to TRUE sets the list up with state=state, lambda=seq(0,2,0.5), simulation.iterations=50, simex.sample.size=25000, extrapolation="linear" and save.matrices=TRUE.
   }
-  \item{calculate.simex.baseline}{A character state acronym or list including state/csem variable, simulation.iterations, lambda and extrapolation method. Defaults to NULL, no simex calculations performed.  Alternatively, setting the argument to TRUE sets the list up with state=state, lambda=seq(0,2,0.5), simulation.iterations=50, simex.sample.size=25000, extrapolation="linear", save.matrices=TRUE and simex.use.my.coefficient.matrices = TRUE.  This argument is passed to \code{\link{analyzeSGP}}.
+  \item{calculate.simex.baseline}{A character state acronym or list including state/csem variable, csem.data.vnames, csem.loss.hoss, simulation.iterations, lambda and extrapolation method. Defaults to NULL, no simex calculations performed.
+  Alternatively, setting the argument to TRUE uses the same defaults as above along with \code{simex.use.my.coefficient.matrices = TRUE}. This argument is passed to \code{\link{analyzeSGP}}.
   }
   \item{sgp.use.my.coefficient.matrices}{A Boolean argument (defaults to FALSE/NULL) passed to \code{\link{analyzeSGP}} indicating whether previous coefficient matrices should be used as
   part of the analyses.
@@ -121,8 +125,8 @@ If missing the function will use the data to infer all the grade progressions fo
   \item{update.old.data.with.new}{A Boolean argument (defaults to TRUE) indicating whether updateSGP should add new data supplied in argument with_SGP_Data_LONG to existing longitudinal data
   or reduce data set to run analyses on only that which is provided.
   }
-  \item{output.updated.data}{A Boolean argument (defaults to TRUE) indicating whether updateSGP should use \code{\link{outputSGP}} to save the new data added in 
-   \code{with_sgp_data_LONG} separately in a new directory called "Updated_Data".  Only relevant when `overwrite.existing.data is FALSE and 
+  \item{output.updated.data}{A Boolean argument (defaults to TRUE) indicating whether updateSGP should use \code{\link{outputSGP}} to save the new data added in
+   \code{with_sgp_data_LONG} separately in a new directory called "Updated_Data".  Only relevant when `overwrite.existing.data is FALSE and
    sgp.use.my.coefficient.matrices is TRUE.  Output type controlled by the \code{outputSGP.output.type} argument.
   }
 
@@ -132,8 +136,9 @@ If missing the function will use the data to infer all the grade progressions fo
   }
   \item{outputSGP.output.type}{Specifies the type of output generated as part of intermediate step when adding addition data and using old coefficient matrices. Defaults are the defaults of outputSGP,
   \code{LONG_Data}, \code{LONG_FINAL_YEAR_Data}, \code{WIDE_Data}, and \code{INSTRUCTOR_Data}.
-
-  }
+	}
+	\item{outputSGP.directory}{A a file path indicating where to save output files. Defaults to \code{Data}.
+	}
   \item{sgp.config}{List of analysis control parameters passed to \code{\link{analyzeSGP}}. For details on this argument see document for that function.
   }
   \item{goodness.of.fit.print}{A Boolean variable passed to \code{\link{analyzeSGP}} indicating whether to print goodness of fit plots.
@@ -155,9 +160,10 @@ If missing the function will use the data to infer all the grade progressions fo
 student growth percentiles as part of call to \code{\link{studentGrowthPercentiles}}. Default is TRUE. Setting to FALSE produces only coefficient
 matrices.
   }
-  \item{fix.duplicates}{Argument to control how \code{prepareSGP} deals with duplicate records based upon the key of VALID_CASE, CONTENT_AREA, YEAR, and ID.
-  The function currently warns of duplicate records and doesn't modify data. If set to TRUE, \code{prepareSGP} tries to
-  fix the duplicate individual records by adding a '_DUP_***' suffix to the duplicate ID in order to create unique records based upon the key.
+	\item{fix.duplicates}{Argument to control how \code{analyzeSGP} and \code{combineSGP} deal with duplicate records based upon the key of VALID_CASE, CONTENT_AREA, YEAR, and ID.
+  The function currently warns of duplicate records and doesn't modify data.  If set to 'KEEP.ALL', \code{analyzeSGP} tries to fix the duplicate individual records by
+  adding a '_DUP_***' suffix to the duplicate ID before running \code{\link{studentGrowthPercentiles}} in order to create unique records based upon the key.  If needed, the
+	\code{@Data} slot will be extended as necessary to accomodate additional student records and SGP results in \code{combineSGP}.
   }
   \item{...}{Arguments to be passed to \code{\link{abcSGP}} for finer control over SGP calculations. For example, 'parallel.config' can be supplied to abcSGP for parallel computation.
   }

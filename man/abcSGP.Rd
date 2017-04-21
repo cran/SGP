@@ -47,13 +47,15 @@ abcSGP(sgp_object,
 				"LONG_FINAL_YEAR_Data",
 				"WIDE_Data",
 				"INSTRUCTOR_Data"),
-	verbose.output=FALSE,
+	outputSGP.directory="Data",
+  verbose.output=FALSE,
 	sgp.sqlite=FALSE,
 	sgp.percentiles.equated=NULL,
     sgp.percentiles.equating.method=NULL,
 	sgp.percentiles.calculate.sgps=TRUE,
     get.cohort.data.info=FALSE,
-	SGPt=NULL)
+	SGPt=NULL,
+  fix.duplicates=NULL)
 }
 
 \arguments{
@@ -101,17 +103,20 @@ If missing the function will use the data to infer all the grade progressions fo
   \item{sgp.target.scale.scores.only}{Boolean variable passed to \code{\link{combineSGP}} indicating whether ONLY target scale scores associated with SGP_TARGETs should be calculated as
   part of the \code{\link{combineSGP}} run. Defaults to FALSE.
   }
-  \item{sgp.test.cohort.size}{Integer indicating the maximum number of students sampled from the full cohort to use in the calculation of student growth percentiles.  Intended to be used 
+  \item{sgp.test.cohort.size}{Integer indicating the maximum number of students sampled from the full cohort to use in the calculation of student growth percentiles.  Intended to be used
   as a test of the desired analyses to be run. The default, NULL, uses no restrictions (no tests are performed, and analyses use the entire cohort of students).
-  }	
+  }
   \item{return.sgp.test.results}{Boolean variable passed to \code{\link{analyzeSGP}} and \code{\link{studentGrowthPercentiles}} indicating whether the results from the cohort sample subset (if specified using the above argument) should be returned for inspection. Defaults to FALSE. If TRUE, only the sample subset of the data used will be returned in the SGP object's @Data slot. Alternatively, user can supply the character "ALL_DATA" to the argument to return the entire original data.
   }
   \item{simulate.sgps}{Boolean variable indicating whether to simulate SGP values for students based on test-specific Conditional Standard Errors of Measurement (CSEM).
   Test CSEM data must be available for simulation.  Must be set to TRUE for confidence interval construction. Defaults to TRUE in \code{abcSGP} only.
   }
-  \item{calculate.simex}{A character state acronym or list including state/csem variable, csem.data.vnames, csem.loss.hoss, simulation.iterations, lambda and extrapolation method. Default to NULL, no simex calculations done.  Alternatively, setting the argument to TRUE sets the list up with state=state, lambda=seq(0,2,0.5), simulation.iterations=50, simex.sample.size=25000, extrapolation="linear" and save.matrices=TRUE.
+  \item{calculate.simex}{A character state acronym or list including state/csem variable, csem.data.vnames, csem.loss.hoss, simulation.iterations, lambda and extrapolation method.
+   Returns both SIMEX adjusted SGP (\code{SGP_SIMEX}) as well as the percentile ranked SIMEX SGP (\code{RANK_SIMEX}) values as suggested by Castellano and McCaffrey (2017).
+   Defaults to NULL, no simex calculations performed.  Alternatively, setting the argument to TRUE sets the list up with state=state, lambda=seq(0,2,0.5), simulation.iterations=50, simex.sample.size=25000, extrapolation="linear" and save.matrices=TRUE.
   }
-  \item{calculate.simex.baseline}{A character state acronym or list including state/csem variable, csem.data.vnames, csem.loss.hoss, simulation.iterations, lambda and extrapolation method. Defaults to NULL, no simex calculations performed.  Alternatively, setting the argument to TRUE sets the list up with state=state, lambda=seq(0,2,0.5), simulation.iterations=50, simex.sample.size=25000, extrapolation="linear", save.matrices=TRUE and simex.use.my.coefficient.matrices = TRUE.  This argument is passed to \code{\link{analyzeSGP}}.
+  \item{calculate.simex.baseline}{A character state acronym or list including state/csem variable, csem.data.vnames, csem.loss.hoss, simulation.iterations, lambda and extrapolation method. Defaults to NULL, no simex calculations performed.
+  Alternatively, setting the argument to TRUE uses the same defaults as above along with \code{simex.use.my.coefficient.matrices = TRUE}. This argument is passed to \code{\link{analyzeSGP}}.
   }
   \item{goodness.of.fit.print}{Boolean variable passed to \code{\link{analyzeSGP}} indicating whether to print goodness of fit results.
   }
@@ -149,7 +154,10 @@ If missing the function will use the data to infer all the grade progressions fo
   \code{\link{studentGrowthPlot}}s, and \code{\link{growthAchievementPlot}}s.
   }
   \item{outputSGP.output.type}{An argument passed to outputSGP indicating the output types to be produced. Defaults to \code{LONG_Data}, \code{LONG_FINAL_YEAR_Data}, \code{WIDE_Data},
-  and \code{INSTRUCTOR_Data}.}
+  and \code{INSTRUCTOR_Data}.
+  }
+  \item{outputSGP.directory}{A a file path indicating where to save output files. Defaults to \code{Data}.
+  }
   \item{verbose.output}{A Boolean argument indicating whether the function should output verbose diagnostic messages.
   }
   \item{sgp.sqlite}{A Boolean argument (defaults to FALSE) indicating whether a SQLite database file of the essential SGP data should be created from the \code{@Data} slot and subsequently
@@ -170,6 +178,11 @@ matrices.
   information based upon sgp configurations provided or calculated in \code{\link{analyzeSGP}}.
   }
   \item{SGPt}{Argument (defaults to NULL) indicating whether to perform time dependent SGP analyses (SGPt).
+  }
+  \item{fix.duplicates}{Argument to control how \code{analyzeSGP} and \code{combineSGP} deal with duplicate records based upon the key of VALID_CASE, CONTENT_AREA, YEAR, and ID.
+  The function currently warns of duplicate records and doesn't modify data.  If set to 'KEEP.ALL', \code{analyzeSGP} tries to fix the duplicate individual records by
+  adding a '_DUP_***' suffix to the duplicate ID before running \code{\link{studentGrowthPercentiles}} in order to create unique records based upon the key.  If needed, the
+	\code{@Data} slot will be extended as necessary to accomodate additional student records and SGP results in \code{combineSGP}.
   }
 }
 

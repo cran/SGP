@@ -27,7 +27,7 @@ function(sgp_object,
 	SCALE_SCORE <- CONTENT_AREA <- YEAR <- GRADE <- ID <- ETHNICITY <- GENDER <- LAST_NAME <- FIRST_NAME <- VALID_CASE <- DISTRICT_NUMBER <- SCHOOL_NUMBER <- YEAR_BY_CONTENT_AREA <- NULL
 	names.type <- names.provided <- names.output <- names.sgp <- STATE_ENROLLMENT_STATUS <- EMH_LEVEL <- STATE_ASSIGNED_ID <- .N <- TRANSFORMED_SCALE_SCORE <- GROUP <- STATE <- YEAR_WITHIN <- NULL
 	DISADVANTAGED_STATUS <- SPECIAL_EDUCATION_STATUS <- ELL_STATUS <- HLS_CODE <- IEP_CODE <- LANGUAGE_PROFICIENCY <- GIFTED_CODE <- FRL_CODE <- STUDENT_GROWTH_ID <- MIDDLE_NAME <- NULL
-	OCTOBER_ENROLLMENT_STATUS <- SCALE_SCORE_EQUATED <- SCALE_SCORE_ACTUAL <- ACHIEVEMENT_LEVEL <- TEMP <- TEMP_SCORE <- TEMP_GRADE <- TEMP_CONTENT_AREA <- NULL
+	OCTOBER_ENROLLMENT_STATUS <- SCALE_SCORE_EQUATED <- SCALE_SCORE_ACTUAL <- ACHIEVEMENT_LEVEL <- TEMP <- TEMP_SCORE <- TEMP_GRADE <- TEMP_CONTENT_AREA <- SGP_NORM_GROUP_BASELINE <- SGP_PROJECTION_GROUP <- NULL
 
 	### Create state (if missing) and tmp.state from sgp_object (if possible)
 
@@ -180,8 +180,13 @@ function(sgp_object,
 		} else {
 			long_data_tmp <- long_data_tmp[,YEAR_BY_CONTENT_AREA:=paste(YEAR, CONTENT_AREA, sep=".")]["VALID_CASE"]
 		}
+		if (dups.tf <- any(duplicated(long_data_tmp, by=key(long_data_tmp)))){
+			long_data_tmp <- createUniqueLongData(long_data_tmp, wide.output=TRUE)
+			setkeyv(long_data_tmp, getKey(long_data_tmp))
+		}
 		assign(paste(tmp.state, "SGP_WIDE_Data", sep="_"), ddcast(long_data_tmp, ID ~ YEAR_BY_CONTENT_AREA,
 			value.var=setdiff(names(long_data_tmp), c("ID", "YEAR_BY_CONTENT_AREA", "VALID_CASE", "CONTENT_AREA", "YEAR")), sep="."))
+		if (dups.tf) eval(parse(text=paste0("invisible(", paste(tmp.state, "SGP_WIDE_Data", sep="_"), "[, ID := gsub('_DUPS_[0-9]*', '', ID)])")))
 		save(list=paste(tmp.state, "SGP_WIDE_Data", sep="_"), file=file.path(outputSGP.directory, paste(tmp.state, "SGP_WIDE_Data.Rdata", sep="_")))
 		fwrite(get(paste(tmp.state, "SGP_WIDE_Data", sep="_")), file=file.path(outputSGP.directory, paste(tmp.state, "SGP_WIDE_Data.txt", sep="_")), sep="|", quote=FALSE)
 
@@ -221,8 +226,10 @@ function(sgp_object,
 		started.at <- proc.time()
 		messageSGP(paste("\tStarted INSTRUCTOR data production in outputSGP", prettyDate()))
 
+		if ("GRADE" %in% names(sgp_object@Data_Supplementary[["INSTRUCTOR_NUMBER"]])) tmp_key <- getKey(sgp_object@Data) else tmp_key <- setdiff(getKey(sgp_object@Data), "GRADE")
+
 		assign(paste(tmp.state, "SGP_INSTRUCTOR_Data", sep="_"), sgp_object@Data[data.table(sgp_object@Data_Supplementary[["INSTRUCTOR_NUMBER"]][,VALID_CASE:="VALID_CASE"],
-			key=getKey(sgp_object@Data)), nomatch=0])
+			key=tmp_key), nomatch=0, on=tmp_key])
 
 		save(list=paste(tmp.state, "SGP_INSTRUCTOR_Data", sep="_"), file=file.path(outputSGP.directory, paste(tmp.state, "SGP_INSTRUCTOR_Data.Rdata", sep="_")))
 		fwrite(get(paste(tmp.state, "SGP_INSTRUCTOR_Data", sep="_")), file=file.path(outputSGP.directory, paste(tmp.state, "SGP_INSTRUCTOR_Data.txt", sep="_")), sep="|", quote=FALSE)
@@ -754,6 +761,7 @@ function(sgp_object,
 
 		for (names.iter in grep("BASELINE", names(sgp_object@SGP[['SGPercentiles']]), value=TRUE)) {
 			dir.create(file.path(outputSGP.directory, "RLI", "SGPercentiles"), recursive=TRUE, showWarnings=FALSE)
+			file.label <- gsub("_RASCH", "", names.iter)
 
 			output.column.order <- c(SGP::SGPstateData$RLI$SGP_Configuration$output.column.order$SGPercentiles, outputSGP.pass.through.variables)
 			tmp.dt <- sgp_object@Data[,c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID", outputSGP.pass.through.variables), with=FALSE][
@@ -761,24 +769,24 @@ function(sgp_object,
 					VALID_CASE="VALID_CASE",
 					CONTENT_AREA=unlist(strsplit(names.iter, "[.]"))[1],
 					YEAR=getTableNameYear(names.iter),
-					sgp_object@SGP[["SGPercentiles"]][[names.iter]])]
+					sgp_object@SGP[["SGPercentiles"]][[names.iter]]), on=c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID")]
 			if (any(!output.column.order %in% names(tmp.dt))) tmp.dt[,(output.column.order[!output.column.order %in% names(tmp.dt)]):=as.numeric(NA)]
-			tmp.dt <- tmp.dt[,ID:=gsub("_DUPS_[0-9]*", "", ID)][,output.column.order, with=FALSE]
-			fwrite(tmp.dt, file=file.path(outputSGP.directory, "RLI", "SGPercentiles", paste(names.iter, "txt", sep=".")), sep=",", quote=FALSE)
+			tmp.dt <- tmp.dt[,ID:=gsub("_DUPS_[0-9]*", "", ID)][,SGP_NORM_GROUP_BASELINE:=gsub("_RASCH", "", SGP_NORM_GROUP_BASELINE)][,output.column.order, with=FALSE]
+			fwrite(tmp.dt, file=file.path(outputSGP.directory, "RLI", "SGPercentiles", paste(file.label, "txt", sep=".")), sep=",", quote=FALSE)
 
 			if (identical(.Platform$OS.type, "unix")) {
-				if (file.info(file.path(outputSGP.directory, "RLI", "SGPercentiles", paste(names.iter, "txt", sep=".")))$size > 4000000000) {
+				if (file.info(file.path(outputSGP.directory, "RLI", "SGPercentiles", paste(file.label, "txt", sep=".")))$size > 4000000000) {
 					tmp.working.directory <- getwd()
 					setwd(file.path(outputSGP.directory, "RLI", "SGPercentiles"))
-					if (paste(names.iter, "txt.gz", sep=".") %in% list.files()) file.remove(paste(names.iter, "txt.gz", sep="."))
-					system(paste("gzip", paste(names.iter, "txt", sep=".")))
+					if (paste(file.label, "txt.gz", sep=".") %in% list.files()) file.remove(paste(file.label, "txt.gz", sep="."))
+					system(paste("gzip", paste(file.label, "txt", sep=".")))
 					setwd(tmp.working.directory)
 				} else {
 					tmp.working.directory <- getwd()
 					setwd(file.path(outputSGP.directory, "RLI", "SGPercentiles"))
-					if (paste(names.iter, "txt.zip", sep=".") %in% list.files()) file.remove(paste(names.iter, "txt.zip", sep="."))
+					if (paste(file.label, "txt.zip", sep=".") %in% list.files()) file.remove(paste(file.label, "txt.zip", sep="."))
 					suppressMessages(
-						zip(paste(names.iter, "txt.zip", sep="."), paste(names.iter, "txt", sep="."), flags="-rmq1")
+						zip(paste(file.label, "txt.zip", sep="."), paste(file.label, "txt", sep="."), flags="-rmq1")
 					)
 					setwd(tmp.working.directory)
 				}
@@ -809,6 +817,7 @@ function(sgp_object,
 
 		for (names.iter in grep("BASELINE", names(sgp_object@SGP[['SGProjections']]), value=TRUE)) {
 			dir.create(file.path(outputSGP.directory, "RLI", "SGProjections"), recursive=TRUE, showWarnings=FALSE)
+			file.label <- gsub("_RASCH", "", names.iter)
 
 			if (!grepl("TARGET_SCALE_SCORES", names.iter)) {
 				tmp.table <- data.table(
@@ -839,24 +848,24 @@ function(sgp_object,
 					VALID_CASE="VALID_CASE",
 					CONTENT_AREA=unlist(strsplit(names.iter, "[.]"))[1],
 					YEAR=getTableNameYear(names.iter),
-					sgp_object@SGP[["SGProjections"]][[names.iter]])][,GROUP:=names.iter]
+					sgp_object@SGP[["SGProjections"]][[names.iter]]), on=c("VALID_CASE", "CONTENT_AREA", "YEAR", "ID")][,GROUP:=names.iter]
 			if (any(!output.column.order %in% names(tmp.dt))) tmp.dt[,output.column.order[!output.column.order %in% names(tmp.dt)]:=as.numeric(NA)]
-			tmp.dt <- tmp.dt[,ID:=gsub("_DUPS_[0-9]*", "", ID)][,output.column.order, with=FALSE]
-			fwrite(tmp.dt, file=file.path(outputSGP.directory, "RLI", "SGProjections", paste(names.iter, "txt", sep=".")), sep=",", quote=FALSE)
+			tmp.dt <- tmp.dt[,ID:=gsub("_DUPS_[0-9]*", "", ID)][,CONTENT_AREA:=gsub("_RASCH", "", CONTENT_AREA)][,SGP_PROJECTION_GROUP:=gsub("_RASCH", "", SGP_PROJECTION_GROUP)][,GROUP:=gsub("_RASCH", "", GROUP)][,output.column.order, with=FALSE]
+			fwrite(tmp.dt, file=file.path(outputSGP.directory, "RLI", "SGProjections", paste(file.label, "txt", sep=".")), sep=",", quote=FALSE)
 
 			if (identical(.Platform$OS.type, "unix")) {
-				if (file.info(file.path(outputSGP.directory, "RLI", "SGProjections", paste(names.iter, "txt", sep=".")))$size > 4000000000) {
+				if (file.info(file.path(outputSGP.directory, "RLI", "SGProjections", paste(file.label, "txt", sep=".")))$size > 4000000000) {
 					tmp.working.directory <- getwd()
 					setwd(file.path(outputSGP.directory, "RLI", "SGProjections"))
-					if (paste(names.iter, "txt.gz", sep=".") %in% list.files()) file.remove(paste(names.iter, "txt.gz", sep="."))
-					system(paste("gzip", paste(names.iter, "txt", sep=".")))
+					if (paste(file.label, "txt.gz", sep=".") %in% list.files()) file.remove(paste(file.label, "txt.gz", sep="."))
+					system(paste("gzip", paste(file.label, "txt", sep=".")))
 					setwd(tmp.working.directory)
 				} else {
 					tmp.working.directory <- getwd()
 					setwd(file.path(outputSGP.directory, "RLI", "SGProjections"))
-					if (paste(names.iter, "txt.zip", sep=".") %in% list.files()) file.remove(paste(names.iter, "txt.zip", sep="."))
+					if (paste(file.label, "txt.zip", sep=".") %in% list.files()) file.remove(paste(file.label, "txt.zip", sep="."))
 					suppressMessages(
-						zip(paste(names.iter, "txt.zip", sep="."), paste(names.iter, "txt", sep="."), flags="-rmq1")
+						zip(paste(file.label, "txt.zip", sep="."), paste(file.label, "txt", sep="."), flags="-rmq1")
 					)
 					setwd(tmp.working.directory)
 				}

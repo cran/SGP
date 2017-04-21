@@ -119,8 +119,8 @@ function(
 			return(tmp.cell.color)
 		}
 
-		.quantcut <- function (x, q = seq(0, 1, by = 0.25), na.rm = TRUE, ...) { ### From the quantcut package (thanks!!)
-			quant <- quantile(x, q, na.rm = na.rm)
+		.quantcut <- function (x, q = seq(0, 1, by = 0.25), na.rm = TRUE, dig.lab, ...) { ### From the quantcut package (thanks!!)
+			quant <- round(quantile(x, q, na.rm = na.rm), dig.lab)
 			dups <- duplicated(quant)
 			if (any(dups)) {
 				flag <- x %in% unique(quant[dups])
@@ -161,7 +161,7 @@ function(
 		}
 
 		.sgp.fit <- function (score, sgp) {
-			if (all(grepl("[.]", score[!is.na(score)]))) tmp.digits <- 3 else tmp.digits <- 4
+			if (all(grepl("[.]", score[!is.na(score)]))) tmp.digits <- 2 else tmp.digits <- 4
 			gfittable <- prop.table(table(.quantcut(score, q=0:10/10, right=FALSE, dig.lab=min(tmp.digits, max(nchar(score)))),
 			cut(sgp, c(-1, 9.5, 19.5, 29.5, 39.5, 49.5, 59.5, 69.5, 79.5, 89.5, 100.5),
 			labels=my.percentile.labels)), 1)*100
@@ -188,20 +188,20 @@ function(
 
 		LH <- SCALE_SCORE <- SCALE_SCORE_PRIOR <- SGP <- NULL
 		tmp.table <- .sgp.fit(data1[['SCALE_SCORE_PRIOR']], data1[['SGP']])
-		tmp.cuts <- .quantcut(data1[['SCALE_SCORE_PRIOR']], 0:10/10, right=FALSE)
+		tmp.cuts <- .quantcut(data1[['SCALE_SCORE_PRIOR']], 0:10/10, right=FALSE, dig.lab=5)
 		tmp.cuts.percentages <- round(100*table(tmp.cuts)/sum(table(tmp.cuts)), digits=1)
 		tmp.colors <- .cell.color(as.vector(tmp.table))
 		tmp.list <- list()
 
 		for (i in levels(tmp.cuts)) {
-			tmp.list[[i]] <- quantile(data1$SGP[tmp.cuts==i], probs=ppoints(1:500))
+			tmp.list[[i]] <- quantile(data1$SGP[tmp.cuts==i], probs=ppoints(1:500), na.rm=TRUE)
 		}
 
 		if ((tmp.n <- dim(tmp.data.final)[1]) > 50) pct <- 50/tmp.n else pct <- 0.9999 # Take Top/Bottom 50 kids to find LOSS/HOSS
 
 		loss_hoss.data <- rbindlist(list(
-			data.table(data1)[, list(SCALE_SCORE, SGP)][which(SCALE_SCORE <= quantile(SCALE_SCORE, probs = pct, na.rm = T)),][, LH:="LOSS"],
-			data.table(data1)[, list(SCALE_SCORE, SGP)][which(SCALE_SCORE >= quantile(SCALE_SCORE, probs=1-pct, na.rm = T)),][, LH:="HOSS"]))
+			data.table(data1)[, list(SCALE_SCORE, SGP)][which(SCALE_SCORE <= quantile(SCALE_SCORE, probs = pct, na.rm=TRUE)),][, LH:="LOSS"],
+			data.table(data1)[, list(SCALE_SCORE, SGP)][which(SCALE_SCORE >= quantile(SCALE_SCORE, probs=1-pct, na.rm=TRUE)),][, LH:="HOSS"]))
 		setkey(loss_hoss.data, SCALE_SCORE, LH)
 		if (length(unique(loss_hoss.data[LH=="HOSS"][["SCALE_SCORE"]])) > 1) hoss.rows <- 2 else hoss.rows <- 1
 		if (length(unique(loss_hoss.data[LH=="LOSS"][["SCALE_SCORE"]])) > 1) loss.rows <- 2 else loss.rows <- 1
@@ -238,7 +238,7 @@ function(
 			} else {
 				if (is.null(SGP::SGPstateData[[state]][["Assessment_Program_Information"]][["Assessment_Transition"]])) {
 					tmp.prior.achievement.level.labels <- names(SGP::SGPstateData[[state]][['Student_Report_Information']][['Achievement_Level_Labels']])
-					tmp.prior.achievement.levels <- unlist(SGP::SGPstateData[[state]][['Student_Report_Information']][['Achievement_Level_Labels']], use.names = FALSE)
+					tmp.prior.achievement.levels <- unlist(SGP::SGPstateData[[state]][['Student_Report_Information']][['Achievement_Level_Labels']], use.names=FALSE)
 				} else {
 					tmp.prior.achievement.level.labels <- names(SGP::SGPstateData[[state]][["Assessment_Program_Information"]][["Assessment_Transition"]][[get.achievement_level.label(state, years_prior)]])
 					tmp.prior.achievement.levels <- unlist(SGP::SGPstateData[[state]][["Assessment_Program_Information"]][["Assessment_Transition"]][[get.achievement_level.label(state, years_prior)]], use.names = FALSE)
@@ -446,6 +446,8 @@ function(
 		if (grepl("BASELINE", use.sgp)) file.extra.label <- "BASELINE"
 		if (grepl("SIMEX_BASELINE", use.sgp)) file.extra.label <- "BASELINE.SIMEX"
 		if (grepl("EQUATED", use.sgp)) file.extra.label <- "EQUATED"
+		if (grepl("RANK_SIMEX", use.sgp)) file.extra.label <- "RANK_SIMEX"
+		if (grepl("RANK_SIMEX_BASELINE", use.sgp)) file.extra.label <- "BASELINE.RANK_SIMEX"
 	} else {
 		my.extra.label <- "SGP"
 		file.extra.label <- NULL
@@ -474,7 +476,7 @@ function(
 				tmp.norm.group <- unlist(unique(tmp.data_1[[norm.group.var]]), use.names=FALSE)
 				##  Remove norm groups that are subsets of larger ones:
 				# tmp.norm.group <- tmp.norm.group[sapply(1:length(tmp.norm.group), function(f) !any(grepl(tmp.norm.group[f], tmp.norm.group[-f])))]
-				tmp.norm.group <- tmp.norm.group[!is.na(tmp.norm.group)]
+				tmp.norm.group <- sort(tmp.norm.group[!is.na(tmp.norm.group)])
 			} else tmp.norm.group <- NA
 
 			for (grades.iter in grades) {
@@ -490,7 +492,7 @@ function(
 					} else {
 						tmp.prior.ach <- FALSE
 						if ("ACHIEVEMENT_LEVEL_PRIOR" %in% names(tmp.data.final)) tmp.data.final[, ACHIEVEMENT_LEVEL_PRIOR:=NULL]
-						message(paste("\tNOTE:", content_areas.iter, "Grade", grades.iter, "data does not include ACHIEVEMENT_LEVEL_PRIOR variable. Prior Achievement Level plot panel will not be included in goodness of fit plot."))
+						messageSGP(paste("\tNOTE:", content_areas.iter, "Grade", grades.iter, "data does not include ACHIEVEMENT_LEVEL_PRIOR variable. Prior Achievement Level plot panel will not be included in goodness of fit plot."))
 					}
 					if (tmp.prior.ach) {
 						if ("CONTENT_AREA_PRIOR" %in% names(tmp.data.final)) content_areas_prior <- tmp.data.final[["CONTENT_AREA_PRIOR"]][1]
@@ -500,7 +502,6 @@ function(
 							} else tmp.content_areas_prior <- content_areas.iter
 						} else tmp.content_areas_prior <- content_areas_prior
 						if ("YEAR_PRIOR" %in% names(tmp.data.final)) years_prior <- tmp.data.final[["YEAR_PRIOR"]][1] else years_prior <- NA
-						if (!is.na(norm.group.iter)) norm.group.iter <- gsub("MATHEMATICS", "MATH", norm.group.iter)
 						gof.object <- gof.draw(
 							data.frame(
 								SCALE_SCORE=tmp.data.final[['SCALE_SCORE']],
@@ -513,12 +514,11 @@ function(
 							years_prior=years_prior,
 							grade=grades.iter,
 							file.extra.label=file.extra.label,
-							plot.name=norm.group.iter,
+							plot.name= if (!is.na(norm.group.iter)) gsub("MATHEMATICS", "MATH", norm.group.iter) else norm.group.iter,
 							my.width=my.width,
 							my.height=my.height,
 							with.prior.achievement.level=TRUE)
 					} else {
-						if (!is.na(norm.group.iter)) norm.group.iter <- gsub("MATHEMATICS", "MATH", norm.group.iter)
 						gof.object <- gof.draw(
 							data.frame(
 								SCALE_SCORE=tmp.data.final[['SCALE_SCORE']],
@@ -528,7 +528,7 @@ function(
 							year=years.iter,
 							grade=grades.iter,
 							file.extra.label=file.extra.label,
-							plot.name=norm.group.iter,
+							plot.name= if (!is.na(norm.group.iter)) gsub("MATHEMATICS", "MATH", norm.group.iter) else norm.group.iter,
 							my.width=8.5,
 							my.height=8,
 							with.prior.achievement.level=FALSE)

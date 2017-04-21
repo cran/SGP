@@ -34,13 +34,15 @@ function(sgp_object,
 	confidence.interval.groups=NULL,
 	plot.types=c("bubblePlot", "studentGrowthPlot", "growthAchievementPlot"),
 	outputSGP.output.type=c("LONG_Data", "LONG_FINAL_YEAR_Data", "WIDE_Data", "INSTRUCTOR_Data"),
+	outputSGP.directory="Data",
 	verbose.output=FALSE,
 	sgp.sqlite = FALSE,
 	sgp.percentiles.equated=NULL,
 	sgp.percentiles.equating.method=NULL,
 	sgp.percentiles.calculate.sgps=TRUE,
 	get.cohort.data.info=FALSE,
-	SGPt=NULL) {
+	SGPt=NULL,
+	fix.duplicates=NULL) {
 
     started.at <- proc.time()
 	messageSGP(paste("\nStarted abcSGP", prettyDate()), "\n")
@@ -55,6 +57,12 @@ function(sgp_object,
 		state <- getStateAbbreviation(tmp.name, "abcSGP")
 	}
 
+	### Configure arguments
+
+	if (is.null(fix.duplicates) & !is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][["fix.duplicates"]])) {
+		fix.duplicates <- SGP::SGPstateData[[state]][["SGP_Configuration"]][["fix.duplicates"]]
+	}
+
 
 	### prepareSGP ###
 
@@ -64,8 +72,9 @@ function(sgp_object,
 				data_supplementary=data_supplementary,
 				state=state,
 				var.names=prepareSGP.var.names,
-				create.additional.variables=prepareSGP.create.additional.variables)
-	        if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
+				create.additional.variables=prepareSGP.create.additional.variables,
+				fix.duplicates=fix.duplicates)
+		if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}
 
 
@@ -76,7 +85,7 @@ function(sgp_object,
         ### Check for consistency between simulate.sgps and existence of CSEMs ###
 
 		if (simulate.sgps & is.null(SGP::SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
-        	        messageSGP("\tCSEMs are required in SGPstateData to simulate SGPs for confidence interval calculations. Confidence intervals will not be calculated.")
+			messageSGP("\tCSEMs are required in SGPstateData to simulate SGPs for confidence interval calculations. Confidence intervals will not be calculated.")
 			simulate.sgps <- FALSE
 		}
 
@@ -121,9 +130,10 @@ function(sgp_object,
 			sgp.percentiles.equating.method=sgp.percentiles.equating.method,
 			sgp.percentiles.calculate.sgps=sgp.percentiles.calculate.sgps,
 			get.cohort.data.info=get.cohort.data.info,
-			SGPt=SGPt)
+			SGPt=SGPt,
+			fix.duplicates=fix.duplicates)
 
-                if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
+		if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}
 
 
@@ -145,9 +155,10 @@ function(sgp_object,
 			sgp.target.scale.scores.only=sgp.target.scale.scores.only,
 			sgp.config=sgp.config,
 			SGPt=SGPt,
+			fix.duplicates=fix.duplicates,
 			parallel.config=parallel.config)
 
-                if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
+		if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}
 
 
@@ -165,7 +176,7 @@ function(sgp_object,
 			parallel.config=parallel.config,
 			save.old.summaries=save.old.summaries)
 
-                if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
+		if (save.intermediate.results) save(sgp_object, file="sgp_object.Rdata")
 	}
 
 
@@ -194,6 +205,7 @@ function(sgp_object,
 			sgp_object=sgp_object,
 			state=state,
 			output.type=outputSGP.output.type,
+			outputSGP.directory=outputSGP.directory,
 			outputSGP_SUMMARY.years=years,
 			outputSGP_SUMMARY.content_areas=content_areas,
 			outputSGP_INDIVIDUAL.years=years,
@@ -204,6 +216,6 @@ function(sgp_object,
 
 	### Print finish and return SGP object
 
-        messageSGP(paste("Finished abcSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
+	messageSGP(paste("Finished abcSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
 	return(sgp_object)
 } ## END abcSGP Function

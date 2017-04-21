@@ -29,6 +29,7 @@ function(what_sgp_object=NULL,
 	sgPlot.demo.report=TRUE,
 	plot.types=c("bubblePlot", "studentGrowthPlot", "growthAchievementPlot"),
 	outputSGP.output.type=c("LONG_Data", "LONG_FINAL_YEAR_Data", "WIDE_Data", "INSTRUCTOR_Data"),
+	outputSGP.directory="Data",
 	sgp.config=NULL,
 	goodness.of.fit.print=TRUE,
 	parallel.config=NULL,
@@ -54,6 +55,12 @@ function(what_sgp_object=NULL,
 		state <- getStateAbbreviation(tmp.name, "updateSGP")
 	}
 
+	### Configure arguments
+
+	if (is.null(fix.duplicates) & !is.null(SGPstateData[[state]][["SGP_Configuration"]][["fix.duplicates"]])) {
+		fix.duplicates <- SGPstateData[[state]][["SGP_Configuration"]][["fix.duplicates"]]
+	}
+
 	if (!is.null(calculate.simex) | !is.null(calculate.simex.baseline)) {
 		if (is.null(SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
 			messageSGP("\tNOTE: CSEMs are required in 'SGPstateData' (either as a data.frame of CSEMs or as a variable name of CSEMsin @Data) to produce SIMEX corrected SGPs. SIMEX corrected SGPs will NOT be calculated.")
@@ -76,7 +83,7 @@ function(what_sgp_object=NULL,
 	}
 
 	if (is.null(save.old.summaries) && overwrite.existing.data) save.old.summaries <- FALSE else save.old.summaries <- TRUE
-	
+
 
 	### Utility functions
 
@@ -171,11 +178,13 @@ function(what_sgp_object=NULL,
 					plot.types=plot.types,
 					goodness.of.fit.print=goodness.of.fit.print,
 					outputSGP.output.type=outputSGP.output.type,
+					outputSGP.directory=outputSGP.directory,
 					SGPt=SGPt,
 					sgp.percentiles.equated=sgp.percentiles.equated,
 					sgp.percentiles.equating.method=sgp.percentiles.equating.method,
 					sgp.percentiles.calculate.sgps=sgp.percentiles.calculate.sgps,
 					parallel.config=parallel.config,
+					fix.duplicates=fix.duplicates,
 					...
 					)
 
@@ -252,11 +261,13 @@ function(what_sgp_object=NULL,
 						plot.types=plot.types,
 						goodness.of.fit.print=goodness.of.fit.print,
 						outputSGP.output.type=outputSGP.output.type,
+						outputSGP.directory=outputSGP.directory,
 						SGPt=SGPt,
 						sgp.percentiles.equated=sgp.percentiles.equated,
 						sgp.percentiles.equating.method=sgp.percentiles.equating.method,
 						sgp.percentiles.calculate.sgps=sgp.percentiles.calculate.sgps,
 						parallel.config=parallel.config,
+						fix.duplicates=fix.duplicates,
 						...)
 
 			### Print finish and return SGP object
@@ -306,6 +317,7 @@ function(what_sgp_object=NULL,
 							sgp.percentiles.equating.method=sgp.percentiles.equating.method,
 							sgp.percentiles.calculate.sgps=sgp.percentiles.calculate.sgps,
 							parallel.config=parallel.config,
+							fix.duplicates=fix.duplicates,
 							...)
 
 				if ("combineSGP" %in% steps) {
@@ -320,6 +332,7 @@ function(what_sgp_object=NULL,
 						sgp.target.scale.scores=sgp.target.scale.scores,
 						sgp.target.scale.scores.only=sgp.target.scale.scores.only,
 						SGPt=SGPt,
+						fix.duplicates=fix.duplicates,
 						parallel.config=parallel.config))
 				}
 
@@ -331,7 +344,7 @@ function(what_sgp_object=NULL,
 					assign(tmp.file.name, tmp.sgp_object.update)
 					save(list=tmp.file.name, file=file.path("Data", "Updated_Data", paste(tmp.file.name, "Rdata", sep=".")))
 					outputSGP(tmp.sgp_object.update, state=state, output.type=union(outputSGP.output.type, intersect(outputSGP.output.type, "LONG_FINAL_YEAR_Data")),
-						outputSGP.directory=file.path("Data", "Updated_Data"))
+						outputSGP.directory=file.path(outputSGP.directory, "Updated_Data"))
 				}
 
 				### Merge update with original SGP object
@@ -374,6 +387,7 @@ function(what_sgp_object=NULL,
 						sgp.target.scale.scores=sgp.target.scale.scores,
 						sgp.target.scale.scores.only=sgp.target.scale.scores.only,
 						SGPt=SGPt,
+						fix.duplicates=fix.duplicates,
 						parallel.config=parallel.config)
 				}
 
@@ -462,11 +476,13 @@ function(what_sgp_object=NULL,
 							plot.types=plot.types,
 							goodness.of.fit.print=goodness.of.fit.print,
 							outputSGP.output.type=outputSGP.output.type,
+							outputSGP.directory=outputSGP.directory,
 							SGPt=SGPt,
 							sgp.percentiles.equated=sgp.percentiles.equated,
 							sgp.percentiles.equating.method=sgp.percentiles.equating.method,
 							sgp.percentiles.calculate.sgps=sgp.percentiles.calculate.sgps,
 							parallel.config=parallel.config,
+							fix.duplicates=fix.duplicates,
 							...)
 
 				### Print finish and return SGP object
