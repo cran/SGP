@@ -1,7 +1,8 @@
 `getPreferredSGP` <-
 function(tmp.data,
 	state,
-	type="COHORT_REFERENCED") {
+	type="COHORT_REFERENCED",
+	dup.key=NULL) {
 
 	YEAR <- SGP_NORM_GROUP <- VALID_CASE <- CONTENT_AREA <- ID <- PREFERENCE <- SGP_NOTE <- SGP_NOTE_TF <- NULL
 
@@ -27,8 +28,33 @@ function(tmp.data,
 		tmp.data <- data.table(SGP::SGPstateData[[state]][['SGP_Progression_Preference']][,tmp.sgp.norm.group.variables,with=FALSE][tmp.data],
 			key=c(getKey(tmp.data), "PREFERENCE"))
 	} else {
+		if ("SGP_NOTE" %in% names(tmp.data)) { # Key data on SGP_NOTE to put existing SGPs at the top, regardless of preference of SGP_NOTE's norm group.
+			tmp.key.vars <- c("SGP_NOTE_TF", "PREFERENCE")
+			invisible(tmp.data[, SGP_NOTE_TF := !is.na(SGP_NOTE)])
+		} else tmp.key.vars <- "PREFERENCE"
+
+		if (any(grepl("^PREFERENCE$", names(tmp.data)))) {
+			#  Order data using key
+		  setkeyv(tmp.data, c(getKey(tmp.data), tmp.key.vars))
+		  if (is.null(dup.key)) dup.key <- getKey(tmp.data)
+		  setkeyv(tmp.data, dup.key)
+			if (!is.null(SGP::SGPstateData[[state]][['SGP_Norm_Group_Preference']])) {
+				if (any(unique(tmp.data$YEAR) %in% unique(SGP::SGPstateData[[state]][['SGP_Norm_Group_Preference']]$YEAR))) {
+					new.dups <- tmp.data[!is.na(PREFERENCE),]
+					new.dups <- new.dups[!duplicated(new.dups, by=key(tmp.data))]
+					tmp.data <- rbindlist(list(tmp.data[is.na(PREFERENCE),], new.dups))[, PREFERENCE:=NULL]
+					setkeyv(tmp.data, dup.key)
+					ng.pref.obj.tf <- TRUE
+				} else ng.pref.obj.tf <- FALSE
+			} else ng.pref.obj.tf <- FALSE
+			if (!ng.pref.obj.tf) {
+			  tmp.data <- tmp.data[!duplicated(tmp.data, by=key(tmp.data))][, PREFERENCE:=NULL]
+		  	if ("SGP_NOTE_TF" %in% names(tmp.data)) invisible(tmp.data[, SGP_NOTE_TF := NULL])
+		  	return(tmp.data)
+			}
+		}
 		if (!is.null(SGP::SGPstateData[[state]][['SGP_Norm_Group_Preference']])) {
-			message(paste0(tmp.message, state, "."))
+			messageSGP(paste0(tmp.message, state, "."))
 			data.norm.groups <- unique(as.character(tmp.data[which(duplicated(tmp.data, by=key(tmp.data))), SGP_NORM_GROUP]))
 			metadata.norm.groups <- unique(as.character(SGP::SGPstateData[[state]][['SGP_Norm_Group_Preference']][[tmp.sgp.norm.group.variables[2]]]))
 			if(!all(data.norm.groups %in% metadata.norm.groups)) {
@@ -40,16 +66,14 @@ function(tmp.data,
 		} else {
 			stop("\tNOTE: Multiple SGPs exist for individual students. Please examine results in @SGP[['SGPercentiles']].  A SGP_Norm_Group_Preference entry in SGPstateData may be required.")
 		}
-		if ("SGP_NOTE" %in% names(tmp.data)) { # Key data on SGP_NOTE to put existing SGPs at the top, regardless of preference of SGP_NOTE's norm group.
-			tmp.key.vars <- c("SGP_NOTE_TF", "PREFERENCE")
-			tmp.data[, SGP_NOTE_TF := !is.na(SGP_NOTE)]
-		} else tmp.key.vars <- "PREFERENCE"
 		tmp.data <- data.table(SGP::SGPstateData[[state]][['SGP_Norm_Group_Preference']][,tmp.sgp.norm.group.variables,with=FALSE][tmp.data],
 			key=c(getKey(tmp.data), tmp.key.vars))
 	}
 
-	setkeyv(tmp.data, getKey(tmp.data))
+	if (is.null(dup.key)) dup.key <- getKey(tmp.data)
+
+	setkeyv(tmp.data, dup.key)
 	tmp.data <- tmp.data[!duplicated(tmp.data, by=key(tmp.data))][,PREFERENCE:=NULL]
-	if ("SGP_NOTE" %in% names(tmp.data)) tmp.data[, SGP_NOTE_TF := NULL]
+	if ("SGP_NOTE" %in% names(tmp.data)) invisible(tmp.data[, SGP_NOTE_TF := NULL])
 	return(tmp.data)
 } ### END getPreferredSGP

@@ -120,7 +120,8 @@ function(
 		}
 
 		.quantcut <- function (x, q = seq(0, 1, by = 0.25), na.rm = TRUE, dig.lab, ...) { ### From the quantcut package (thanks!!)
-			quant <- round(quantile(x, q, na.rm = na.rm), dig.lab)
+			x <- round(x, digits=dig.lab)
+			quant <- quantile(x, q, na.rm = na.rm)
 			dups <- duplicated(quant)
 			if (any(dups)) {
 				flag <- x %in% unique(quant[dups])
@@ -132,8 +133,7 @@ function(
 				}
 
 				newquant <- sapply(uniqs, reposition)
-				retval[!flag] <- as.character(cut(x[!flag], breaks = newquant,
-				include.lowest = TRUE, ...))
+				retval[!flag] <- as.character(cut(x[!flag], breaks = newquant, include.lowest = TRUE, ...))
 				levs <- unique(retval[order(x)])
 				retval <- factor(retval, levels = levs)
 				mkpairs <- function(x) sapply(x, function(y) if (length(y) == 2) y[c(2, 2)] else y[2:3])
@@ -148,7 +148,7 @@ function(
 				levs <- ifelse(pairs[1, ] == pairs[2, ], pairs[1, ], paste(ifelse(closed.lower, "[", "("), pairs[1, ], ",", pairs[2, ], ifelse(closed.upper, "]", ")"), sep = ""))
 				levels(retval) <- levs
 			} else {
-				retval <- cut(x, quant, include.lowest = TRUE, ...)
+				retval <- cut(x, quant, include.lowest = TRUE, dig.lab=dig.lab, ...)
 			}
 			return(retval)
 		} ## END .quantcut function
@@ -314,21 +314,21 @@ function(
 
 			### LOSS/HOSS table
 
-			roundrectGrob(width=0.98, r=unit(2, "mm"), vp="loss_hoss"),
-			rectGrob(x=rep(1:12, each=loss_hoss.rows), y=rep(loss_hoss.rows:1,loss_hoss.rows), width=1, height=1, default.units="native",
+				roundrectGrob(width=0.98, r=unit(2, "mm"), vp="loss_hoss"),
+				rectGrob(x=rep(1:12, each=loss_hoss.rows), y=rep(loss_hoss.rows:1,loss_hoss.rows), width=1, height=1, default.units="native",
 							 gp=gpar(col="black", fill=loss_hoss.colors), vp="loss_hoss"),
-			linesGrob(x=c(0.5,12.5), y=hoss.rows+0.5, gp=gpar(lwd=1.25, col="red"), default.units="native", vp="loss_hoss"),
-			textGrob(x= 0.45, y=loss_hoss.rows:1, dimnames(loss_hoss.table)[[1]], just="right", gp=gpar(cex=0.7), default.units="native", vp="loss_hoss"),
-			textGrob(x=-1.5, y=loss_hoss.rows, "Lowest OSS: ", just="right", gp=gpar(cex=0.7), default.units="native", vp="loss_hoss"),
-			textGrob(x=-1.5, y=loss_hoss.rows-loss.rows, "Highest OSS: ", just="right", gp=gpar(cex=0.7), default.units="native", vp="loss_hoss"),
-			textGrob(x=12.65, y=loss_hoss.rows:1, paste("N =", c(loss.counts, hoss.counts)), just="left", gp=gpar(cex=0.7),
+				linesGrob(x=c(0.5,12.5), y=hoss.rows+0.5, gp=gpar(lwd=1.25, col="red"), default.units="native", vp="loss_hoss"),
+				textGrob(x= 0.45, y=loss_hoss.rows:1, dimnames(loss_hoss.table)[[1]], just="right", gp=gpar(cex=0.7), default.units="native", vp="loss_hoss"),
+				textGrob(x=-1.5, y=loss_hoss.rows, "Lowest OSS: ", just="right", gp=gpar(cex=0.7), default.units="native", vp="loss_hoss"),
+				textGrob(x=-1.5, y=loss_hoss.rows-loss.rows, "Highest OSS: ", just="right", gp=gpar(cex=0.7), default.units="native", vp="loss_hoss"),
+				textGrob(x=12.65, y=loss_hoss.rows:1, paste("N =", c(loss.counts, hoss.counts)), just="left", gp=gpar(cex=0.7),
 							 default.units="native", vp="loss_hoss"),
-			textGrob(x=-4.25, y=((loss_hoss.rows+3)/2), "Current Observed Score", gp=gpar(cex=0.8), default.units="native", rot=90, vp="loss_hoss"),
-			textGrob(x=-3.75, y=((loss_hoss.rows+3)/2), "Extremes (Range)", gp=gpar(cex=0.8), default.units="native", rot=90, vp="loss_hoss"),
-			textGrob(x=1:12, y=loss_hoss.rows+0.8, dimnames(loss_hoss.table)[[2]], gp=gpar(cex=0.7), default.units="native", rot=45, just="left", vp="loss_hoss"),
-			textGrob(x=6.75, y=loss_hoss.rows+2.65, "Student Growth Percentile Range", gp=gpar(cex=0.8), default.units="native", vp="loss_hoss"),
-			textGrob(x=-4.0, y=loss_hoss.rows+3.25, "Ceiling / Floor Effects Test", just="left", default.units="native", gp=gpar(cex=1.2), vp="loss_hoss"),
-			textGrob(x=rep(1:12,each=loss_hoss.rows), y=rep(loss_hoss.rows:1,loss_hoss.rows),
+				textGrob(x=-4.25, y=((loss_hoss.rows+3)/2), "Current Observed Score", gp=gpar(cex=0.8), default.units="native", rot=90, vp="loss_hoss"),
+				textGrob(x=-3.75, y=((loss_hoss.rows+3)/2), "Extremes (Range)", gp=gpar(cex=0.8), default.units="native", rot=90, vp="loss_hoss"),
+				textGrob(x=1:12, y=loss_hoss.rows+0.8, dimnames(loss_hoss.table)[[2]], gp=gpar(cex=0.7), default.units="native", rot=45, just="left", vp="loss_hoss"),
+				textGrob(x=6.75, y=loss_hoss.rows+2.65, "Student Growth Percentile Range", gp=gpar(cex=0.8), default.units="native", vp="loss_hoss"),
+				textGrob(x=-4.0, y=loss_hoss.rows+3.25, "Ceiling / Floor Effects Test", just="left", default.units="native", gp=gpar(cex=1.2), vp="loss_hoss"),
+				textGrob(x=rep(1:12,each=loss_hoss.rows), y=rep(loss_hoss.rows:1,loss_hoss.rows),
 							 formatC(as.vector(loss_hoss.table), format="f", digits=1), default.units="native", gp=gpar(cex=0.7), vp="loss_hoss"),
 
 			### table
@@ -446,8 +446,8 @@ function(
 		if (grepl("BASELINE", use.sgp)) file.extra.label <- "BASELINE"
 		if (grepl("SIMEX_BASELINE", use.sgp)) file.extra.label <- "BASELINE.SIMEX"
 		if (grepl("EQUATED", use.sgp)) file.extra.label <- "EQUATED"
-		if (grepl("RANK_SIMEX", use.sgp)) file.extra.label <- "RANK_SIMEX"
-		if (grepl("RANK_SIMEX_BASELINE", use.sgp)) file.extra.label <- "BASELINE.RANK_SIMEX"
+		if (grepl("SGP_SIMEX_RANKED", use.sgp)) file.extra.label <- "RANKED_SIMEX"
+		if (grepl("SGP_SIMEX_RANKED_BASELINE", use.sgp)) file.extra.label <- "BASELINE.RANKED_SIMEX"
 	} else {
 		my.extra.label <- "SGP"
 		file.extra.label <- NULL

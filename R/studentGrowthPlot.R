@@ -393,10 +393,15 @@ function(Scale_Scores,                        ## Vector of Scale Scores
 			label.split <- unlist(strsplit(label, " "))
 			label.word.nchar <- cumsum(nchar(label.split))
 			if (length(label.word.nchar) > 1 & tail(label.word.nchar, 1) > 10) {
-				label.split.position <- max(which(label.word.nchar <= 10))
-				tmp.label <- paste(label.split[1:label.split.position], collapse=" ")
-				tmp.label[2] <- paste(label.split[(label.split.position+1):length(label.split)], collapse=" ")
-				tmp.cex <- c(title.ca.size - 0.25 - max(0, nchar(tmp.label[1])-10)*0.1, title.ca.size - 0.25 - max(0, nchar(tmp.label[2])-10)*0.1)
+				if (any(label.word.nchar <= 10)) {
+					label.split.position <- max(which(label.word.nchar <= 10))
+					tmp.label <- paste(label.split[1:label.split.position], collapse=" ")
+					tmp.label[2] <- paste(label.split[(label.split.position+1):length(label.split)], collapse=" ")
+					tmp.cex <- c(title.ca.size - 0.25 - max(0, nchar(tmp.label[1])-10)*0.1, title.ca.size - 0.25 - max(0, nchar(tmp.label[2])-10)*0.1)
+				} else {
+					tmp.label <- label.split
+					tmp.cex <- rep(title.ca.size - 0.25 - (max(nchar(tmp.label))-10)*0.1, length(tmp.label))
+				}
 				return(list(content_area.label.pieces=tmp.label, cex=tmp.cex))
 			} else {
 				return(list(content_area.label.pieces=label, cex=title.ca.size - max(0, nchar(label)-10)*0.1))
@@ -1145,7 +1150,14 @@ function(Scale_Scores,                        ## Vector of Scale Scores
 
 	if (!grade.values[['any_scale_scores']]) {
 		pushViewport(no.data.vp)
-		grid.text(x=0.5, y=0.5, paste("No", test.abbreviation, content.area.label, "Data"), gp=gpar(col="grey40", cex=3.5))
+		no.data.text <- paste("No", test.abbreviation, content.area.label, "Data")
+		no.data.text.pieces <- labelSplit(no.data.text)
+		if (length(no.data.text.pieces[[1]])==1) {
+			grid.text(x=0.5, y=0.5, no.data.text.pieces[[1]][1], gp=gpar(col="grey40", cex=3.5))
+		} else {
+			grid.text(x=0.475, y=0.575, no.data.text.pieces[[1]][1], gp=gpar(col="grey40", cex=2.25))
+			grid.text(x=0.475, y=0.425, no.data.text.pieces[[1]][2], gp=gpar(col="grey40", cex=2.25))
+		}
 		grid.roundrect(r=unit(0.02, "snpc"), gp=gpar(fill="white", lwd=0, col="white", alpha=0.5))
 		popViewport()
 	}

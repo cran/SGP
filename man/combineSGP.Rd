@@ -25,7 +25,7 @@ combineSGP(sgp_object,
 	max.sgp.target.years.forward=3,
 	update.all.years=FALSE,
 	sgp.config=NULL,
-	sgp.percentiles.equated=FALSE,
+	sgp.percentiles.equated=NULL,
 	SGPt=NULL,
   fix.duplicates=NULL,
 	parallel.config=NULL)
@@ -59,7 +59,8 @@ student growth percentile results.
   }
   \item{sgp.target.content_areas}{A Boolean variable indicating whether content area associated with SGP targets should be calculated.
   }
-  \item{max.sgp.target.years.forward}{A integer indicating the number of years forward from the lagged (last year's) score to project forward for growth to standard calculations. Default is 3 years from the present, 4 years from the lagged year, which is the standard in most growth to standard calculations used by state departments of education.
+  \item{max.sgp.target.years.forward}{A integer indicating the number of years forward from the lagged (last year's) score to project forward for growth to standard calculations.
+  Default is 3 years from the present, 4 years from the lagged year, which is the standard in most growth to standard calculations used by state departments of education.
   }
   \item{update.all.years}{A Boolean argument defaulting to FALSE indicating whether \code{\link{combineSGP}} should delete previously merged variables calculated in \code{\link{analyzeSGP}} and
 re-merge all available data.
@@ -67,8 +68,9 @@ re-merge all available data.
   \item{sgp.config}{Argument (defaults to NULL) passed utilized only for target scale score calculation. If targets for end of course tests are required, user must specify configurations
   directly. See code from \code{\link{testSGP}} number 3 for an example.
   }
-  \item{sgp.percentiles.equated}{Boolean variable indicating whether equated percentiles are being merged. If scale score targets are being calculated, linkages will be passed to scale score targets
-for calculation.
+  \item{sgp.percentiles.equated}{Boolean variable indicating whether equated percentiles are being merged (defaults to NULL which is converted
+    to FALSE unless otherwise explicitly declared. If scale score targets are being calculated, linkages will be passed to scale score targets
+    for calculation.
   }
   \item{SGPt}{Argument used to pass SGPt configuration to \code{getTargetScaleScore} for \code{\link{studentGrowthProjections}} calculation of scale score targets.
   }
