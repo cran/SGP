@@ -171,9 +171,11 @@ function(sgp_object,
 
 		###  Check SGPstateData for changes and modify parallel processing for SNOW (Windows) if so:
 		if (!is.null(parallel.config)) {
-			tmp.type <- names(parallel.config$WORKERS)[1]
-			if (is.null(tmp.type)) tmp.type <- parallel.config$WORKERS
-			par.start <- startParallel(parallel.config, tmp.type)
+			# tmp.type <- names(parallel.config$WORKERS)[1]
+			# if (is.null(tmp.type)) tmp.type <- parallel.config$WORKERS
+			tmp.parallel.config <- parallel.config
+			tmp.parallel.config[["WORKERS"]][["GA_PLOTS"]] <- 2
+			par.start <- startParallel(tmp.parallel.config, "GA_PLOTS") # tmp.type) #  Just use 2 cores for this test - avoids issue when WORKERS[1] is 'TAUS'/missing qr.taus argument
 
 			tmp.digest <- SGP::SGPstateData[["digest"]]
 			tmp.SGPstateData <- SGP::SGPstateData
@@ -216,7 +218,7 @@ function(sgp_object,
 			bPlot.format=bPlot.format,
 			bPlot.folder=bPlot.folder)
 
-		messageSGP(paste("Finished bubblePlot in visualizeSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
+		messageSGP(paste("Finished bubblePlot in visualizeSGP", prettyDate(), "in", convertTime(timetakenSGP(started.at)), "\n"))
 	} ## END bubblePlot %in% plot.types
 
 
@@ -328,7 +330,7 @@ function(sgp_object,
 		}
 			stopParallel(parallel.config, par.start)
 		}
-		messageSGP(paste("Finished growthAchievementPlot in visualizeSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
+		messageSGP(paste("Finished growthAchievementPlot in visualizeSGP", prettyDate(), "in", convertTime(timetakenSGP(started.at)), "\n"))
 	} ## END if (growthAchievementPlot %in% plot.types)
 
 
@@ -1196,10 +1198,10 @@ if (sgPlot.produce.plots) {
 	} # END else Parallel Processing
 } ## END if (sgPlot.produce.plots)
 
-	messageSGP(paste("Finished studentGrowthPlot in visualizeSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
+	messageSGP(paste("Finished studentGrowthPlot in visualizeSGP", prettyDate(), "in", convertTime(timetakenSGP(started.at)), "\n"))
 
 } ## END if ("studentGrowthPlot" %in% plot.types)
 
-	messageSGP(paste("Finished visualizeSGP", prettyDate(), "in", convertTime(timetaken(started.at.visualizeSGP)), "\n"))
+	messageSGP(paste("Finished visualizeSGP", prettyDate(), "in", convertTime(timetakenSGP(started.at.visualizeSGP)), "\n"))
 
 } ## END visualizeSGP Function

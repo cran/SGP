@@ -1,8 +1,8 @@
 Package: SGP
 Type: Package
 Title: Student Growth Percentiles & Percentile Growth Trajectories
-Version: 1.8-0.0
-Date: 2018-5-9
+Version: 1.9-0.0
+Date: 2019-2-19
 Authors@R: c(person(given=c("Damian", "W."), family="Betebenner", email="dbetebenner@nciea.org", role=c("aut", "cre")),
 		person(given=c("Adam", "R."), family="Van Iwaarden", email="avaniwaarden@gmail.com", role="aut"),
 		person(given="Ben", family="Domingue", email="ben.domingue@gmail.com", role="aut"),
@@ -73,8 +73,8 @@ Authors@R: c(person(given=c("Damian", "W."), family="Betebenner", email="dbetebe
 		person(given="Narek", family="Sahakyan", role="ctb", comment="World Class Instruction and Design (WIDA)"))
 Maintainer: Damian W. Betebenner <dbetebenner@nciea.org>
 Depends: R (>= 3.0)
-Suggests: SGPdata (>= 20.0-0), knitr, rmarkdown
-Imports: Cairo, colorspace, crayon, datasets, data.table (>= 1.10.0),
+Suggests: SGPdata (>= 21.0-0), knitr, rmarkdown
+Imports: Cairo, colorspace, crayon, datasets, data.table (>= 1.12.0),
         digest, doParallel, doRNG, equate (>= 2.0-5), foreach,
         graphics, grid, grDevices, gridBase, iterators, gtools,
         jsonlite, matrixStats, methods, parallel, plotly, quantreg,
@@ -96,7 +96,7 @@ LazyDataCompression: xz
 License: GPL-3
 ByteCompile: TRUE
 NeedsCompilation: no
-Packaged: 2018-05-10 20:37:51 UTC; damian
+Packaged: 2019-02-20 19:26:13 UTC; conet
 Author: Damian W. Betebenner [aut, cre],
   Adam R. Van Iwaarden [aut],
   Ben Domingue [aut],
@@ -174,4 +174,4 @@ Author: Damian W. Betebenner [aut, cre],
     and South Dakota Department of Education),
   Narek Sahakyan [ctb] (World Class Instruction and Design (WIDA))
 Repository: CRAN
-Date/Publication: 2018-05-10 21:26:44 UTC
+Date/Publication: 2019-02-20 20:00:03 UTC

@@ -12,6 +12,7 @@ function(
 	sgp.projections.lagged.baseline=TRUE,
 	sgp.target.scale.scores=FALSE,
 	sgp.target.scale.scores.only=FALSE,
+	sgp.target.scale.scores.merge=FALSE,
 	sgp.target.content_areas=NULL,
 	max.sgp.target.years.forward=3,
 	update.all.years=FALSE,
@@ -112,6 +113,20 @@ function(
 		fix.duplicates <- SGP::SGPstateData[[state]][["SGP_Configuration"]][["fix.duplicates"]]
 	}
 
+	### Check sgp.target.scale.scores.merge
+
+	if (!is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][["sgp.target.scale.scores.merge"]])) {
+		sgp.target.scale.scores.merge <- SGP::SGPstateData[[state]][["SGP_Configuration"]][["sgp.target.scale.scores.merge"]]
+	}
+
+	### Check return.target.num.years
+
+	if (!is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][["return.sgp.target.num.years"]])) {
+		return.sgp.target.num.years <- SGP::SGPstateData[[state]][["SGP_Configuration"]][["return.sgp.target.num.years"]]
+	} else return.sgp.target.num.years <- FALSE
+
+
+
 
 	### Utility functions
 
@@ -140,11 +155,17 @@ function(
 			} else {
 				tmp.list[['my.sgp']] <- "SGP"
 			}
+			tmp.list[['my.sgp.target']] <- paste("SGP_TARGET", max.sgp.target.years.forward, projection.unit.label, sep="_")
+			tmp.list[['my.sgp.target.content_area']] <- paste("SGP_TARGET", max.sgp.target.years.forward, projection.unit.label, "CONTENT_AREA", sep="_")
+			tmp.list[['my.sgp.target.move.up.stay.up']] <- paste("SGP_TARGET_MOVE_UP_STAY_UP", max.sgp.target.years.forward, projection.unit.label, sep="_")
 			if (sgp.target.scale.scores) tmp.list[['sgp.target.scale.scores.types']] <- intersect(target.type, c("sgp.projections", "sgp.projections.lagged"))
 		}
 		if (identical(system.type, "Baseline Referenced")) {
 			tmp.list[['target.type']] <- intersect(target.type, c("sgp.projections.baseline", "sgp.projections.lagged.baseline"))
 			tmp.list[['my.sgp']] <- "SGP_BASELINE"
+			tmp.list[['my.sgp.target']] <- paste("SGP_TARGET_BASELINE", max.sgp.target.years.forward, projection.unit.label, sep="_")
+			tmp.list[['my.sgp.target.content_area']] <- paste("SGP_TARGET_BASELINE", max.sgp.target.years.forward, projection.unit.label, "CONTENT_AREA", sep="_")
+			tmp.list[['my.sgp.target.move.up.stay.up']] <- paste("SGP_TARGET_BASELINE_MOVE_UP_STAY_UP", max.sgp.target.years.forward, projection.unit.label, sep="_")
 			if (sgp.target.scale.scores) tmp.list[['sgp.target.scale.scores.types']] <- intersect(target.type, c("sgp.projections.baseline", "sgp.projections.lagged.baseline"))
 		}
 		if (identical(system.type, "Cohort and Baseline Referenced")) {
@@ -156,6 +177,13 @@ function(
 			} else {
 				tmp.list[['my.sgp']] <- c("SGP", "SGP_BASELINE")[c(sgp.percentiles, sgp.percentiles.baseline)]
 			}
+			tmp.list[['my.sgp.target']] <- c(paste("SGP_TARGET", max.sgp.target.years.forward, projection.unit.label, sep="_"),
+				paste("SGP_TARGET_BASELINE", max.sgp.target.years.forward, projection.unit.label, sep="_"))
+			tmp.list[['my.sgp.target.content_area']] <- c(paste("SGP_TARGET", max.sgp.target.years.forward, projection.unit.label, "CONTENT_AREA", sep="_"),
+				paste("SGP_TARGET_BASELINE", max.sgp.target.years.forward, projection.unit.label, "CONTENT_AREA", sep="_"))
+			tmp.list[['my.sgp.target.move.up.stay.up']] <- c(paste("SGP_TARGET_MOVE_UP_STAY_UP", max.sgp.target.years.forward, projection.unit.label, sep="_"),
+				paste("SGP_TARGET_BASELINE_MOVE_UP_STAY_UP", max.sgp.target.years.forward, projection.unit.label, sep="_"))
+
 			if (sgp.target.scale.scores) tmp.list[['sgp.target.scale.scores.types']] <-
 				intersect(target.type, c("sgp.projections", "sgp.projections.baseline", "sgp.projections.lagged", "sgp.projections.lagged.baseline"))
 		}
@@ -204,7 +232,8 @@ function(
 			paste("SGP_TARGET_BASELINE", max.sgp.target.years.forward, projection.unit.label, sep="_"),
 			paste("SGP_TARGET_BASELINE_MOVE_UP_STAY_UP", max.sgp.target.years.forward, projection.unit.label, sep="_"),
 			paste("SGP_TARGET_BASELINE", max.sgp.target.years.forward, projection.unit.label, "CURRENT", sep="_"),
-			paste("SGP_TARGET_BASELINE_MOVE_UP_STAY_UP", max.sgp.target.years.forward, projection.unit.label, "CURRENT", sep="_"))
+			paste("SGP_TARGET_BASELINE_MOVE_UP_STAY_UP", max.sgp.target.years.forward, projection.unit.label, "CURRENT", sep="_"),
+			grep("SCALE_SCORE_SGP_TARGET", names(slot.data), value=TRUE))
 
 		for (tmp.variables.to.null.out in intersect(names(slot.data), variables.to.null.out)) {
 			slot.data[,(tmp.variables.to.null.out):=NULL]
@@ -379,7 +408,7 @@ function(
 							invisible(slot.data[, paste0("SCALE_SCORE_PRIOR_", tmp.prior-1L) := as.numeric(sapply(tmp.split, function(x) rev(x)[tmp.prior]))])
 				}}}
 
-				tmp.data <- getTargetSGP(sgp_object, slot.data, content_areas, state, years, target.type.iter, target.level.iter, max.sgp.target.years.forward, fix.duplicates=fix.duplicates)
+				tmp.data <- getTargetSGP(sgp_object, slot.data, content_areas, state, years, target.type.iter, target.level.iter, max.sgp.target.years.forward, fix.duplicates=fix.duplicates, return.sgp.target.num.years=return.sgp.target.num.years)
 
 				if (!is.null(fix.duplicates)) dup.by <- c(key(tmp.data), grep("SCALE_SCORE$|SCALE_SCORE_PRIOR", names(tmp.data), value=TRUE)) else dup.by <- key(tmp.data)
 
@@ -437,6 +466,14 @@ function(
 		terminal.content_areas <- unique(na.omit(slot.data, cols=paste("SGP_TARGET", max.sgp.target.years.forward, "YEAR", sep="_")), by='CONTENT_AREA')[['CONTENT_AREA']]
 		if (!is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]])) {
 			terminal.content_areas <- intersect(terminal.content_areas, sapply(SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]], tail, 1))
+		}
+
+		if (identical(sgp.target.content_areas, TRUE)) {
+			for (my.sgp.target.content_area.iter in seq_along(target.args[['my.sgp.target.content_area']])) {
+				slot.data[!is.na(get(target.args[['my.sgp.target']][my.sgp.target.content_area.iter])), target.args[['my.sgp.target.content_area']][my.sgp.target.content_area.iter] :=
+					getTargetSGPContentArea(GRADE[1], CONTENT_AREA[1], state, max.sgp.target.years.forward, target.args[['my.sgp.target.content_area']][my.sgp.target.content_area.iter]),
+					by=list(GRADE, CONTENT_AREA)]
+			}
 		}
 
 
@@ -602,6 +639,9 @@ function(
 				sgp_object@SGP$SGProjections[[names.iter]] <- sgp_object@SGP$SGProjections[[names.iter]][,lapply(.SD, mean, na.rm=TRUE), by=c("ID", "GRADE", "SGP_PROJECTION_GROUP", "SGP_PROJECTION_GROUP_SCALE_SCORES")]
 			}
 		}
+		if (!identical(sgp.target.scale.scores.merge, FALSE)) {
+			slot.data <- mergeScaleScoreTarget(sgp_object, slot.data, years, sgp.target.scale.scores.merge)
+		}
 	} ### END if (sgp.target.scale.scores)
 
 	### Final clean and put slot.data into @Data slot
@@ -612,7 +652,7 @@ function(
 	setkeyv(slot.data, getKey(slot.data))
 	sgp_object@Data <- slot.data
 
-	messageSGP(c(tmp.messages, paste("Finished combineSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n")))
+	messageSGP(c(tmp.messages, paste("Finished combineSGP", prettyDate(), "in", convertTime(timetakenSGP(started.at)), "\n")))
 
 	return(sgp_object)
 } ## END combineSGP Function

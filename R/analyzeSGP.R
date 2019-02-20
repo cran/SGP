@@ -200,7 +200,7 @@ function(sgp_object,
 
 	if (any(c("SIMEX", "TAUS") %in% names(parallel.config[['WORKERS']]))) {
 		lower.level.parallel.config <- parallel.config
-		if (length(grep("SUMMARY|GA_PLOTS|SG_PLOTS", names(parallel.config[['WORKERS']]), value=TRUE, invert=TRUE)) <= 2) parallel.config <- NULL # NULL out parallel.config when passed from abcSGP, etc
+		if (length(grep("SUMMARY|GA_PLOTS|SG_PLOTS|SGP_SCALE_SCORE_TARGETS", names(parallel.config[['WORKERS']]), value=TRUE, invert=TRUE)) <= 2) parallel.config <- NULL # NULL out parallel.config when passed from abcSGP, etc
 	} else lower.level.parallel.config <- NULL
 
 
@@ -1909,7 +1909,7 @@ function(sgp_object,
 					sgp.test.cohort.size=sgp.test.cohort.size,
 					return.norm.group.scale.scores=return.norm.group.scale.scores,
 					return.norm.group.dates=return.norm.group.dates,
-          return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
+                    return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
 					return.prior.scale.score.standardized=return.prior.scale.score.standardized,
 					goodness.of.fit=goodness.of.fit.print.arg,
 					goodness.of.fit.minimum.n=SGPstateData[[state]][["SGP_Configuration"]][["goodness.of.fit.minimum.n"]],
@@ -1974,7 +1974,7 @@ function(sgp_object,
 					sgp.less.than.sgp.cohort.size.return=sgp.less.than.sgp.cohort.size.return,
 					return.norm.group.scale.scores=return.norm.group.scale.scores,
 					return.norm.group.dates=return.norm.group.dates,
-          return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
+                    return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
 					return.prior.scale.score.standardized=return.prior.scale.score.standardized,
 					goodness.of.fit=goodness.of.fit.print.arg,
 					goodness.of.fit.minimum.n=SGPstateData[[state]][["SGP_Configuration"]][["goodness.of.fit.minimum.n"]],
@@ -2230,7 +2230,7 @@ function(sgp_object,
 
 	if (!is.null(sgp.test.cohort.size) & toupper(return.sgp.test.results) != "ALL_DATA") {
 		if (!return.sgp.test.results) {
-			messageSGP(paste("Finished analyzeSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
+			messageSGP(paste("Finished analyzeSGP", prettyDate(), "in", convertTime(timetakenSGP(started.at)), "\n"))
 			return(sgp_object)
 		} else {
 			setkeyv(tmp_sgp_data_for_analysis, getKey(sgp_object@Data))
@@ -2243,6 +2243,6 @@ function(sgp_object,
 	if (goodness.of.fit.print) gof.print(sgp_object)
 	setkeyv(sgp_object@Data, getKey(sgp_object)) # re-key data for combineSGP, etc.
 	sgp_object@Version[["analyzeSGP"]][[as.character(gsub("-", "_", Sys.Date()))]] <- as.character(packageVersion("SGP"))
-	messageSGP(paste("Finished analyzeSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
+	messageSGP(paste("Finished analyzeSGP", prettyDate(), "in", convertTime(timetakenSGP(started.at)), "\n"))
 	return(sgp_object)
 } ## END analyzeSGP Function

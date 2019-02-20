@@ -510,7 +510,7 @@
 	if (is.null(confidence.interval.groups)) confidence.interval.groups <- summarizeSGP.config(sgp_object, "confidence.interval.groups")
 
 	variables.for.summaries <- intersect(
-		c("VALID_CASE", "ID", my.sgp, my.sgp.target, my.sgp.target.baseline, my.sgp.target.musu, my.sgp.target.musu.baseline,
+		c(sgp_key, my.sgp, my.sgp.target, my.sgp.target.baseline, my.sgp.target.musu, my.sgp.target.musu.baseline,
 		"ACHIEVEMENT_LEVEL", "ACHIEVEMENT_LEVEL_PRIOR",
 		my.cuku.target, my.musu.target, my.cuku.target.baseline, my.musu.target.baseline,
 		"SCALE_SCORE_PRIOR_STANDARDIZED", "SGP_SIMEX", "SGP_SIMEX_RANKED", "SGP_SIMEX_BASELINE", "SGP_SIMEX_BASELINE_RANKED",
@@ -704,7 +704,7 @@
 		setkeyv(sgp_object@Data, getKey(sgp_object))
 	}
 
-	messageSGP(paste("Finished summarizeSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
+	messageSGP(paste("Finished summarizeSGP", prettyDate(), "in", convertTime(timetakenSGP(started.at)), "\n"))
 
 	setkeyv(sgp_object@Data, getKey(sgp_object))
 	return(sgp_object)

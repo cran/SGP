@@ -21,7 +21,9 @@ function(sgp_object,
 	calculate.simex.baseline=NULL,
 	year.for.equate=NULL,
 	sgp.percentiles.equated=FALSE,
-	SGPt=NULL) {
+	SGPt=NULL,
+	projection_group.identifier=NULL,
+	from.getTargetScaleScore=FALSE) {
 
 	YEAR <- CONTENT_AREA <- VALID_CASE <- NULL
 
@@ -59,7 +61,7 @@ function(sgp_object,
 
 	### get.config function
 
-	get.config <- function(content_area, year, grades) {
+	get.config <- function(content_area, year, grades, from.getTargetScaleScore) {
 
 		### Data for Years & Grades
 		tmp.unique.data <- lapply(sgp_object@Data[SJ("VALID_CASE", content_area), nomatch=0][, c("YEAR", "GRADE"), with=FALSE], function(x) sort(type.convert(unique(x), as.is=TRUE)))
@@ -75,6 +77,11 @@ function(sgp_object,
 		if (!is.numeric(tmp.last.year.grades) | !is.numeric(tmp.unique.data[['GRADE']])) {
 			stop("\tNOTE: Automatic 'sgp.config' calculation is only available for integer grade levels. Manual specification of 'sgp.config' is required for non-traditional grade and course progressions.")
 		}
+
+		if (from.getTargetScaleScore && length(tmp.last.year.grades) > length(grades)) {
+			grades <- c(sort(grades), tmp.last.year.grades[which(tmp.last.year.grades==tail(sort(grades),1))+1])
+		}
+
 		tmp.sgp.grade.sequences <- lapply(tmp.last.year.grades, function(x) tail(tmp.unique.data$GRADE[tmp.unique.data$GRADE <= x], length(tmp.unique.data$YEAR)))
 		if (!is.null(grades)) {
 			tmp.sgp.grade.sequences <- tmp.sgp.grade.sequences[sapply(tmp.sgp.grade.sequences, function(x) tail(x,1)) %in% grades]
@@ -522,7 +529,7 @@ function(sgp_object,
 		}
 		for (i in content_areas) {
 			for (j in tmp.years[[i]]) {
-				tmp.sgp.config[[paste(i,j,sep=".")]] <- get.config(i,j,grades)
+				tmp.sgp.config[[paste(i,j,sep=".")]] <- get.config(i,j,grades,from.getTargetScaleScore)
 			}
 		}
 		par.sgp.config <- checkConfig(get.par.sgp.config(tmp.sgp.config), "Standard")
@@ -680,6 +687,15 @@ function(sgp_object,
 	for (p in grep('sgp.percentiles', names(sgp.config.list))) {
 		for (l in seq_along(sgp.config.list[[p]])) {
 			sgp.config.list[[p]][[l]] <- sgp.config.list[[p]][[l]][-grep("projection", names(sgp.config.list[[p]][[l]]))]
+		}
+	}
+
+
+	### Filter based upon projection_group.identifier if not NULL
+
+	if (!is.null(projection_group.identifier)) {
+		for (p in grep('sgp.projections', names(sgp.config.list))) {
+			sgp.config.list[[p]] <- sgp.config.list[[p]][sapply(sgp.config.list[[p]], function(x) x[['sgp.projection.sequence']] %in% projection_group.identifier)]
 		}
 	}
 

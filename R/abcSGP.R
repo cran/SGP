@@ -36,7 +36,7 @@ function(sgp_object,
 	outputSGP.output.type=c("LONG_Data", "LONG_FINAL_YEAR_Data", "WIDE_Data", "INSTRUCTOR_Data"),
 	outputSGP.directory="Data",
 	verbose.output=FALSE,
-	sgp.sqlite = FALSE,
+	sgp.sqlite=FALSE,
 	sgp.percentiles.equated=NULL,
 	sgp.percentiles.equating.method=NULL,
 	sgp.percentiles.calculate.sgps=TRUE,
@@ -216,6 +216,6 @@ function(sgp_object,
 
 	### Print finish and return SGP object
 
-	messageSGP(paste("Finished abcSGP", prettyDate(), "in", convertTime(timetaken(started.at)), "\n"))
+	messageSGP(paste("Finished abcSGP", prettyDate(), "in", convertTime(timetakenSGP(started.at)), "\n"))
 	return(sgp_object)
 } ## END abcSGP Function
