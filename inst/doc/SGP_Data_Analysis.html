@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <meta name="author" content="Damian W Betebenner &amp; Adam R Van Iwaarden" />
 
@@ -97,7 +97,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
       if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -118,9 +118,6 @@ padding-right: 2em;
 font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 font-size: 14px;
 line-height: 1.35;
-}
-#header {
-text-align: center;
 }
 #TOC {
 clear: both;
@@ -289,8 +286,12 @@ code > span.st { color: #d14; }
 code > span.co { color: #888888; font-style: italic; } 
 code > span.ot { color: #007020; } 
 code > span.al { color: #ff0000; font-weight: bold; } 
-code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
 </style>
+
+
+
 
 </head>
 
@@ -300,8 +301,8 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 
 <h1 class="title toc-ignore">SGP Data Analysis</h1>
-<h4 class="author"><em>Damian W Betebenner &amp; Adam R Van Iwaarden</em></h4>
-<h4 class="date"><em>February 20th, 201i9</em></h4>
+<h4 class="author">Damian W Betebenner &amp; Adam R Van Iwaarden</h4>
+<h4 class="date">February 20th, 201i9</h4>
 
 
 
@@ -327,7 +328,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 </div>
 <div id="sgp-analysis-in-1-step" class="section level2">
 <h2>SGP Analysis in 1 Step</h2>
-<p>Because these steps are almost always conducted simultaneously in operational SGP analyses, the SGP Package has wrapper functions <a href="reference/abcSGP.html"><code>abcSGP</code></a> and <a href="https://sgp.io/reference/updateSGP.html"><code>updateSGP</code></a> that “wrap” the above 6 steps into a single function call, simplifying the source code associated with the analysis.</p>
+<p>Because these steps are almost always conducted simultaneously in operational SGP analyses, the SGP Package has wrapper functions <a href="https://sgp.io/reference/abcSGP.html"><code>abcSGP</code></a> and <a href="https://sgp.io/reference/updateSGP.html"><code>updateSGP</code></a> that “wrap” the above 6 steps into a single function call, simplifying the source code associated with the analysis.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">#####################################################################################</a>
 <a class="sourceLine" id="cb1-2" data-line-number="2">###</a>
 <a class="sourceLine" id="cb1-3" data-line-number="3">### R Script for Demonstration SGP analyses</a>
@@ -362,7 +363,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 </ol>
 <ul>
 <li><em>Demonstration_SGP_Data_LONG.txt.zip</em> a pipe delimited copy of <em><a href="mailto:Demonstration_SGP@Data">Demonstration_SGP@Data</a></em>, the complete master longitudinal record.</li>
-<li><em>Demonstration_SGP_Data_LONG_2019.txt.zip</em> a pipe delimited copy of the 2017 longitudinal record subsetted from <em><a href="mailto:Demonstration_SGP@Data">Demonstration_SGP@Data</a></em>.</li>
+<li><em>Demonstration_SGP_Data_LONG_2020.txt.zip</em> a pipe delimited copy of the 2020 longitudinal record subsetted from <em><a href="mailto:Demonstration_SGP@Data">Demonstration_SGP@Data</a></em>.</li>
 <li><em>Demonstration_SGPData_WIDE.txt.zip</em> a pipe delimited WIDE version of the master longitudinal record, <em><a href="mailto:Demonstration_SGP@Data">Demonstration_SGP@Data</a></em>.</li>
 <li><em>Demonstration_SGP_INSTRUCTOR_Data.txt.zip</em> a pipe delimited LONG version of the INSTRUCTOR_NUMBER file merged with the master longitudinal data record.</li>
 </ul>
@@ -374,6 +375,9 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>If you have a contribution or topic request for this vignette, don’t hesitate to write or set up an <a href="https://github.com/CenterForAssessment/SGP/issues">issue on GitHub</a>.</p>
 </div>
 
+
+
+<!-- code folding -->
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

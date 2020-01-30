@@ -278,7 +278,7 @@ function(what_sgp_object=NULL,
 		} else { ### END if (overwrite.existing.data)
 			if (!is.null(sgp.use.my.coefficient.matrices)) {
 				# Extract score histories.  Don't use CONTENT_AREA due to potential use of EOCT course progressions.
-				tmp.long.data <- rbindlist(list(data.table(what_sgp_object@Data, key=c("VALID_CASE", "ID"))[
+				tmp.long.data <- rbindlist(list(data.table(what_sgp_object@Data[!YEAR %in% update.years], key=c("VALID_CASE", "ID"))[ # add update.years exclusion to avoid pulling in current year students from other content areas that are not being updated
 					unique(data.table(tmp_sgp_object@Data, key=c("VALID_CASE", "ID"))[,list(VALID_CASE, ID)], by=c("VALID_CASE", "ID")), nomatch=0], tmp_sgp_object@Data), fill=TRUE)
 				if ("YEAR_WITHIN" %in% names(tmp.long.data)) {
 					tmp.long.data[, FIRST_OBSERVATION := NULL]
@@ -402,7 +402,7 @@ function(what_sgp_object=NULL,
 
 				if ("summarizeSGP" %in% steps) what_sgp_object <- summarizeSGP(what_sgp_object, state=state, parallel.config=parallel.config)
 				if ("visualizeSGP" %in% steps) visualizeSGP(what_sgp_object, state=state, plot.types=plot.types, sgPlot.demo.report=sgPlot.demo.report)
-				if ("outputSGP" %in% steps) outputSGP(what_sgp_object, state=state, output.type=outputSGP.output.type)
+				if ("outputSGP" %in% steps) outputSGP(what_sgp_object, state=state, output.type=outputSGP.output.type, outputSGP.directory=outputSGP.directory)
 
 
 				### Re-establish FIRST_ & LAST_OBSERVATION variables

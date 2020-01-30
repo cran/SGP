@@ -5,7 +5,7 @@ function(
 	test.option=list(),
 	memory.profile=FALSE) {
 
-	YEAR <- GRADE <- DUPS_FLAG <- SGP_NORM_GROUP <- NULL
+	YEAR <- GRADE <- DUPS_FLAG <- SGP_NORM_GROUP <- SCALE_SCORE_CSEM <- NULL
 
 	if (missing(TEST_NUMBER)) {
 		messageSGP("\ttestSGP carries out testing of SGP package. Tests currently included in testSGP:\n")
@@ -41,7 +41,7 @@ function(
 			### Part 1
 
 			expression.to.evaluate <-
-				paste0("Demonstration_SGP <- list(Panel_Data=SGPdata::sgpData)\nmy.grade.sequences <- list(3:4, 3:5, 3:6, 3:7, 4:8)\nfor (i in seq_along(my.grade.sequences)) {\n\tDemonstration_SGP <- studentGrowthPercentiles(\n\t\tpanel.data=Demonstration_SGP,\n\t\tsgp.labels=list(my.year=", tail(sgpData.years.single, 1), ", my.subject='Reading'),\n\t\tgrowth.levels='DEMO',\n\t\tgoodness.of.fit='DEMO',\n\t\tgoodness.of.fit.output.format=c('PDF', 'PNG', 'SVG'),\n\t\tgrade.progression=my.grade.sequences[[i]],\n\t\tpercentile.cuts=c(1,35,50,65,99),\n\t\tprint.sgp.order=TRUE,\n\t\tcalculate.confidence.intervals='DEMO',\n\t\tprint.other.gp=TRUE,\n\t\tverbose.output=TRUE,\n\t\tmax.order.for.percentile=3,\n\t\treturn.additional.max.order.sgp=2,\n\t\treturn.norm.group.scale.scores=TRUE,\n\t\treturn.panel.data=TRUE,\n\t\tparallel.config=", parallel.config,")\n}")
+				paste0("Demonstration_SGP <- list(Panel_Data=SGPdata::sgpData)\nmy.grade.sequences <- list(3:4, 3:5, 3:6, 3:7, 4:8)\nfor (i in seq_along(my.grade.sequences)) {\n\tDemonstration_SGP <- studentGrowthPercentiles(\n\t\tpanel.data=Demonstration_SGP,\n\t\tsgp.labels=list(my.year=", tail(sgpData.years.single, 1L), ", my.subject='Reading'),\n\t\tgrowth.levels='DEMO',\n\t\tgoodness.of.fit='DEMO',\n\t\tgoodness.of.fit.output.format=c('PDF', 'PNG', 'SVG'),\n\t\tgrade.progression=my.grade.sequences[[i]],\n\t\tpercentile.cuts=c(1,35,50,65,99),\n\t\tprint.sgp.order=TRUE,\n\t\tcalculate.confidence.intervals='DEMO',\n\t\tprint.other.gp=TRUE,\n\t\tverbose.output=TRUE,\n\t\tmax.order.for.percentile=3,\n\t\treturn.additional.max.order.sgp=2,\n\t\treturn.norm.group.scale.scores=TRUE,\n\t\treturn.panel.data=TRUE,\n\t\tparallel.config=", parallel.config,")\n}")
 
 			cat(paste0("EVALUATING Test Number 0, Part 1:\n", expression.to.evaluate), fill=TRUE)
 
@@ -55,61 +55,62 @@ function(
 			tmp.messages <- c(tmp.messages, "\t##### Results of testSGP test number 0: Part 1 #####\n")
 
 			### TEST of SGP Variable
-			# if (identical(sum(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1), sep=".")]][['SGP']]), 1707319L)) {
-			if (identical(digest(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1), sep=".")]][['SGP']]), "218a961b96d1f6588c408f5698ac04ce")) {
+			# if (identical(sum(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1L), sep=".")]][['SGP']]), 1707319L)) {
+			if (identical(digest(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1L), sep=".")]][['SGP']]), "218a961b96d1f6588c408f5698ac04ce")) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP, part 1: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP, part 1: FAIL\n")
 			}
 
 			### TEST of SGP_ORDER_1 Variable
-			# if (identical(sum(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1), sep=".")]][['SGP_ORDER_1']]), 1708589L)) {
-			if (identical(digest(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1), sep=".")]][['SGP_ORDER_1']]), "543b9397789643ae0619256c05812a17")) {
+			# if (identical(sum(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1L), sep=".")]][['SGP_ORDER_1']]), 1708589L)) {
+			if (identical(digest(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1L), sep=".")]][['SGP_ORDER_1']]), "543b9397789643ae0619256c05812a17")) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_ORDER_1, part 1: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_ORDER_1, part 1: FAIL\n")
 			}
 
 			### TEST of SCALE_SCORE_PRIOR Variable
-			# if (identical(sum(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1), sep=".")]][['SCALE_SCORE_PRIOR']]), 20707938)) {
-			if (identical(digest(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1), sep=".")]][['SCALE_SCORE_PRIOR']]), "87b318d12cad2d571cbb59297b6b0a3d")) {
+			# if (identical(sum(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1L), sep=".")]][['SCALE_SCORE_PRIOR']]), 20707938)) {
+			if (identical(digest(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1L), sep=".")]][['SCALE_SCORE_PRIOR']]), "87b318d12cad2d571cbb59297b6b0a3d")) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SCALE_SCORE_PRIOR, part 1: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SCALE_SCORE_PRIOR, part 1: FAIL\n")
 			}
 
 			### TEST of SGP_ORDER Variable
-			# if (identical(as.vector(table(Demonstration_SGP$SGPercentiles[[paste("READING", tail(sgpData.years.single, 1), sep=".")]][['SGP_ORDER']])), c(8666L, 7639L, 17920L))) {
-			if (identical(digest(table(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1), sep=".")]][['SGP_ORDER']])), "b2779fb3a7408ade8eea0c69cb9f265b")) {
+			# if (identical(as.vector(table(Demonstration_SGP$SGPercentiles[[paste("READING", tail(sgpData.years.single, 1L), sep=".")]][['SGP_ORDER']])), c(8666L, 7639L, 17920L))) {
+			if (identical(digest(table(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1L), sep=".")]][['SGP_ORDER']])), "b2779fb3a7408ade8eea0c69cb9f265b")) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_ORDER, part 1: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_ORDER, part 1: FAIL\n")
 			}
 
 			### TEST of SGP_LEVEL Variable
-			# if (identical(as.vector(table(Demonstration_SGP$SGPercentiles[[paste("READING", tail(sgpData.years.single, 1), sep=".")]][['SGP_LEVEL']])), c(6740L, 6824L, 7176L, 6835L, 6650L))) {
-			if (identical(digest(table(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1), sep=".")]][['SGP_LEVEL']])), "22d6dafb62d5d6b2927c7a08ba1d8461")) {
+			# if (identical(as.vector(table(Demonstration_SGP$SGPercentiles[[paste("READING", tail(sgpData.years.single, 1L), sep=".")]][['SGP_LEVEL']])), c(6740L, 6824L, 7176L, 6835L, 6650L))) {
+			if (identical(digest(table(Demonstration_SGP[['SGPercentiles']][[paste("READING", tail(sgpData.years.single, 1L), sep=".")]][['SGP_LEVEL']])), "22d6dafb62d5d6b2927c7a08ba1d8461")) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_LEVEL, part 1: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_LEVEL, part 1: FAIL\n")
 			}
 
 			### TEST of SGP_STANDARD_ERROR Variable
-			# if (identical(sum(Demonstration_SGP$SGPercentiles[[paste('READING', tail(sgpData.years.single, 1), sep=".")]][['SGP_STANDARD_ERROR']], na.rm=TRUE), 283761.5)) {
-			# if (identical(sum(Demonstration_SGP$SGPercentiles[[paste('READING', tail(sgpData.years.single, 1), sep=".")]][['SGP_STANDARD_ERROR']], na.rm=TRUE), 543735.7)) { ## 1.9-0.0
-			# if (identical(digest(Demonstration_SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years.single, 1), sep=".")]][['SGP_STANDARD_ERROR']]), "bc17af609fa1ac0bf71548a36cff8ceb")) { ## Pre 1.9-0.0
-			if (identical(digest(Demonstration_SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years.single, 1), sep=".")]][['SGP_STANDARD_ERROR']]), "157ff9ac26da921092d7c115768537ac")) {
+			# if (identical(sum(Demonstration_SGP$SGPercentiles[[paste('READING', tail(sgpData.years.single, 1L), sep=".")]][['SGP_STANDARD_ERROR']], na.rm=TRUE), 283761.5)) {
+			# if (identical(sum(Demonstration_SGP$SGPercentiles[[paste('READING', tail(sgpData.years.single, 1L), sep=".")]][['SGP_STANDARD_ERROR']], na.rm=TRUE), 543735.7)) { ## 1.9-0.0
+			# if (identical(digest(Demonstration_SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years.single, 1L), sep=".")]][['SGP_STANDARD_ERROR']]), "bc17af609fa1ac0bf71548a36cff8ceb")) { ## Pre 1.9-0.0
+			# if (identical(digest(Demonstration_SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years.single, 1L), sep=".")]][['SGP_STANDARD_ERROR']]), "157ff9ac26da921092d7c115768537ac")) { ## Pre mod allow state corrected loss.hoss
+			if (identical(digest(Demonstration_SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years.single, 1L), sep=".")]][['SGP_STANDARD_ERROR']]), "cc80e301fa445eb1925b8ed125a9818c")) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_STANDARD_ERROR, part 1: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_STANDARD_ERROR, part 1: FAIL\n")
 			}
 
 			### TEST of SGP_FROM_**** variable
-			#  sum(Demonstration_SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years.single, 1), sep=".")]][[paste('SGP_FROM', as.numeric(tail(sgpData.years.single, 1))-2, sep="_")]]) # 1708877
-			if (identical(digest(Demonstration_SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years.single, 1), sep=".")]][[paste('SGP_FROM', as.numeric(tail(sgpData.years.single, 1))-2, sep="_")]]), "454ff2c53966e1cfd4c9280aab4b40b5")) {
-				tmp.messages <- c(tmp.messages, paste0("\t\tTest of variable ",  paste('SGP_FROM', as.numeric(tail(sgpData.years.single, 1))-2, sep="_"), ", part 2: OK\n"))
+			#  sum(Demonstration_SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years.single, 1L), sep=".")]][[paste('SGP_FROM', as.numeric(tail(sgpData.years.single, 1L))-2, sep="_")]]) # 1708877
+			if (identical(digest(Demonstration_SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years.single, 1L), sep=".")]][[paste('SGP_FROM', as.numeric(tail(sgpData.years.single, 1L))-2, sep="_")]]), "454ff2c53966e1cfd4c9280aab4b40b5")) {
+				tmp.messages <- c(tmp.messages, paste0("\t\tTest of variable ",  paste('SGP_FROM', as.numeric(tail(sgpData.years.single, 1L))-2, sep="_"), ", part 2: OK\n"))
 			} else {
-				tmp.messages <- c(tmp.messages, paste0("\t\tTest of variable ", paste('SGP_FROM', as.numeric(tail(sgpData.years.single, 1))-2, sep="_"), ", part 2: FAIL\n"))
+				tmp.messages <- c(tmp.messages, paste0("\t\tTest of variable ", paste('SGP_FROM', as.numeric(tail(sgpData.years.single, 1L))-2, sep="_"), ", part 2: FAIL\n"))
 			}
 
 			### TEST of Goodness of Fit Output Files
@@ -119,7 +120,7 @@ function(
 							"gofSGP_Grade_6.pdf", "gofSGP_Grade_6.png", "gofSGP_Grade_6.svg",
 							"gofSGP_Grade_7.pdf", "gofSGP_Grade_7.png", "gofSGP_Grade_7.svg",
 							"gofSGP_Grade_8.pdf", "gofSGP_Grade_8.png", "gofSGP_Grade_8.svg")
-			if (identical(sort(list.files(file.path("Goodness_of_Fit", paste("READING", tail(sgpData.years.single, 1), sep=".")))), gof.files)) {
+			if (identical(sort(list.files(file.path("Goodness_of_Fit", paste("READING", tail(sgpData.years.single, 1L), sep=".")))), gof.files)) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of Goodness of Fit Output Files, part 1: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of Goodness of Fit Output Files, part 1: FAIL\n")
@@ -131,7 +132,7 @@ function(
 			### Part 2
 
 			expression.to.evaluate <-
-				paste0("Demonstration_SGP$Panel_Data <- SGPdata::sgpData[,c('ID',", paste('\'GRADE', head(sgpData.years.single, -1), sep='_', collapse='\', '), "', ", paste('\'SS', head(sgpData.years.single, -1), sep='_', collapse='\', '), "')]\nmy.grade.progressions <- list(3, 3:4, 3:5, 3:6, 4:7)\nfor (i in seq_along(my.grade.progressions)) {\n\tDemonstration_SGP <- studentGrowthProjections(\n\t\tpanel.data=Demonstration_SGP,\n\t\tsgp.labels=list(my.year=", tail(sgpData.years.single, 1), ", my.subject='Reading', my.extra.label='LAGGED'),\n\t\tuse.my.coefficient.matrices=list(my.year=", tail(sgpData.years.single, 1), ", my.subject='Reading'),\n\t\tprojcuts.digits=0,\n\t\tperformance.level.cutscores='DEMO',\n\t\tpercentile.trajectory.values=1:99,\n\t\tlag.increment=1,\n\t\tgrade.progression=my.grade.progressions[[i]],\n\t\treturn.projection.group.identifier='READING',\n\t\treturn.projection.group.scale.scores=TRUE)\n}")
+				paste0("Demonstration_SGP$Panel_Data <- SGPdata::sgpData[,c('ID',", paste('\'GRADE', head(sgpData.years.single, -1L), sep='_', collapse='\', '), "', ", paste('\'SS', head(sgpData.years.single, -1L), sep='_', collapse='\', '), "')]\nmy.grade.progressions <- list(3, 3:4, 3:5, 3:6, 4:7)\nfor (i in seq_along(my.grade.progressions)) {\n\tDemonstration_SGP <- studentGrowthProjections(\n\t\tpanel.data=Demonstration_SGP,\n\t\tsgp.labels=list(my.year=", tail(sgpData.years.single, 1L), ", my.subject='Reading', my.extra.label='LAGGED'),\n\t\tuse.my.coefficient.matrices=list(my.year=", tail(sgpData.years.single, 1L), ", my.subject='Reading'),\n\t\tprojcuts.digits=0,\n\t\tperformance.level.cutscores='DEMO',\n\t\tpercentile.trajectory.values=1:99,\n\t\tlag.increment=1,\n\t\tgrade.progression=my.grade.progressions[[i]],\n\t\treturn.projection.group.identifier='READING',\n\t\treturn.projection.group.scale.scores=TRUE)\n}")
 
 			cat(paste0("EVALUATING Test Number 0, Part 2:\n", expression.to.evaluate), fill=TRUE)
 
@@ -146,24 +147,24 @@ function(
 			tmp.messages <- c(tmp.messages, "\n\t##### Results of testSGP test number 0: Part 2 #####\n")
 
 			### TEST of dimension of table READING.####.LAGGED dimensions
-			# if (identical(dim(Demonstration_SGP$SGProjections[[paste('READING', tail(sgpData.years.single, 1), 'LAGGED', sep=".")]]), c(36478L, 513L))) {
-			if (identical(digest(Demonstration_SGP[['SGProjections']][[paste('READING', tail(sgpData.years.single, 1), 'LAGGED', sep=".")]]), "8ed0dbdfe95ea48e426a1e1faf9e8da1")) {
-				tmp.messages <- c(tmp.messages, paste("\t\tTest of",  paste('READING', tail(sgpData.years.single, 1), 'LAGGED', sep="."), "table dimensions, part 2: OK\n"))
+			# if (identical(dim(Demonstration_SGP$SGProjections[[paste('READING', tail(sgpData.years.single, 1L), 'LAGGED', sep=".")]]), c(36478L, 513L))) {
+			if (identical(digest(Demonstration_SGP[['SGProjections']][[paste('READING', tail(sgpData.years.single, 1L), 'LAGGED', sep=".")]]), "8ed0dbdfe95ea48e426a1e1faf9e8da1")) {
+				tmp.messages <- c(tmp.messages, paste("\t\tTest of",  paste('READING', tail(sgpData.years.single, 1L), 'LAGGED', sep="."), "table dimensions, part 2: OK\n"))
 			} else {
-				tmp.messages <- c(tmp.messages, paste("\t\tTest of",  paste('READING', tail(sgpData.years.single, 1), 'LAGGED', sep="."), "table dimensions, part 2: FAIL\n"))
+				tmp.messages <- c(tmp.messages, paste("\t\tTest of",  paste('READING', tail(sgpData.years.single, 1L), 'LAGGED', sep="."), "table dimensions, part 2: FAIL\n"))
 			}
 
 			### TEST of LEVEL_1_SGP_TARGET_YEAR_1 Variable
-			# if (identical(sum(Demonstration_SGP$SGProjections[[paste('READING', tail(sgpData.years.single, 1), "LAGGED", sep=".")]][['LEVEL_1_SGP_TARGET_YEAR_1']]), 402866L)) {
-			if (identical(digest(Demonstration_SGP[['SGProjections']][[paste('READING', tail(sgpData.years.single, 1), "LAGGED", sep=".")]][['LEVEL_1_SGP_TARGET_YEAR_1']]), "60193d09485ede52ddcf58a51dedf04f")) {
+			# if (identical(sum(Demonstration_SGP$SGProjections[[paste('READING', tail(sgpData.years.single, 1L), "LAGGED", sep=".")]][['LEVEL_1_SGP_TARGET_YEAR_1']]), 402866L)) {
+			if (identical(digest(Demonstration_SGP[['SGProjections']][[paste('READING', tail(sgpData.years.single, 1L), "LAGGED", sep=".")]][['LEVEL_1_SGP_TARGET_YEAR_1']]), "60193d09485ede52ddcf58a51dedf04f")) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable LEVEL_1_SGP_TARGET_YEAR_1, part 2: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable LEVEL_1_SGP_TARGET_YEAR_1, part 2: FAIL\n")
 			}
 
 			### TEST of P84_PROJ_YEAR_4 Variable
-			# if (identical(sum(Demonstration_SGP$SGProjections[[paste('READING', tail(sgpData.years.single, 1), "LAGGED", sep=".")]][['P84_PROJ_YEAR_4']], na.rm=TRUE), 10545791)) {
-			if (identical(digest(Demonstration_SGP[['SGProjections']][[paste('READING', tail(sgpData.years.single, 1), "LAGGED", sep=".")]][['P84_PROJ_YEAR_4']]), "e691fdcb7f80f9d716685300a9e16b48")) {
+			# if (identical(sum(Demonstration_SGP$SGProjections[[paste('READING', tail(sgpData.years.single, 1L), "LAGGED", sep=".")]][['P84_PROJ_YEAR_4']], na.rm=TRUE), 10545791)) {
+			if (identical(digest(Demonstration_SGP[['SGProjections']][[paste('READING', tail(sgpData.years.single, 1L), "LAGGED", sep=".")]][['P84_PROJ_YEAR_4']]), "e691fdcb7f80f9d716685300a9e16b48")) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable P84_PROJ_YEAR_4, part 2: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable P84_PROJ_YEAR_4, part 2: FAIL\n")
@@ -286,8 +287,8 @@ function(
 
 			### TEST of SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1 variable for READING.XXXX_XXXX scale score targets
 
-#			if (identical(as.integer(sum(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1), "LAGGED.TARGET_SCALE_SCORES", sep=".")]][['SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1']])), 18313900L)) {
-			if (identical(digest(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1), "LAGGED.TARGET_SCALE_SCORES", sep=".")]][['SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1']]), "d67a2c0b75f411683abe1a9c023c8c0e")) {
+#			if (identical(as.integer(sum(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1L), "LAGGED.TARGET_SCALE_SCORES", sep=".")]][['SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1']])), 18313900L)) {
+			if (identical(digest(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1L), "LAGGED.TARGET_SCALE_SCORES", sep=".")]][['SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1']]), "d67a2c0b75f411683abe1a9c023c8c0e")) {
 				tmp.messages <- c(tmp.messages, "\tTest of variable SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\tTest of variable SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1: FAIL\n")
@@ -313,8 +314,8 @@ function(
 
 			### TEST of LAGGED PROJECTION CUTs variable P35_PROJ_YEAR_1 variable for MATHEMATICS.XXXX_XXXX.LAGGED
 
-#			if (identical(sum(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), 'LAGGED', sep=".")]][['P20_PROJ_YEAR_1']]), 15567825)) {
-			if (identical(digest(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), 'LAGGED', sep=".")]][['P20_PROJ_YEAR_1']]), "e83219e1830264576b42861aaaed067f")) {
+#			if (identical(sum(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), 'LAGGED', sep=".")]][['P20_PROJ_YEAR_1']]), 15567825)) {
+			if (identical(digest(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), 'LAGGED', sep=".")]][['P20_PROJ_YEAR_1']]), "e83219e1830264576b42861aaaed067f")) {
 				tmp.messages <- c(tmp.messages, "\tTest of variable P20_PROJ_YEAR_1 (LAGGED PROJECTION): OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\tTest of variable P20_PROJ_YEAR_1 (LAGGED PROJECTION): FAIL\n")
@@ -325,7 +326,7 @@ function(
 #			if (identical(sum(Demonstration_SGP@Data[['SGP_0.025_CONFIDENCE_BOUND']], na.rm=TRUE), 6096120)) {
 #			if (identical(sum(Demonstration_SGP@Data[['SGP_0.025_CONFIDENCE_BOUND']], na.rm=TRUE), 3952340)) {
 #			if (identical(digest(Demonstration_SGP@Data[['SGP_0.025_CONFIDENCE_BOUND']]), "5e48f22520ff2607032c2e4b51ddccc2")) { # pre-GRADE key: dc13c362312f379fbbfa83c49f1e53eb
-			if (identical(digest(Demonstration_SGP@Data[['SGP_0.025_CONFIDENCE_BOUND']]), "d519a7cbee25d01f6fafd3ab171e98f7")) { # pre-GRADE key: dc13c362312f379fbbfa83c49f1e53eb
+			if (identical(digest(Demonstration_SGP@Data[['SGP_0.025_CONFIDENCE_BOUND']]), "237d3505dfbbc4a4dfbdbdbd73c45629")) { # pre-GRADE key: dc13c362312f379fbbfa83c49f1e53eb
 				tmp.messages <- c(tmp.messages, "\tTest of variable SGP_0.025_CONFIDENCE_BOUND: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\tTest of variable SGP_0.025_CONFIDENCE_BOUND: FAIL\n")
@@ -396,8 +397,8 @@ function(
 			options(error=recover)
 			options(warn=2)
 			Demonstration_SGP <- NULL
-			Demonstration_Data_LONG <- subset(SGPdata::sgpData_LONG, YEAR %in% head(sgpData.years, -1))
-			Demonstration_Data_LONG_LAST_YEAR <- subset(SGPdata::sgpData_LONG, YEAR==tail(sgpData.years, 1))
+			Demonstration_Data_LONG <- subset(SGPdata::sgpData_LONG, YEAR %in% head(sgpData.years, -1L))
+			Demonstration_Data_LONG_LAST_YEAR <- subset(SGPdata::sgpData_LONG, YEAR==tail(sgpData.years, 1L))
 			tmp.messages <- "##### Begin testSGP test number 2a #####\n\n"
 
 			### Part 1
@@ -559,7 +560,7 @@ function(
 				options(error=recover)
 				options(warn=2)
 				Demonstration_SGP <- ID <- CONTENT_AREA <- NULL
-				Demonstration_Data_LONG_LAST_YEAR <- subset(SGPdata::sgpData_LONG, YEAR==tail(sgpData.years, 1))
+				Demonstration_Data_LONG_LAST_YEAR <- subset(SGPdata::sgpData_LONG, YEAR==tail(sgpData.years, 1L))
 
 				############################################################
 				### Part 1: Required for all Tests 2b, 2c, and 2d
@@ -569,7 +570,7 @@ function(
 				tmp.messages <- c(tmp.messages, paste0("\t##### Begin testSGP test number ", capwords(i), ": Part 1 #####\n\n"))
 
 				expression.to.evaluate <-
-					paste0("Demonstration_SGP <- abcSGP(\n\tsgp_object=SGPdata::sgpData_LONG,\n\tsteps=c('prepareSGP', 'analyzeSGP', 'combineSGP'),\n\tyears='", tail(sgpData.years, 1), "',\n\tparallel.config=", parallel.config, "\n)\n")
+					paste0("Demonstration_SGP <- abcSGP(\n\tsgp_object=SGPdata::sgpData_LONG,\n\tsteps=c('prepareSGP', 'analyzeSGP', 'combineSGP'),\n\tyears='", tail(sgpData.years, 1L), "',\n\tparallel.config=", parallel.config, "\n)\n")
 
 				cat(paste0("EVALUATING:\n", expression.to.evaluate), fill=TRUE)
 
@@ -590,7 +591,7 @@ function(
 
 				### TEST 2b ###
 				if (i=='2B') {
-					Demonstration_Data_LONG_LAST_YEAR <- subset(SGPdata::sgpData_LONG, YEAR==tail(sgpData.years, 1))
+					Demonstration_Data_LONG_LAST_YEAR <- subset(SGPdata::sgpData_LONG, YEAR==tail(sgpData.years, 1L))
 
 					expression.to.evaluate <-
 						paste0("Demonstration_SGP <- updateSGP(\n\twhat_sgp_object=Demonstration_SGP,\n\twith_sgp_data_LONG=Demonstration_Data_LONG_LAST_YEAR,\n\tsteps=c('prepareSGP', 'analyzeSGP', 'combineSGP'),\n\toverwrite.existing.data=TRUE,\n\tsgp.target.scale.scores=TRUE,\n\tsgPlot.demo.report=TRUE,\n\tparallel.config=", parallel.config, "\n)\n")
@@ -603,7 +604,7 @@ function(
 
 				### TEST 2c ###
 				if (i=='2C') {
-					Demonstration_Data_LONG_LAST_YEAR <- subset(SGPdata::sgpData_LONG, YEAR==tail(sgpData.years, 1))
+					Demonstration_Data_LONG_LAST_YEAR <- subset(SGPdata::sgpData_LONG, YEAR==tail(sgpData.years, 1L))
 
 					expression.to.evaluate <-
 						paste0("Demonstration_SGP <- updateSGP(\n\twhat_sgp_object=Demonstration_SGP,\n\twith_sgp_data_LONG=Demonstration_Data_LONG_LAST_YEAR,\n\tsteps=c('prepareSGP', 'analyzeSGP', 'combineSGP'),\n\toverwrite.existing.data=TRUE,\n\tsgp.use.my.coefficient.matrices=TRUE,\n\tsgp.target.scale.scores=TRUE,\n\tsgPlot.demo.report=TRUE,\n\tparallel.config=", parallel.config, "\n)\n")
@@ -616,24 +617,24 @@ function(
 
 				### TEST 2d ###
 				if (i=='2D') {
-					Demonstration_Data_LONG_LAST_YEAR <- subset(SGPdata::sgpData_LONG, YEAR==tail(sgpData.years, 1))
+					Demonstration_Data_LONG_LAST_YEAR <- subset(SGPdata::sgpData_LONG, YEAR==tail(sgpData.years, 1L))
 					tmp.LAST_YEAR.ids <- sort(unique(Demonstration_Data_LONG_LAST_YEAR[['ID']]))
 					tmp.group.1 <- tmp.LAST_YEAR.ids[1:150]
 					tmp.group.2 <- tmp.LAST_YEAR.ids[151:250]
 					with_sgp_data_LONG <- subset(Demonstration_Data_LONG_LAST_YEAR, ID %in% tmp.group.1 | (ID %in% tmp.group.2 & CONTENT_AREA=="MATHEMATICS"))
-					Demonstration_SGP@Data <- subset(Demonstration_SGP@Data, !((ID %in% tmp.group.1 & YEAR==tail(sgpData.years, 1)) | (ID %in% tmp.group.2 & CONTENT_AREA=="MATHEMATICS" & YEAR==tail(sgpData.years, 1))))
-					Demonstration_SGP@SGP[['SGPercentiles']][[paste('MATHEMATICS', tail(sgpData.years, 1), sep=".")]] <- subset(Demonstration_SGP@SGP$SGPercentiles[[paste('MATHEMATICS', tail(sgpData.years, 1), sep=".")]], !ID %in% c(tmp.group.1, tmp.group.2))
-					Demonstration_SGP@SGP[['SGPercentiles']][[paste('MATHEMATICS', tail(sgpData.years, 1), 'BASELINE', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGPercentiles']][[paste('MATHEMATICS', tail(sgpData.years, 1), 'BASELINE', sep=".")]], !ID %in% c(tmp.group.1, tmp.group.2))
-					Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), sep=".")]], !ID %in% c(tmp.group.1, tmp.group.2))
-					Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), 'BASELINE', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), 'BASELINE', sep=".")]], !ID %in% c(tmp.group.1, tmp.group.2))
-					Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), 'LAGGED', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), 'LAGGED', sep=".")]], !ID %in% c(tmp.group.1, tmp.group.2))
-					Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), 'LAGGED.BASELINE', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), 'LAGGED.BASELINE', sep=".")]], !ID %in% c(tmp.group.1, tmp.group.2))
-					Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1), sep=".")]] <- subset(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1), sep=".")]], !ID %in% tmp.group.1)
-					Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1), 'BASELINE', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1), 'BASELINE', sep=".")]], !ID %in% tmp.group.1)
-					Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1), sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1), sep=".")]], !ID %in% tmp.group.1)
-					Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1), 'BASELINE', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1), 'BASELINE', sep=".")]], !ID %in% tmp.group.1)
-					Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1), 'LAGGED', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1), 'LAGGED', sep=".")]], !ID %in% tmp.group.1)
-					Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1), 'LAGGED.BASELINE', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1), 'LAGGED.BASELINE', sep=".")]], !ID %in% tmp.group.1)
+					Demonstration_SGP@Data <- subset(Demonstration_SGP@Data, !((ID %in% tmp.group.1 & YEAR==tail(sgpData.years, 1L)) | (ID %in% tmp.group.2 & CONTENT_AREA=="MATHEMATICS" & YEAR==tail(sgpData.years, 1L))))
+					Demonstration_SGP@SGP[['SGPercentiles']][[paste('MATHEMATICS', tail(sgpData.years, 1L), sep=".")]] <- subset(Demonstration_SGP@SGP$SGPercentiles[[paste('MATHEMATICS', tail(sgpData.years, 1L), sep=".")]], !ID %in% c(tmp.group.1, tmp.group.2))
+					Demonstration_SGP@SGP[['SGPercentiles']][[paste('MATHEMATICS', tail(sgpData.years, 1L), 'BASELINE', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGPercentiles']][[paste('MATHEMATICS', tail(sgpData.years, 1L), 'BASELINE', sep=".")]], !ID %in% c(tmp.group.1, tmp.group.2))
+					Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), sep=".")]], !ID %in% c(tmp.group.1, tmp.group.2))
+					Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), 'BASELINE', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), 'BASELINE', sep=".")]], !ID %in% c(tmp.group.1, tmp.group.2))
+					Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), 'LAGGED', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), 'LAGGED', sep=".")]], !ID %in% c(tmp.group.1, tmp.group.2))
+					Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), 'LAGGED.BASELINE', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), 'LAGGED.BASELINE', sep=".")]], !ID %in% c(tmp.group.1, tmp.group.2))
+					Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), sep=".")]] <- subset(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), sep=".")]], !ID %in% tmp.group.1)
+					Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), 'BASELINE', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), 'BASELINE', sep=".")]], !ID %in% tmp.group.1)
+					Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1L), sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1L), sep=".")]], !ID %in% tmp.group.1)
+					Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1L), 'BASELINE', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1L), 'BASELINE', sep=".")]], !ID %in% tmp.group.1)
+					Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1L), 'LAGGED', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1L), 'LAGGED', sep=".")]], !ID %in% tmp.group.1)
+					Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1L), 'LAGGED.BASELINE', sep=".")]] <- subset(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1L), 'LAGGED.BASELINE', sep=".")]], !ID %in% tmp.group.1)
 
 					expression.to.evaluate <-
 						paste0("Demonstration_SGP <- updateSGP(\n\twhat_sgp_object=Demonstration_SGP,\n\twith_sgp_data_LONG=with_sgp_data_LONG,\n\tsteps=c('prepareSGP', 'analyzeSGP', 'combineSGP'),\n\tsgp.use.my.coefficient.matrices=TRUE,\n\tsgp.target.scale.scores=TRUE,\n\tsgPlot.demo.report=TRUE,\n\tparallel.config=", parallel.config, "\n)\n")
@@ -648,8 +649,8 @@ function(
 
 				tmp.messages <- c(tmp.messages, paste("\t\t##### Results of testSGP test number", capwords(i), "#####\n"))
 
-#				if (identical(sum(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1)]$SGP, na.rm=TRUE), 2896606L)) {
-				if (identical(digest(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1)]$SGP), "94cdd800a205121ca0113bcbd623985b")) { # pre-GRADE key: 0cc817e2864bc3e3bda3da9c8c8c8ab9
+#				if (identical(sum(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1L)]$SGP, na.rm=TRUE), 2896606L)) {
+				if (identical(digest(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1L)]$SGP), "94cdd800a205121ca0113bcbd623985b")) { # pre-GRADE key: 0cc817e2864bc3e3bda3da9c8c8c8ab9
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP, part 2: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP, part 2: FAIL\n")
@@ -657,8 +658,8 @@ function(
 
 				### TEST of SGP_BASELINE variable
 
-#				if (identical(sum(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1)]$SGP_BASELINE, na.rm=TRUE), 2906337L)) {
-				if (identical(digest(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1)]$SGP_BASELINE), "b58870bc707d3b07d157e57b0efb53d1")) { # pre-GRADE key: 6727904bc44c191e21be0dfb95a6187b
+#				if (identical(sum(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1L)]$SGP_BASELINE, na.rm=TRUE), 2906337L)) {
+				if (identical(digest(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1L)]$SGP_BASELINE), "b58870bc707d3b07d157e57b0efb53d1")) { # pre-GRADE key: 6727904bc44c191e21be0dfb95a6187b
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_BASELINE, part 2: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_BASELINE, part 2: FAIL\n")
@@ -666,8 +667,8 @@ function(
 
 				### TEST of SGP_TARGET_3_YEAR variable
 
-#				if (identical(sum(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1)]$SGP_TARGET_3_YEAR, na.rm=TRUE), 2551187L)) {
-				if (identical(digest(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1)]$SGP_TARGET_3_YEAR), "4cedb67edc5582c1c6f136dfb57f2b74")) { # pre-GRADE key: cfc79dbc3b55744c3a4cfa1834d2eeaf
+#				if (identical(sum(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1L)]$SGP_TARGET_3_YEAR, na.rm=TRUE), 2551187L)) {
+				if (identical(digest(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1L)]$SGP_TARGET_3_YEAR), "4cedb67edc5582c1c6f136dfb57f2b74")) { # pre-GRADE key: cfc79dbc3b55744c3a4cfa1834d2eeaf
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_TARGET_3_YEAR, part 2: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_TARGET_3_YEAR, part 2: FAIL\n")
@@ -675,8 +676,8 @@ function(
 
 				### TEST of SGP_TARGET_MOVE_UP_STAY_UP_3_YEAR variable
 
-#				if (identical(sum(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1)]$SGP_TARGET_MOVE_UP_STAY_UP_3_YEAR, na.rm=TRUE), 3113673L)) {
-				if (identical(digest(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1)]$SGP_TARGET_MOVE_UP_STAY_UP_3_YEAR), "101811cd16d1100e23bab6a52c54a499")) { # pre-GRADE key: eef9ed11b6eed237364e6916dae06b91
+#				if (identical(sum(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1L)]$SGP_TARGET_MOVE_UP_STAY_UP_3_YEAR, na.rm=TRUE), 3113673L)) {
+				if (identical(digest(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1L)]$SGP_TARGET_MOVE_UP_STAY_UP_3_YEAR), "101811cd16d1100e23bab6a52c54a499")) { # pre-GRADE key: eef9ed11b6eed237364e6916dae06b91
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_TARGET_MOVE_UP_STAY_UP_3_YEAR, part 2: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_TARGET_MOVE_UP_STAY_UP_3_YEAR, part 2: FAIL\n")
@@ -684,8 +685,8 @@ function(
 
 				### TEST of CATCH_UP_KEEP_UP_STATUS_3_YEAR variable
 
-#				if (identical(as.numeric(table(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1)]$CATCH_UP_KEEP_UP_STATUS_3_YEAR)), c(13977, 3847, 11202, 29107))) {
-				if (identical(digest(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1)]$CATCH_UP_KEEP_UP_STATUS_3_YEAR), "0f79344e49378c59d80900270080c0ec")) { # pre-GRADE key: cb981073080b1b8b6688338e06e1e074
+#				if (identical(as.numeric(table(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1L)]$CATCH_UP_KEEP_UP_STATUS_3_YEAR)), c(13977, 3847, 11202, 29107))) {
+				if (identical(digest(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1L)]$CATCH_UP_KEEP_UP_STATUS_3_YEAR), "0f79344e49378c59d80900270080c0ec")) { # pre-GRADE key: cb981073080b1b8b6688338e06e1e074
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable CATCH_UP_KEEP_UP_STATUS_3_YEAR, part 2: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable CATCH_UP_KEEP_UP_STATUS_3_YEAR, part 2: FAIL\n")
@@ -693,8 +694,8 @@ function(
 
 				### TEST of MOVE_UP_STAY_UP_STATUS variable
 
-#				if (identical(as.numeric(table(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1)]$MOVE_UP_STAY_UP_STATUS_3_YEAR)), c(24801, 4647, 6186, 4675))) {
-				if (identical(digest(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1)]$MOVE_UP_STAY_UP_STATUS_3_YEAR), "8d5bf02dadb02b1d009c0f7b93ba5854")) { # pre-GRADE key: 8dbe7770bd436331b81bd0a84dbaa1bb
+#				if (identical(as.numeric(table(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1L)]$MOVE_UP_STAY_UP_STATUS_3_YEAR)), c(24801, 4647, 6186, 4675))) {
+				if (identical(digest(Demonstration_SGP@Data[YEAR==tail(sgpData.years, 1L)]$MOVE_UP_STAY_UP_STATUS_3_YEAR), "8d5bf02dadb02b1d009c0f7b93ba5854")) { # pre-GRADE key: 8dbe7770bd436331b81bd0a84dbaa1bb
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable MOVE_UP_STAY_UP_STATUS_3_YEAR, part 2: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable MOVE_UP_STAY_UP_STATUS_3_YEAR, part 2: FAIL\n")
@@ -723,10 +724,11 @@ function(
 				if (.Platform$OS.type == "unix") tmp.backend <- "'PARALLEL', " else tmp.backend <- "'FOREACH', TYPE='doParallel', "
 				parallel.config <- paste0("list(BACKEND=", tmp.backend, "WORKERS=list(\n\t\tPERCENTILES=", number.cores, ", BASELINE_PERCENTILES=", number.cores, ", PROJECTIONS=", number.cores, ", LAGGED_PROJECTIONS=", number.cores, ", \n\t\tSGP_SCALE_SCORE_TARGETS=", number.cores, ", SUMMARY=", number.cores, ", GA_PLOTS=", number.cores, ", SG_PLOTS=1))")
 			} else parallel.config <- test.option[['parallel.config']]
+			if (is.null(test.option[['use.csems.embedded.in.data']])) use.csems.embedded.in.data <- FALSE else use.csems.embedded.in.data <- TRUE
 
 			Demonstration_SGP <- NULL
+			sgpData_LONG <- SGPdata::sgpData_LONG
 			tmp.messages <- ("\t##### Results of testSGP test number 3 #####\n\n")
-			sgpData_LONG <- as.data.table(SGPdata::sgpData_LONG)
 
 			### Some minor modifications to SGPstateData for testing purposes
 
@@ -734,8 +736,18 @@ function(
 			SGPstateData[['DEMO_EOCT']][['SGP_Configuration']][['sgPlot.sgp.targets.timeframe']] <- 3
 			SGPstateData[['DEMO_EOCT']][['SGP_Configuration']][['sgp.target.scale.scores.merge']] <- "all_years_lagged_current"
 			SGPstateData[['DEMO_EOCT']][['SGP_Configuration']][['return.sgp.target.num.years']] <- TRUE
+			SGPstateData[['DEMO_EOCT']][['SGP_Configuration']][['round.digits']] <- 4L
 
-			### Add EOCT courses to sgpData_LONG
+			### Add EOCT courses to sgpData_LONG and CSEMs if using use.csems.embedded.in.data argument
+
+			if (use.csems.embedded.in.data) {
+				tmp.csems <- setkey(SGPstateData[["DEMO"]][["Assessment_Program_Information"]][["CSEM"]], CONTENT_AREA, GRADE, SCALE_SCORE)
+				sgpData_LONG[,SCALE_SCORE_CSEM:=splinefun(tmp.csems[eval(list(CONTENT_AREA[1], GRADE[1]))][[3]], tmp.csems[eval(list(CONTENT_AREA[1], GRADE[1]))][[4]], method="natural")(SCALE_SCORE), keyby=c("CONTENT_AREA", "GRADE")]
+				sgpData_LONG[CONTENT_AREA=="MATHEMATICS" & GRADE=="10", SCALE_SCORE_CSEM:=NA]
+				SGPstateData[["DEMO_EOCT"]][["Assessment_Program_Information"]][["CSEM"]] <- "SCALE_SCORE_CSEM"
+			} else {
+					SGPstateData[["DEMO_EOCT"]][["Assessment_Program_Information"]][["CSEM"]] <- setkey(SGPstateData[["DEMO_EOCT"]][["Assessment_Program_Information"]][["CSEM"]][CONTENT_AREA!="ALGEBRA_II"], CONTENT_AREA, GRADE)
+			}
 
 			sgpData_LONG[CONTENT_AREA=='MATHEMATICS' & GRADE=='9', CONTENT_AREA:='ALGEBRA_I']
 			sgpData_LONG[CONTENT_AREA=='MATHEMATICS' & GRADE=='10', CONTENT_AREA:='ALGEBRA_II']
@@ -791,7 +803,7 @@ function(
 			sgp.config <- c(READING_LAST_YEAR.config, MATHEMATICS_LAST_YEAR.config, GRADE_9_LIT_LAST_YEAR.config, AMERICAN_LIT_LAST_YEAR.config, ALGEBRA_I_LAST_YEAR.config, ALGEBRA_II_LAST_YEAR.config)
 
 			expression.to.evaluate <-
-				paste0("Demonstration_SGP <- abcSGP(state='DEMO_EOCT',\n\tsgp_object=sgpData_LONG,\n\tsteps=c('prepareSGP', 'analyzeSGP', 'combineSGP', 'summarizeSGP', 'visualizeSGP'),\n\tsimulate.sgps=FALSE,\n\tsgPlot.demo.report=TRUE,\n\tsgp.target.scale.scores=TRUE,\n\tsgp.config=sgp.config,\n\tparallel.config=", parallel.config, "\n)\n")
+				paste0("Demonstration_SGP <- abcSGP(state='DEMO_EOCT',\n\tsgp_object=sgpData_LONG,\n\tsteps=c('prepareSGP', 'analyzeSGP', 'combineSGP', 'summarizeSGP', 'visualizeSGP'),\n\tsimulate.sgps=TRUE,\n\tsgPlot.demo.report=TRUE,\n\tsgp.target.scale.scores=TRUE,\n\tsgp.config=sgp.config,\n\tparallel.config=", parallel.config, "\n)\n")
 
 			if (save.results) expression.to.evaluate <- paste(expression.to.evaluate, "dir.create('Data', showWarnings=FALSE)", "save(Demonstration_SGP, file='Data/Demonstration_SGP.Rdata')", sep="\n")
 
@@ -903,6 +915,14 @@ function(
 				tmp.messages <- c(tmp.messages, "\tTest of variable SGP_TARGET_2_YEAR_NUM_YEARS_TO_TARGET: FAIL\n")
 			}
 
+#			if (identical(mean(Demonstration_SGP@Data$SGP_STANDARD_ERROR, na.rm=TRUE), 8.50872)) {
+#			if (identical(digest(Demonstration_SGP@Data$SGP_STANDARD_ERROR), "cb81264f5933f0e4e22d515b5437f97f")) {
+			if (identical(digest(Demonstration_SGP@Data$SGP_STANDARD_ERROR), "ba125c9bb4a62a0e76bcbac55fca913b")) {
+				tmp.messages <- c(tmp.messages, "\tTest of variable SGP_STANDARD_ERROR (Omitting ALGEBRA_II): OK\n")
+			} else {
+				tmp.messages <- c(tmp.messages, "\tTest of variable SGP_STANDARD_ERROR (Omitting ALGEBRA_II): FAIL\n")
+			}
+
 			tmp.messages <- c(tmp.messages, paste("\n##### End testSGP test number 3: ", convertTime(timetakenSGP(started.at.overall)), "#####\n"))
 			messageSGP(tmp.messages)
 		} ### End TEST_NUMBER 3
@@ -923,11 +943,14 @@ function(
 			if (is.null(test.option[['simex.sample.size']])) {
 				simex.parameters <- "list(state='DEMO', lambda=seq(0,2,0.5), simulation.iterations=50, extrapolation='linear', save.matrices=TRUE)"
 				simex.sample.size <- FALSE
-			} else {
+			}
+			if (!is.null(test.option[['simex.sample.size']]) && !calculate.simex.baseline) {
 				simex.parameters <- "list(state='DEMO', lambda=seq(0,2,0.5), simulation.iterations=50, extrapolation='linear', save.matrices=TRUE, simex.sample.size=2500)"
 				simex.sample.size <- TRUE
 				messageSGP("\n\tParameter `simex.sample.size` set to 2500\n")
 			}
+			if (is.null(test.option[['use.csems.embedded.in.data']])) use.csems.embedded.in.data <- FALSE else use.csems.embedded.in.data <- TRUE
+			if (is.null(test.option[['dependent.var.error']])) dependent.var.error <- FALSE else dependent.var.error <- TRUE
 
 			###  The test of SIMEX baseline functionality requires the DEMO SIMEX matrices to be loaded manually.
 			### SGPstateData[["DEMO"]][["Baseline_splineMatrix"]][["Coefficient_Matrices"]] <- c(SGPstateData[["DEMO"]][["Baseline_splineMatrix"]][["Coefficient_Matrices"]], DEMO_SIMEX_Baseline_Matrices)
@@ -954,7 +977,18 @@ function(
 			sgpData_LONG$GRADE_REPORTED <- sgpData_LONG$GRADE
 			sgpData_LONG$GRADE[sgpData_LONG$CONTENT_AREA %in% c('ALGEBRA_I', 'ALGEBRA_II', 'GRADE_9_LIT', 'AMERICAN_LIT')] <-  'EOCT'
 
-			options(error=recover) # Don't use options(warn=2) - get warnings about knots and bounds from BASELINE SIMEX
+			if (use.csems.embedded.in.data) {
+				tmp.csems <- setkey(SGPstateData[["DEMO"]][["Assessment_Program_Information"]][["CSEM"]], CONTENT_AREA, GRADE, SCALE_SCORE)
+				sgpData_LONG[,SCALE_SCORE_CSEM:=splinefun(tmp.csems[eval(list(CONTENT_AREA[1], GRADE[1]))][[3]], tmp.csems[eval(list(CONTENT_AREA[1], GRADE[1]))][[4]], method="natural")(SCALE_SCORE), keyby=c("CONTENT_AREA", "GRADE")]
+				SGPstateData[["DEMO"]][["Assessment_Program_Information"]][["CSEM"]] <- "SCALE_SCORE_CSEM"
+				simex.parameters <- sub("save.matrices=TRUE", "save.matrices=TRUE, csem.data.vnames='SCALE_SCORE_CSEM'", simex.parameters)
+				simex.parameters <- sub("state='DEMO', ", "", simex.parameters)
+			}
+			if (dependent.var.error) {
+				simex.parameters <- sub("save.matrices=TRUE", "save.matrices=TRUE, dependent.var.error=TRUE", simex.parameters)
+			}
+
+			options(error=recover) # Don't use options(warn=2) - get warnings about knots and boundaries from BASELINE SIMEX
 			if (.Platform$OS.type == "unix") number.cores <- detectSGPCores(logical=TRUE) else number.cores <- detectSGPCores(logical=FALSE)
 			Demonstration_SGP <- NULL
 			tmp.messages <- ("##### Results of testSGP test number 4 #####\n\n")
@@ -968,15 +1002,15 @@ function(
 
 			expression.to.evaluate <-"\nDemonstration_SGP <- prepareSGP(sgpData_LONG, create.additional.variables=FALSE)\n\n"
 			if (!any(grepl('use.my.coefficient.matrices', names(test.option)))) {
-				expression.to.evaluate <- paste0(expression.to.evaluate, "Demonstration_SGP <- analyzeSGP(\n\tsgp_object=Demonstration_SGP,\n\tyears='", tail(sgpData.years, 1), "',\n\tcontent_areas='READING',\n\tsgp.percentiles.baseline.max.order=2,",
-					"\n\tsgp.percentiles=TRUE,\n\tsgp.projections=FALSE,\n\tsgp.projections.lagged=FALSE,\n\tsgp.percentiles.baseline=", calculate.simex.baseline, ",\n\tsgp.projections.baseline=FALSE,\n\tsgp.projections.lagged.baseline=FALSE,\n\tsimulate.sgps=FALSE,",
-					"\n\tcalculate.simex=", simex.parameters, ",\n\tcalculate.simex.baseline=", ifelse(calculate.simex.baseline, gsub(", simex.sample.size=2500", "", simex.parameters), "NULL"),",\n\tparallel.config=", parallel.config,"\n)\n")
+				expression.to.evaluate <- paste0(expression.to.evaluate, "Demonstration_SGP <- analyzeSGP(\n\tsgp_object=Demonstration_SGP,\n\tyears='", tail(sgpData.years, 1L), "',\n\tcontent_areas='READING',\n\tsgp.percentiles.baseline.max.order=2,",
+					"\n\tsgp.percentiles=TRUE,\n\tsgp.projections=FALSE,\n\tsgp.projections.lagged=FALSE,\n\tsgp.percentiles.baseline=", calculate.simex.baseline, ",\n\tsgp.projections.baseline=FALSE,\n\tsgp.projections.lagged.baseline=FALSE,\n\tsimulate.sgps=TRUE,",
+					"\n\tcalculate.simex=", simex.parameters, ",\n\tcalculate.simex.baseline=", ifelse(calculate.simex.baseline, gsub("save.matrices=TRUE", "save.matrices=TRUE, use.cohort.for.ranking=TRUE", simex.parameters), "NULL"),",\n\tparallel.config=", parallel.config,"\n)\n")
 			} else {
 				expression.to.evaluate <- paste0(expression.to.evaluate, "Demonstration_SGP@SGP[['Coefficient_Matrices']] <- test.option[[grep('use.my.coefficient.matrices', names(test.option))]]\n\n",
-					"Demonstration_SGP <- analyzeSGP(\n\tsgp_object=Demonstration_SGP,\n\tyears='", tail(sgpData.years, 1), "',\n\tcontent_areas='READING',\n\tsgp.percentiles.baseline.max.order=2,",
-					"\n\tsgp.percentiles=TRUE,\n\tsgp.projections=FALSE,\n\tsgp.projections.lagged=FALSE,\n\tsgp.percentiles.baseline=", calculate.simex.baseline, ",\n\tsgp.projections.baseline=FALSE,\n\tsgp.projections.lagged.baseline=FALSE,\n\tsimulate.sgps=FALSE,",
+					"Demonstration_SGP <- analyzeSGP(\n\tsgp_object=Demonstration_SGP,\n\tyears='", tail(sgpData.years, 1L), "',\n\tcontent_areas='READING',\n\tsgp.percentiles.baseline.max.order=2,",
+					"\n\tsgp.percentiles=TRUE,\n\tsgp.projections=FALSE,\n\tsgp.projections.lagged=FALSE,\n\tsgp.percentiles.baseline=", calculate.simex.baseline, ",\n\tsgp.projections.baseline=FALSE,\n\tsgp.projections.lagged.baseline=FALSE,\n\tsimulate.sgps=TRUE,",
 					"\n\tsgp.use.my.coefficient.matrices=TRUE,", # Use "Naive" Matrices for SGPs and in SIMEX too.
-					"\n\tcalculate.simex=", gsub("save.matrices=TRUE", "simex.use.my.coefficient.matrices=TRUE", simex.parameters), ",\n\tcalculate.simex.baseline=", ifelse(calculate.simex.baseline, gsub(", simex.sample.size=2500", "", simex.parameters), "NULL"),",",
+					"\n\tcalculate.simex=", gsub("save.matrices=TRUE", "simex.use.my.coefficient.matrices=TRUE, use.cohort.for.ranking=TRUE", simex.parameters), ",\n\tcalculate.simex.baseline=", ifelse(calculate.simex.baseline, gsub("save.matrices=TRUE", "save.matrices=TRUE, use.cohort.for.ranking=TRUE", simex.parameters), "NULL"),",",
 					"\n\tparallel.config=", parallel.config,"\n)\n")
 				available.matrices <- test.option[[grep('use.my.coefficient.matrices', names(test.option))]]
 				available.matrices <- available.matrices[grep("[.]SIMEX", names(available.matrices))][1][[1]][[1]][[1]]
@@ -1001,8 +1035,10 @@ function(
 
 			### TEST of SGP_SIMEX variable
 
-#			if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, 1028656L, 1029023L))) {
-			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, "b7a4dadefa56e7034210db02fd5acb36", "55fb02e2b05c308c3eb288474a9b3d00"))) { # pre-GRADE key: 55fb02e2b05c308c3eb288474a9b3d00
+#			if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, 1028656L, 1029023L))) {
+#			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, "b7a4dadefa56e7034210db02fd5acb36", "55fb02e2b05c308c3eb288474a9b3d00"))) { # pre-1.9-4.0 sgp.simex fix
+#			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, "ee04a88161ab6173420e970bf69aee23", "c7ca3a4e0795cfb2d61d85b36e135c91"))) {
+			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, "ee04a88161ab6173420e970bf69aee23", ifelse(dependent.var.error, "27176e8d237650f806c7ab62d533834c", "c7ca3a4e0795cfb2d61d85b36e135c91")))) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_SIMEX: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_SIMEX: FAIL\n")
@@ -1010,8 +1046,10 @@ function(
 
 			### TEST of SGP_SIMEX_RANKED variable
 
-#			if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, 1032411L, 1032498L))) {
-			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, "84370af691ee17b803bc683d3e243f4a", "22babea1ccfdea54c6cd073bb24cf82e"))) {
+#			if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, 1032411L, 1032498L))) {
+#			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, "84370af691ee17b803bc683d3e243f4a", "22babea1ccfdea54c6cd073bb24cf82e"))) { # pre-1.9-4.0 sgp.simex fix
+#``			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, "3636c7881c5c89664e3a8e0ce96564dc", "6ad93e28790b68d5d51d83a7501a7a7c"))) {
+			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, "3636c7881c5c89664e3a8e0ce96564dc", ifelse (dependent.var.error, "77c1ca82479f442f91e8248f0888a351", "6ad93e28790b68d5d51d83a7501a7a7c")))) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_SIMEX_RANKED: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_SIMEX_RANKED: FAIL\n")
@@ -1019,15 +1057,17 @@ function(
 
 			### TEST of SGP_SIMEX_BASELINE and SGP_SIMEX_BASELINE_RANKED variables
 			if (calculate.simex.baseline) {
-#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1), "BASELINE", sep=".")]][['SGP_SIMEX_BASELINE']]), 1034475L)) {
-				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1), "BASELINE", sep=".")]][['SGP_SIMEX_BASELINE']]), "816099ca957a29552f4ba1fea88ae1e5")) { # pre-GRADE key: 816099ca957a29552f4ba1fea88ae1e5
+#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), "BASELINE", sep=".")]][['SGP_SIMEX_BASELINE']]), 1034475L)) {
+#				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), "BASELINE", sep=".")]][['SGP_SIMEX_BASELINE']]), "816099ca957a29552f4ba1fea88ae1e5")) {# pre-GRADE key: 816099ca957a29552f4ba1fea88ae1e5
+				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), "BASELINE", sep=".")]][['SGP_SIMEX_BASELINE']]), "3e259b0a8a2d287d58945bf3635f1270")) {# post 1.9-4.0
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_SIMEX_BASELINE: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_SIMEX_BASELINE: FAIL\n")
 				}
 
-#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1), "BASELINE", sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), 1031775L)) {
-				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1), "BASELINE", sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), "721d5eac4cb20a70f9344bbe88b8ef2b")) {
+#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), "BASELINE", sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), 1031775L)) {
+#				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), "BASELINE", sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), "721d5eac4cb20a70f9344bbe88b8ef2b")) {
+				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1L), "BASELINE", sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), "866a60bfb9e21d420ff566cb87c8521b")) {# post 1.9-4.0
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_SIMEX_BASELINE_RANKED: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_SIMEX_BASELINE_RANKED: FAIL\n")
@@ -1049,13 +1089,13 @@ function(
 			if (!any(grepl('use.my.coefficient.matrices', names(test.option)))) {
 				expression.to.evaluate <-
 					paste0("\nDemonstration_SGP <- analyzeSGP(\n\tsgp_object=Demonstration_SGP,\n\tsgp.config=sgp.config,\n\tsgp.percentiles=TRUE,\n\tsgp.projections=FALSE,\n\tsgp.projections.lagged=FALSE,\n\tsgp.percentiles.baseline=", calculate.simex.baseline, ",\n\tsgp.projections.baseline=FALSE,\n\tsgp.projections.lagged.baseline=FALSE,\n\tsimulate.sgps=FALSE,",
-								 "\n\tcalculate.simex=", simex.parameters, ",\n\tcalculate.simex.baseline=", ifelse(calculate.simex.baseline, gsub(", simex.sample.size=2500", "", simex.parameters), "NULL"),",\n\tparallel.config=", parallel.config, "\n)\n",
+								 "\n\tcalculate.simex=", simex.parameters, ",\n\tcalculate.simex.baseline=", ifelse(calculate.simex.baseline, gsub("save.matrices=TRUE", "save.matrices=TRUE, use.cohort.for.ranking=TRUE", simex.parameters), "NULL"),",\n\tparallel.config=", parallel.config, "\n)\n",
 								 "\nDemonstration_SGP <- combineSGP(Demonstration_SGP)\n\n")
 			} else {
 				expression.to.evaluate <-
 					paste0("\nDemonstration_SGP <- analyzeSGP(\n\tsgp_object=Demonstration_SGP,\n\tsgp.config=sgp.config,\n\tsgp.percentiles=TRUE,\n\tsgp.projections=FALSE,\n\tsgp.projections.lagged=FALSE,\n\tsgp.percentiles.baseline=", calculate.simex.baseline, ",\n\tsgp.projections.baseline=FALSE,\n\tsgp.projections.lagged.baseline=FALSE,\n\tsimulate.sgps=FALSE,",
 								 "\n\tsgp.use.my.coefficient.matrices=TRUE,", # Use "Naive" Matrices for SGPs and in SIMEX too.
-								 "\n\tcalculate.simex=", gsub("save.matrices=TRUE", "simex.use.my.coefficient.matrices=TRUE", simex.parameters), ",\n\tcalculate.simex.baseline=", ifelse(calculate.simex.baseline, gsub(", simex.sample.size=2500", "", simex.parameters), "NULL"),",\n\tparallel.config=", parallel.config, "\n)\n",
+								 "\n\tcalculate.simex=", gsub("save.matrices=TRUE", "simex.use.my.coefficient.matrices=TRUE, use.cohort.for.ranking=TRUE", simex.parameters), ",\n\tcalculate.simex.baseline=", ifelse(calculate.simex.baseline, gsub("save.matrices=TRUE", "save.matrices=TRUE, use.cohort.for.ranking=TRUE", simex.parameters), "NULL"),",\n\tparallel.config=", parallel.config, "\n)\n",
 								 "\nDemonstration_SGP <- combineSGP(Demonstration_SGP)\n\n")
 			}
 
@@ -1077,43 +1117,51 @@ function(
 
 			tmp.messages <- c(tmp.messages, "\n\t##### Results of testSGP test number 4, Part 2 #####\n")
 
-#			if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, 211609L, 211555L))) {
-			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, "df4cc817b52d2fcbbe6f7addd1b4e2f3", "a351d68d993a6ae42714142afd1ea6d3"))) { # pre-GRADE key: a351d68d993a6ae42714142afd1ea6d3
+#			if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, 211609L, 211555L))) {
+#			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, "df4cc817b52d2fcbbe6f7addd1b4e2f3", "a351d68d993a6ae42714142afd1ea6d3"))) { # pre-1.9-4.0 sgp.simex fix
+			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, "47474057b07a5cead92b9d184bee6237", ifelse(dependent.var.error, "f8580018874717543d573cb11d779ac7", "1fc0b74894a50300a307ff1ac7f300eb")))) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of AMERICAN_LIT SGP_SIMEX: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of AMERICAN_LIT SGP_SIMEX: FAIL\n")
 			}
 
-#			if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, 211814L, 211864L))) {
-			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, "a7270bc07d7ce6eca7055ce1d1fd91d6", "af4aa783fc81ba1c81ad758a5c92efff"))) {
+#			if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, 211814L, 211864L))) {
+#			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, "a7270bc07d7ce6eca7055ce1d1fd91d6", "af4aa783fc81ba1c81ad758a5c92efff"))) { # pre-1.9-4.0 sgp.simex fix
+#			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, "b73341834f894dd8632b50b26df2d5c6", "241e933dbcfbf3a2d0d6f536272b7bad"))) {
+			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, "b73341834f894dd8632b50b26df2d5c6", ifelse(dependent.var.error, "1dfc935d020386ec2bc39bafeeeeb384", "241e933dbcfbf3a2d0d6f536272b7bad")))) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of AMERICAN_LIT SGP_SIMEX_RANKED: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of AMERICAN_LIT SGP_SIMEX_RANKED: FAIL\n")
 			}
 
-#			if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, 212639L, 212383L))) {
-			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, "89446b39fa32bbe91d435081a9aa41e6", "ab2862894723e1d9533a1499195dca98"))) { # pre-GRADE key: ab2862894723e1d9533a1499195dca98
+#			if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, 212639L, 212383L))) {
+#			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, "89446b39fa32bbe91d435081a9aa41e6", "ab2862894723e1d9533a1499195dca98"))) { # pre-1.9-4.0 sgp.simex fix
+			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX']]), ifelse(simex.sample.size, "78a18a4a82516b5156f55061d3d0d3e8", ifelse(dependent.var.error, "1b49b1d56a93264443e5ab0036054568", "d744baf8de99087a252940f9d1fe0348")))) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of ALGEBRA_II SGP_SIMEX: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of ALGEBRA_II SGP_SIMEX: FAIL\n")
 			}
 
-#			if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, 213318L, 213361L))) {
-			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, "8a01548a0d3489660cfc9f4ce66ceb98", "152b1048bb2d191a1ed9244fde160d2d"))) {
+#			if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, 213318L, 213361L))) {
+#			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, "8a01548a0d3489660cfc9f4ce66ceb98", "152b1048bb2d191a1ed9244fde160d2d"))) { # pre-1.9-4.0 sgp.simex fix
+			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1L), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, "00f6f613d386740e32999cc38a06d26d", ifelse(dependent.var.error, "a525ed4fdc64d3af1d35ca4a1689e69c", "a6dadc01f6368657dcd49c2437725ccd")))) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of ALGEBRA_II SGP_SIMEX_RANKED: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of ALGEBRA_II SGP_SIMEX_RANKED: FAIL\n")
 			}
 
 #			if (identical(sum(Demonstration_SGP@Data$SGP_SIMEX, na.rm=TRUE), ifelse(simex.sample.size, 1452904L, 1452961L))) {
-			if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX), ifelse(simex.sample.size, "65e6aaf41e6e8f1f5a3a394cbcac9e0f", "928e4428e146a3486a5c8eede3c92ab9"))) { # pre-GRADE key: 676e5bab01b85e849c1dab718fb58e78
+#			if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX), ifelse(simex.sample.size, "65e6aaf41e6e8f1f5a3a394cbcac9e0f", "928e4428e146a3486a5c8eede3c92ab9"))) { # pre-1.9-4.0 sgp.simex fix
+#			if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX), ifelse(simex.sample.size, "8571479f09e79517d3ed95ca938b4524", "02acad263034242149b6604812b44b20"))) {
+			if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX), ifelse(simex.sample.size, "8571479f09e79517d3ed95ca938b4524", ifelse(dependent.var.error, "c11843c1f1a38f18d3d1cd658be4dd43", "02acad263034242149b6604812b44b20")))) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of @Data variable SGP_SIMEX: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of @Data variable SGP_SIMEX: FAIL\n")
 			}
 
 #			if (identical(sum(Demonstration_SGP@Data$SGP_SIMEX_RANKED, na.rm=TRUE), ifelse(simex.sample.size, 1457543L, 1457723L))) {
-			if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX_RANKED), ifelse(simex.sample.size, "d29e7c9a6ef3f21dff1a534550d667ab", "421e5f144da90b8ac8f04c4616370e73"))) {
+#			if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX_RANKED), ifelse(simex.sample.size, "d29e7c9a6ef3f21dff1a534550d667ab", "421e5f144da90b8ac8f04c4616370e73"))) { # pre-1.9-4.0 sgp.simex fix
+			if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX_RANKED), ifelse(simex.sample.size, "6e9bb077ba1de7d9e1e08c4b37af6aba", ifelse(dependent.var.error, "26c943a456f8e44fcc3bd61076a59be5", "f90f641444e545398cbccf1a2bc648d2")))) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of @Data variable SGP_SIMEX_RANKED: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of @Data variable SGP_SIMEX_RANKED: FAIL\n")
@@ -1125,14 +1173,14 @@ function(
 				tmp.matrix.names <- c("MATHEMATICS.BASELINE", "READING.BASELINE", "GRADE_9_LIT.BASELINE", "AMERICAN_LIT.BASELINE", "ALGEBRA_I.BASELINE", "ALGEBRA_II.BASELINE",
 					"MATHEMATICS.BASELINE.SIMEX", "READING.BASELINE.SIMEX", "GRADE_9_LIT.BASELINE.SIMEX", "AMERICAN_LIT.BASELINE.SIMEX", "ALGEBRA_I.BASELINE.SIMEX", "ALGEBRA_II.BASELINE.SIMEX",
 					"READING.2015_2016", "READING.2015_2016.SIMEX", "ALGEBRA_II.2015_2016", "ALGEBRA_II.2015_2016.SIMEX", "AMERICAN_LIT.2015_2016", "AMERICAN_LIT.2015_2016.SIMEX")
-				if (identical(names(Demonstration_SGP@SGP$Coefficient_Matrices), gsub("2015_2016", tail(sgpData.years, 1), tmp.matrix.names))) {
+				if (identical(names(Demonstration_SGP@SGP$Coefficient_Matrices), gsub("2015_2016", tail(sgpData.years, 1L), tmp.matrix.names))) {
 					tmp.messages <- c(tmp.messages, "\t\tTest of @SGP Coefficient Matrix Names: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of @SGP Coefficient Matrix Names: FAIL\n")
 				}
 			} else {
 				tmp.matrix.names <- c("READING.2015_2016", "READING.2015_2016.SIMEX", "ALGEBRA_II.2015_2016", "ALGEBRA_II.2015_2016.SIMEX", "AMERICAN_LIT.2015_2016", "AMERICAN_LIT.2015_2016.SIMEX")
-				if (identical(names(Demonstration_SGP@SGP$Coefficient_Matrices), gsub("2015_2016", tail(sgpData.years, 1), tmp.matrix.names))) {
+				if (identical(names(Demonstration_SGP@SGP$Coefficient_Matrices), gsub("2015_2016", tail(sgpData.years, 1L), tmp.matrix.names))) {
 					tmp.messages <- c(tmp.messages, "\t\tTest of @SGP Coefficient Matrix Names: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of @SGP Coefficient Matrix Names: FAIL\n")
@@ -1140,44 +1188,145 @@ function(
 			}
 
 			if (calculate.simex.baseline) {
-#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE']]), 217894L)) {
-				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE']]), "1dbd929906efe4a131c68180d83c4164")) { # pre-GRADE key: 73176856b45b8bc490b5e98068319411
+#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1L), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE']]), 217894L)) {
+#				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1L), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE']]), "1dbd929906efe4a131c68180d83c4164")) {# pre-GRADE key: 73176856b45b8bc490b5e98068319411
+				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1L), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE']]), "af1033d6a7cdf0ba65f8e0d08bf67c6d")) {# post 1.9-4.0
 					tmp.messages <- c(tmp.messages, "\t\tTest of AMERICAN_LIT SGP_SIMEX_BASELINE: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of AMERICAN_LIT SGP_SIMEX_BASELINE: FAIL\n")
 				}
-#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), 211837L)) {
-				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), "f3e9a7c0e1eb4564ddc04d5b38f5223e")) { # xXx 40cfc13e853dfa9af8398ca38fea96e8
+#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1L), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), 211837L)) {
+#				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1L), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), "f3e9a7c0e1eb4564ddc04d5b38f5223e")) {# xXx 40cfc13e853dfa9af8398ca38fea96e8
+				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1L), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), "75542c44a8463b3bb14aa2611e83cdd7")) {# post 1.9-4.0
 					tmp.messages <- c(tmp.messages, "\t\tTest of AMERICAN_LIT SGP_SIMEX_BASELINE_RANKED: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of AMERICAN_LIT SGP_SIMEX_BASELINE_RANKED: FAIL\n")
 				}
-#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE']]), 212818L)) {
-				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE']]), "e9ac73391f257c5d21df89c2ca6d5283")) { # pre-GRADE key: d4fe0d79e985aacb6331ce95f4a2d01e
+#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1L), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE']]), 212818L)) {
+#				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1L), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE']]), "e9ac73391f257c5d21df89c2ca6d5283")) {# pre-GRADE key: d4fe0d79e985aacb6331ce95f4a2d01e
+				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1L), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE']]), "49fe29a83e7f22f4bb6ee4e3538f5bff")) {# post 1.9-4.0
 					tmp.messages <- c(tmp.messages, "\t\tTest of ALGEBRA_II SGP_SIMEX_BASELINE: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of ALGEBRA_II SGP_SIMEX_BASELINE: FAIL\n")
 				}
-#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), 213377L)) {
-				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), "9fb272b324afab3f9aeb7107c277ac23")) { # xXx 5df2787d9bed17d59004a9eeb76930a6
+#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1L), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), 213377L)) {
+#				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1L), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), "9fb272b324afab3f9aeb7107c277ac23")) { # xXx 5df2787d9bed17d59004a9eeb76930a6
+				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1L), 'BASELINE', sep=".")]][['SGP_SIMEX_BASELINE_RANKED']]), "581eb5580530038fb03f352c731d4930")) {# post 1.9-4.0
 					tmp.messages <- c(tmp.messages, "\t\tTest of ALGEBRA_II SGP_SIMEX_BASELINE_RANKED: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of ALGEBRA_II SGP_SIMEX_BASELINE_RANKED: FAIL\n")
 				}
 #				if (identical(sum(Demonstration_SGP@Data$SGP_SIMEX_BASELINE, na.rm=TRUE), 1465187L)) {
-				if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX_BASELINE), "010289791f188481d48577bf3f247c2e")) { # pre-GRADE key: 3e653f546bd93da33cc915b5d37100a4  xXx  61ff473b2777c2b7ea14a2c0bcb662ec
+#				if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX_BASELINE), "010289791f188481d48577bf3f247c2e")) { # pre-GRADE key: 3e653f546bd93da33cc915b5d37100a4  xXx  61ff473b2777c2b7ea14a2c0bcb662ec
+				if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX_BASELINE), "a193b6fe6b26f8fcd221c945081bbf3b")) {# post 1.9-4.0
 					tmp.messages <- c(tmp.messages, "\t\tTest of @Data variable SGP_SIMEX_BASELINE: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of @Data variable SGP_SIMEX_BASELINE: FAIL\n")
 				}
 #				if (identical(sum(Demonstration_SGP@Data$SGP_SIMEX_BASELINE_RANKED, na.rm=TRUE), 1456989L)) {
-				if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX_BASELINE_RANKED), "0acbb6fb922e87c54bc2aa5acf55ba73")) { #  xXx  3818ece7a3a5f5e6e7a0ff343c8a752a
+#				if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX_BASELINE_RANKED), "0acbb6fb922e87c54bc2aa5acf55ba73")) {#  xXx  3818ece7a3a5f5e6e7a0ff343c8a752a
+				if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX_BASELINE_RANKED), "ed623b7000d943acbc2fd524f7ce4efc")) {# post 1.9-4.0
 					tmp.messages <- c(tmp.messages, "\t\tTest of @Data variable SGP_SIMEX_BASELINE_RANKED: OK\n")
 				} else {
 					tmp.messages <- c(tmp.messages, "\t\tTest of @Data variable SGP_SIMEX_BASELINE_RANKED: FAIL\n")
 				}
 			}
 			tmp.messages <- c(tmp.messages, paste("\n\t##### End testSGP test number 4, Part 2: ", convertTime(timetakenSGP(started.at.intermediate)), "#####\n"))
+
+			if (!is.null(test.option[['test.updated.students']])) {
+				#  Subset and remove a random sample of students
+				set.seed(719)
+				updated.student.ids <- sgpData_LONG[VALID_CASE=="VALID_CASE" & YEAR==tail(sgpData.years, 1) & CONTENT_AREA %in% c("READING", "AMERICAN_LIT", "ALGEBRA_II")][, list(ID = sample(unique(ID), 100)), by=c("CONTENT_AREA", "GRADE")][GRADE != "3"]
+
+				sgp.key <- key(Demonstration_SGP@Data)
+				setkeyv(updated.student.ids, c("CONTENT_AREA", "GRADE", "ID"))
+				setkeyv(Demonstration_SGP@Data, c("CONTENT_AREA", "GRADE", "ID"))
+				Demonstration_Data_LONG_Updated <- data.table(Demonstration_SGP@Data[updated.student.ids, nomatch=0], key=sgp.key) # nomatch=0 not needed?
+				Demonstration_Data_LONG_Updated[, grep("SGP|PRIOR|PERCENTILE", names(Demonstration_Data_LONG_Updated), value=TRUE) := NULL]
+				Demonstration_SGP@Data <- data.table(Demonstration_SGP@Data[!updated.student.ids], key=sgp.key)
+
+				for (ca in names(Demonstration_SGP@SGP[["SGPercentiles"]])) {
+					Demonstration_SGP@SGP[["SGPercentiles"]][[ca]]$CONTENT_AREA <- strsplit(ca, "[.]")[[1]][1]
+					setkeyv(Demonstration_SGP@SGP[["SGPercentiles"]][[ca]], c("CONTENT_AREA", "GRADE", "ID"))
+					Demonstration_SGP@SGP[["SGPercentiles"]][[ca]] <- Demonstration_SGP@SGP[["SGPercentiles"]][[ca]][!updated.student.ids]
+					Demonstration_SGP@SGP[["SGPercentiles"]][[ca]][, CONTENT_AREA := NULL]
+				}
+
+				#  Perturb SCALE_SCORE of students to update
+				set.seed(589)
+				Demonstration_Data_LONG_Updated[, SCALE_SCORE := SCALE_SCORE - round(runif(nrow(Demonstration_Data_LONG_Updated), -10, 10), 0)]
+
+				#  Add READING to sgp.config
+				sgp.config <- c(sgp.config, list(
+				  READING.config=list(
+				    sgp.content.areas=rep('READING', 3),
+				    sgp.panel.years=tail(sgpData.years, 3),
+				    sgp.grade.sequences=list(c('3', '4'), c('3', '4', '5'), c( '4', '5', '6'), c('5', '6', '7'), c('6', '7', '8'))))
+				)
+
+				expression.to.evaluate <-
+					paste0("\nDemonstration_SGP <- updateSGP(\n\twhat_sgp_object=Demonstration_SGP,\n\twith_sgp_data_LONG=Demonstration_Data_LONG_Updated,",
+								 "\n\tsteps=c('prepareSGP', 'analyzeSGP', 'combineSGP'), \n\tsgp.config=sgp.config,",
+								 "\n\toverwrite.existing.data=FALSE,\n\tupdate.old.data.with.new=TRUE,",
+								 "\n\tsgp.percentiles=TRUE,\n\tsgp.projections=FALSE,\n\tsgp.projections.lagged=FALSE,\n\tsgp.percentiles.baseline=", calculate.simex.baseline, ",\n\tsgp.projections.baseline=FALSE,\n\tsgp.projections.lagged.baseline=FALSE,\n\tsimulate.sgps=FALSE,",
+								 "\n\tsgp.use.my.coefficient.matrices=TRUE,", # Use "Naive" Matrices for SGPs and in SIMEX too.
+								 "\n\tcalculate.simex=", gsub("save.matrices=TRUE", "\n\t\tsimex.use.my.coefficient.matrices=TRUE, use.cohort.for.ranking=FALSE\n\t\t", simex.parameters), ",\n\tcalculate.simex.baseline=", ifelse(calculate.simex.baseline, gsub(", simex.sample.size=2500", "", simex.parameters), "NULL,"),
+								 "\n\tsave.intermediate.results=FALSE,\n\tparallel.config=", parallel.config, "\n)\n")
+
+				if (save.results) expression.to.evaluate <- paste(expression.to.evaluate, "save(Demonstration_SGP, file='Data/Demonstration_SGP.Rdata')", sep="\n")
+
+				cat(paste0("EVALUATING test number 4, Part 3:\n", expression.to.evaluate), fill=TRUE)
+
+				if (memory.profile) {
+					Rprof("testSGP(4)_Memory_Profile.out", memory.profiling=TRUE)
+				}
+
+				started.at.intermediate3 <- proc.time()
+				eval(parse(text=expression.to.evaluate))
+
+				if (memory.profile) {
+					Rprof(NULL)
+				}
+
+				tmp.messages <- c(tmp.messages, "\n\t##### Results of testSGP test number 4: Part 3 #####\n")
+
+#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, 1032372L, 1032465L))) {
+				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, "af0bd14d3e6c830ecaf638fcafc57bb6", "a316661bb39fa58a0daa432b6a7cda8f"))) {
+					tmp.messages <- c(tmp.messages, "\t\tTest of READING Updated SGP_SIMEX_RANKED: OK\n")
+				} else {
+					tmp.messages <- c(tmp.messages, "\t\tTest of READING Updated SGP_SIMEX_RANKED: FAIL\n")
+				}
+
+#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, 211710L, 212048L))) {
+				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('AMERICAN_LIT', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, "b7a29a91fb2e4a0d9555d530fd55cc0a", "b1efeb656dd1cce6cf753d7aaf85f3cc"))) {
+					tmp.messages <- c(tmp.messages, "\t\tTest of AMERICAN_LIT Updated SGP_SIMEX_RANKED: OK\n")
+				} else {
+					tmp.messages <- c(tmp.messages, "\t\tTest of AMERICAN_LIT Updated SGP_SIMEX_RANKED: FAIL\n")
+				}
+
+#				if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, 213300L, 213327L))) {
+				if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('ALGEBRA_II', tail(sgpData.years, 1), sep=".")]][['SGP_SIMEX_RANKED']]), ifelse(simex.sample.size, "2cfbc31e5801ac1006c933be5362657f", "d8c707ff51d892232a203960254553c3"))) {
+					tmp.messages <- c(tmp.messages, "\t\tTest of ALGEBRA_II Updated SGP_SIMEX_RANKED: OK\n")
+				} else {
+					tmp.messages <- c(tmp.messages, "\t\tTest of ALGEBRA_II Updated SGP_SIMEX_RANKED: FAIL\n")
+				}
+
+#				if (identical(sum(Demonstration_SGP@Data$SGP_SIMEX, na.rm=TRUE), ifelse(simex.sample.size, 1453181L, 1453991L))) {
+				if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX), ifelse(simex.sample.size, "9c490a7cfa61902b0f7ee733ef1decc9", "dd02dc6c4711840c2a8ba5b152c0a864"))) {
+					tmp.messages <- c(tmp.messages, "\t\tTest of @Data UPDATED variable SGP_SIMEX: OK\n")
+				} else {
+					tmp.messages <- c(tmp.messages, "\t\tTest of @Data UPDATED variable SGP_SIMEX: FAIL\n")
+				}
+
+#				if (identical(sum(Demonstration_SGP@Data$SGP_SIMEX_RANKED, na.rm=TRUE), ifelse(simex.sample.size, 1457549L, 1457840L))) {
+				if (identical(digest(Demonstration_SGP@Data$SGP_SIMEX_RANKED), ifelse(simex.sample.size, "e07fd1aff19438dbbc30e42bdab7557a", "bbb3c63a095d9638acd45eff321e0862"))) {
+					tmp.messages <- c(tmp.messages, "\t\tTest of @Data UPDATED variable SGP_SIMEX_RANKED: OK\n")
+				} else {
+					tmp.messages <- c(tmp.messages, "\t\tTest of @Data UPDATED variable SGP_SIMEX_RANKED: FAIL\n")
+				}
+				tmp.messages <- c(tmp.messages, paste("\n\t##### End testSGP test number 4, Part 3: ", convertTime(timetakenSGP(started.at.intermediate3)), "#####\n"))
+			} ###  End 'test.updated.students'
+
 			tmp.messages <- c(tmp.messages, paste("\n##### End testSGP test number 4: ", convertTime(timetakenSGP(started.at.overall)), "#####\n"))
 			messageSGP(tmp.messages)
 		} ### End TEST_NUMBER 4
@@ -1495,9 +1644,9 @@ function(
 
 			# if (identical(sum(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', rev(sgpData.years)[2], 'EQUATED', sep=".")]][['SGP_EQUATED']], na.rm=TRUE), 1418003L)) {
 			if (identical(digest(Demonstration_SGP@SGP[['SGPercentiles']][[paste('READING', rev(sgpData.years)[2], 'EQUATED', sep=".")]][['SGP_EQUATED']]), "b1ea9b92fa692cec135c18c5ba979a42")) {
-				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP from equated analysis, part 2: OK\n")
+				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP from READING equated analysis, part 2: OK\n")
 			} else {
-				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP from equated analysis, part 2: FAIL\n")
+				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP from READING equated analysis, part 2: FAIL\n")
 			}
 
 			### TEST of SCALE_SCORE_EQUATED variable
@@ -1561,8 +1710,8 @@ function(
 
 			### TEST of LEVEL_1_SGP_TARGET_YEAR_1_CURRENT variable
 
-			# if (identical(as.integer(sum(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1), sep=".")]][['LEVEL_1_SGP_TARGET_YEAR_1_CURRENT']], na.rm=TRUE)), 987731L)) {
-			if (identical(digest(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1), sep=".")]][['LEVEL_1_SGP_TARGET_YEAR_1_CURRENT']]), "003cce734efc7ca41d7f726d572229bd")) {
+			# if (identical(as.integer(sum(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1L), sep=".")]][['LEVEL_1_SGP_TARGET_YEAR_1_CURRENT']], na.rm=TRUE)), 987731L)) {
+			if (identical(digest(Demonstration_SGP@SGP[['SGProjections']][[paste('READING', tail(sgpData.years, 1L), sep=".")]][['LEVEL_1_SGP_TARGET_YEAR_1_CURRENT']]), "003cce734efc7ca41d7f726d572229bd")) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable LEVEL_1_SGP_TARGET_YEAR_1_CURRENT, part 3: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable LEVEL_1_SGP_TARGET_YEAR_1_CURRENT, part 3: FAIL\n")
@@ -1570,8 +1719,8 @@ function(
 
 			### TEST of ACHIEVEMENT_LEVEL_PRIOR Variable in MATHEMATICS.XXXX_XXXX.LAGGED projections
 
-			# if (identical(as.vector(table(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), 'LAGGED', sep=".")]][['ACHIEVEMENT_LEVEL_PRIOR']])), c(8178L, 4316L, 5991L, 7552L, 3145L))) {
-			if (identical(digest(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), 'LAGGED', sep=".")]][['ACHIEVEMENT_LEVEL_PRIOR']]), "e07ef3e5e79828e925ea0e2a5b5304f5")) {
+			# if (identical(as.vector(table(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), 'LAGGED', sep=".")]][['ACHIEVEMENT_LEVEL_PRIOR']])), c(8178L, 4316L, 5991L, 7552L, 3145L))) {
+			if (identical(digest(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), 'LAGGED', sep=".")]][['ACHIEVEMENT_LEVEL_PRIOR']]), "e07ef3e5e79828e925ea0e2a5b5304f5")) {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable ACHIEVEMENT_LEVEL_PRIOR, part 3: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable ACHIEVEMENT_LEVEL_PRIOR, part 3: FAIL\n")
@@ -1614,7 +1763,7 @@ function(
 			SGPstateData[['DEMO']][['Baseline_splineMatrix']] <- NULL
 
 			expression.to.evaluate <-
-				paste0("\nDemonstration_SGP <- abcSGP(\n\tsgp_object=SGPdata::sgpData_LONG,\n\tsteps=c('prepareSGP', 'analyzeSGP', 'combineSGP'),\n\tyears='", tail(sgpData.years, 1), "',\n\tcontent_areas='MATHEMATICS',\n\tsgp.percentiles=FALSE,\n\tsgp.projections=FALSE,\n\tsgp.projections.lagged=FALSE,\n\tsgp.percentiles.baseline=TRUE,\n\tsgp.projections.baseline=FALSE,\n\tsgp.projections.lagged.baseline=FALSE,\n\tparallel.config=", parallel.config, "\n)\n")
+				paste0("\nDemonstration_SGP <- abcSGP(\n\tsgp_object=SGPdata::sgpData_LONG,\n\tsteps=c('prepareSGP', 'analyzeSGP', 'combineSGP'),\n\tyears='", tail(sgpData.years, 1L), "',\n\tcontent_areas='MATHEMATICS',\n\tsgp.percentiles=FALSE,\n\tsgp.projections=FALSE,\n\tsgp.projections.lagged=FALSE,\n\tsgp.percentiles.baseline=TRUE,\n\tsgp.projections.baseline=FALSE,\n\tsgp.projections.lagged.baseline=FALSE,\n\tparallel.config=", parallel.config, "\n)\n")
 
 			if (save.results) expression.to.evaluate <- paste(expression.to.evaluate, "dir.create('Data', showWarnings=FALSE)", "save(Demonstration_SGP, file='Data/Demonstration_SGP.Rdata')", sep="\n")
 
@@ -1665,7 +1814,7 @@ function(
 
 			RLI1_SGPt_PART_1 <- RLI1_SGPt_PART_2 <- RLI1_SGPt_PART_3 <- SCALE_SCORE_RASCH <- NULL
 			tmp.messages <- "##### Begin testSGP test number RLI1 (STAR Scores) #####\n\n"
-			tmp.last.window <- tail(sort(unique(SGPdata::sgptData_LONG[['YEAR']])), 1)
+			tmp.last.window <- tail(sort(unique(SGPdata::sgptData_LONG[['YEAR']])), 1L)
 
 			###############################################################################
 			### PART 1: Using RLI_SGPt_UPDATE_SHELL
@@ -1879,7 +2028,7 @@ function(
 
 			RLI2_SGPt_PART_1 <- RLI2_SGPt_PART_2 <- RLI2_SGPt_PART_3 <- SCALE_SCORE <- NULL
 			tmp.messages <- "##### Begin testSGP test number RLI2 (RASCH Scores) #####\n\n"
-			tmp.last.window <- tail(sort(unique(SGPdata::sgptData_LONG[['YEAR']])), 1)
+			tmp.last.window <- tail(sort(unique(SGPdata::sgptData_LONG[['YEAR']])), 1L)
 
 			###############################################################################
 			### PART 1: Using RLI_SGPt_UPDATE_SHELL
@@ -1923,9 +2072,18 @@ function(
 
 #			if (identical(sum(RLI2_SGPt_PART_1@SGP[['SGPercentiles']][[paste("READING_RASCH", tmp.last.window, "BASELINE", sep=".")]][['SGP_BASELINE']], na.rm=TRUE), 109949L)) { #107694L SGPdata 15.0, preSGP 1.6-4.16 +Dups 107696L, 109568L +Dups
 			if (identical(digest(RLI2_SGPt_PART_1@SGP[['SGPercentiles']][[paste("READING_RASCH", tmp.last.window, "BASELINE", sep=".")]][['SGP_BASELINE']]), "2d11719cc20456977939b677eb14f393")) {
-				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_BASELINE, part 1: OK\n")
+				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_BASELINE for READING_RASCH, part 1: OK\n")
 			} else {
-				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_BASELINE, part 1: FAIL\n")
+				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_BASELINE for READING_RASCH, part 1: FAIL\n")
+			}
+
+			### TEST of SGP variable from READING_UNIFIED
+
+#			if (identical(sum(RLI2_SGPt_PART_1@SGP[['SGPercentiles']][[paste("READING_UNIFIED_RASCH", tmp.last.window, "BASELINE", sep=".")]][['SGP_BASELINE']], na.rm=TRUE), 19726L))
+			if (identical(digest(RLI2_SGPt_PART_1@SGP[['SGPercentiles']][[paste("READING_RASCH", tmp.last.window, "BASELINE", sep=".")]][['SGP_BASELINE']]), "2d11719cc20456977939b677eb14f393")) {
+				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_BASELINE for READING_UNIFIED_RASCH, part 1: OK\n")
+			} else {
+				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_BASELINE for READING_UNIFIED_RASCH, part 1: FAIL\n")
 			}
 
 			### TEST of SGP_TARGET_BASELINE_10_TIME_CURRENT variable from READING
@@ -2098,7 +2256,7 @@ function(
 
 			RLI3_SGPt_PART_1 <- RLI3_SGPt_PART_2 <- RLI3_SGPt_PART_3 <- SCALE_SCORE <- NULL
 			tmp.messages <- "##### Begin testSGP test number RLI3 (RASCH Scores) #####\n\n"
-			tmp.last.window <- tail(sort(unique(SGPdata::sgptData_LONG[['YEAR']])), 1)
+			tmp.last.window <- tail(sort(unique(SGPdata::sgptData_LONG[['YEAR']])), 1L)
 
 			###############################################################################
 			### PART 1: Using RLI_SGPt_UPDATE_SHELL
@@ -2301,6 +2459,142 @@ function(
 
 		#######################################################################################################################################################
 		###
+		### TEST NUMBER RLI4: Test of SGPt functionality with UK data
+		###
+		#######################################################################################################################################################
+
+		if ("RLI4" %in% TEST_NUMBER) {
+
+			eval(parse(text="require(RLImatrices)"))
+			options(error=recover)
+			options(warn=2)
+			if (.Platform$OS.type == "unix") number.cores <- detectSGPCores(logical=TRUE) else number.cores <- detectSGPCores(logical=FALSE)
+			if (is.null(test.option[['parallel.config']])) {
+				if (.Platform$OS.type == "unix") tmp.backend <- "'PARALLEL', " else tmp.backend <- "'FOREACH', TYPE='doParallel', "
+				parallel.config <- paste0("list(BACKEND=", tmp.backend, "WORKERS=list(\n\t\tBASELINE_PERCENTILES=", number.cores, ", PROJECTIONS=", number.cores, ", \n\t\tSGP_SCALE_SCORE_TARGETS=", number.cores, "))")
+			} else parallel.config <- test.option[['parallel.config']]
+			SGPstateData[["RLI_UK"]][["SGP_Configuration"]][["fix.duplicates"]] <- "KEEP.ALL"
+			SGPstateData[["RLI_UK"]][["SGP_Configuration"]][["goodness.of.fit.minimum.n"]] <- 50
+			SGPstateData[["RLI_UK"]][["Assessment_Program_Information"]][["CSEM"]] <- "SEM"
+			RLI_Cutscores <- SGPstateData[['RLI']][['SGP_Configuration']][['testSGP.cutscores']][['STAR']]
+			RLI4_UK_SGPt_PART_1 <- RLI4_UK_SGPt_PART_2 <- COUNTRY <- STATE <- DATE <- NULL
+			tmp.messages <- "##### Begin testSGP test number RLI4 (STAR Scores for UK) #####\n"
+			tmp.last.window <- tail(sort(unique(SGPdata::sgptData_LONG[['YEAR']])), 1L)
+
+			RLI_UK_SGPt_Data_LONG <- copy(SGPdata::sgptData_LONG)[CONTENT_AREA=="READING"][,c("ACHIEVEMENT_LEVEL", "SCALE_SCORE_RASCH"):=NULL][,COUNTRY:="GB"][,STATE:="HAMP"]
+
+			###############################################################################
+			### PART 1: Calculate using actual year in data set (currently 2016_2017.3)
+			###############################################################################
+
+			### Calculate SGPs
+
+			expression.to.evaluate <-
+				paste0("RLI4_UK_SGPt_PART_1 <- rliSGP(\n\tsgp_object=RLI_UK_SGPt_Data_LONG,\n\treturn.updated.shell=TRUE,\n\tgoodness.of.fit.print=,\n\tscore.type='STAR',\n\tcutscore.file.name=RLI_Cutscores,\n\tparallel.config=", parallel.config, "\n)\n")
+
+			if (save.results) expression.to.evaluate <- paste(expression.to.evaluate, "save(RLI4_UK_SGPt_PART_1, file='Data/RLI4_SGPt_PART_1.Rdata')", sep="\n")
+
+			cat(paste0("EVALUATING Test Number RLI4, Part 1:\n", expression.to.evaluate), fill=TRUE)
+
+			if (memory.profile) {
+				Rprof("testSGP(RLI)_Memory_Profile_Part_1.out", memory.profiling=TRUE)
+			}
+
+			started.at.overall <- proc.time()
+			eval(parse(text=expression.to.evaluate))
+			if (dir.exists("Data/RLI_UK_PART_1")) unlink("Data/RLI_UK_PART_1", recursive = TRUE)
+			file.rename("Data/RLI", "Data/RLI_UK_PART_1")
+
+
+			### TEST of variable values
+
+			tmp.messages <- c(tmp.messages, "\n\t##### Results of testSGP test number RLI4 (STAR Scores for UK): Part 1 #####\n")
+
+			### TEST of SGP variable from READING
+
+#			if (identical(sum(RLI4_UK_SGPt_PART_1@SGP[['SGPercentiles']][[paste("READING", tmp.last.window, "BASELINE", sep=".")]][['SGP_BASELINE']], na.rm=TRUE), 109845L)) {
+			if (identical(digest(RLI4_UK_SGPt_PART_1@SGP[['SGPercentiles']][[paste("READING", tmp.last.window, "BASELINE", sep=".")]][['SGP_BASELINE']]), "e125a33a1ce622a083d2d857e6d25e09")) {
+				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_BASELINE, part 1: OK\n")
+			} else {
+				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_BASELINE, part 1: FAIL\n")
+			}
+
+			### TEST of P50_PROJ_TIME_1_CURRENT variable from READING
+
+#			if (identical(sum(RLI4_UK_SGPt_PART_1@SGP[['SGProjections']][[paste("READING", tmp.last.window, "BASELINE", sep=".")]][['P50_PROJ_TIME_1_CURRENT']], na.rm=TRUE), 541497.7)) {
+			if (identical(digest(RLI4_UK_SGPt_PART_1@SGP[['SGProjections']][[paste("READING", tmp.last.window, "BASELINE", sep=".")]][['P50_PROJ_TIME_1_CURRENT']]), "23f4c5ce9669021213e742f16ffd767e")) {
+				tmp.messages <- c(tmp.messages, "\t\tTest of variable P50_PROJ_TIME_1_CURRENT, part 1: OK\n")
+			} else {
+				tmp.messages <- c(tmp.messages, "\t\tTest of variable P50_PROJ_TIME_1_CURRENT, part 1: FAIL\n")
+			}
+
+			tmp.messages <- c(tmp.messages, paste("\t##### End testSGP test number RLI4 (STAR Scores for UK): Part 1", convertTime(timetakenSGP(started.at.overall)), "#####\n"))
+
+
+			###############################################################################
+			### PART 2: Calculate using year + 2 in data set (currently 2018_2019.3)
+			###############################################################################
+
+			### Bump dates forward by two years
+
+			tmp.date <- as.POSIXlt(RLI_UK_SGPt_Data_LONG[['DATE']])
+			tmp.date$year <- tmp.date$year+2
+			RLI_UK_SGPt_Data_LONG[,DATE:=as.Date(tmp.date)]
+			RLI_UK_SGPt_Data_LONG[,YEAR:=gsub("2016_2017", "2018_2019", YEAR)]
+			RLI_UK_SGPt_Data_LONG[,YEAR:=gsub("2015_2016", "2017_2018", YEAR)]
+			RLI_UK_SGPt_Data_LONG[,YEAR:=gsub("2014_2015", "2016_2017", YEAR)]
+			tmp.last.window <- tail(sort(unique(RLI_UK_SGPt_Data_LONG[['YEAR']])), 1L)
+
+
+			### Calculate SGPs
+
+			expression.to.evaluate <-
+				paste0("RLI4_UK_SGPt_PART_2 <- rliSGP(\n\tsgp_object=RLI_UK_SGPt_Data_LONG,\n\treturn.updated.shell=TRUE,\n\tgoodness.of.fit.print=,\n\tscore.type='STAR',\n\tcutscore.file.name=RLI_Cutscores,\n\tparallel.config=", parallel.config, "\n)\n")
+
+			if (save.results) expression.to.evaluate <- paste(expression.to.evaluate, "save(RLI4_UK_SGPt_PART_2, file='Data/RLI4_SGPt_PART_2.Rdata')", sep="\n")
+
+			cat(paste0("EVALUATING Test Number RLI4, Part 2:\n", expression.to.evaluate), fill=TRUE)
+
+			if (memory.profile) {
+				Rprof("testSGP(RLI)_Memory_Profile_Part_2.out", memory.profiling=TRUE)
+			}
+
+			started.at.intermediate <- proc.time()
+			eval(parse(text=expression.to.evaluate))
+			if (dir.exists("Data/RLI_UK_PART_2")) unlink("Data/RLI_UK_PART_2", recursive = TRUE)
+			file.rename("Data/RLI", "Data/RLI_UK_PART_2")
+
+
+			### TEST of variable values
+
+			tmp.messages <- c(tmp.messages, "\n\t##### Results of testSGP test number RLI4 (STAR Scores for UK): Part 2 #####\n")
+
+			### TEST of SGP variable from READING
+
+#			if (identical(sum(RLI4_UK_SGPt_PART_2@SGP[['SGPercentiles']][[paste("READING", tmp.last.window, "BASELINE", sep=".")]][['SGP_BASELINE']], na.rm=TRUE), 109799L)) {
+			if (identical(digest(RLI4_UK_SGPt_PART_2@SGP[['SGPercentiles']][[paste("READING", tmp.last.window, "BASELINE", sep=".")]][['SGP_BASELINE']]), "36b2431ba6eac8508e239acc6f3a1e87")) {
+				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_BASELINE, part 2: OK\n")
+			} else {
+				tmp.messages <- c(tmp.messages, "\t\tTest of variable SGP_BASELINE, part 2: FAIL\n")
+			}
+
+			### TEST of P50_PROJ_TIME_1_CURRENT variable from READING
+
+#			if (identical(sum(RLI4_UK_SGPt_PART_2@SGP[['SGProjections']][[paste("READING", tmp.last.window, "BASELINE", sep=".")]][['P50_PROJ_TIME_1_CURRENT']], na.rm=TRUE), 548304.5)) {
+			if (identical(digest(RLI4_UK_SGPt_PART_2@SGP[['SGProjections']][[paste("READING", tmp.last.window, "BASELINE", sep=".")]][['P50_PROJ_TIME_1_CURRENT']]), "a45755aad2cbd06bffce85fe2f79442f")) {
+				tmp.messages <- c(tmp.messages, "\t\tTest of variable P50_PROJ_TIME_1_CURRENT, part 2: OK\n")
+			} else {
+				tmp.messages <- c(tmp.messages, "\t\tTest of variable P50_PROJ_TIME_1_CURRENT, part 2: FAIL\n")
+			}
+
+			tmp.messages <- c(tmp.messages, paste("\t##### End testSGP test number RLI4 (STAR Scores for UK): Part 2", convertTime(timetakenSGP(started.at.intermediate)), "#####\n"))
+			tmp.messages <- c(tmp.messages, paste("\n##### End testSGP test number RLI4 (STAR Scores for UK): ", convertTime(timetakenSGP(started.at.overall)), "#####\n"))
+			messageSGP(tmp.messages)
+		} ### End TEST_NUMBER RLI4
+
+
+		#######################################################################################################################################################
+		###
 		### TEST NUMBER 7: Test of ability to deal with duplicates in test data
 		###
 		#######################################################################################################################################################
@@ -2365,7 +2659,7 @@ function(
 			MATHEMATICS_PENULTIMATE_YEAR.config <- list(
 				MATHEMATICS.LAST_YEAR=list(
 					sgp.content.areas=c('MATHEMATICS', 'MATHEMATICS', 'MATHEMATICS', 'MATHEMATICS'),
-					sgp.panel.years=head(sgpData.years, -1),
+					sgp.panel.years=head(sgpData.years, -1L),
 					sgp.grade.sequences=list(3:4, 3:5, 3:6, 4:7, 5:8))
 			)
 
@@ -2379,7 +2673,7 @@ function(
 			ALGEBRA_I_PENULTIMATE_YEAR.config <- list(
 				ALGEBRA_I.LAST_YEAR=list(
 					sgp.content.areas=c('MATHEMATICS', 'MATHEMATICS', 'MATHEMATICS', 'ALGEBRA_I'),
-					sgp.panel.years=head(sgpData.years, -1),
+					sgp.panel.years=head(sgpData.years, -1L),
 					sgp.grade.sequences=list(c(6:8, 'EOCT')))
 			)
 
@@ -2393,7 +2687,7 @@ function(
 			ALGEBRA_II_PENULTIMATE_YEAR.config <- list(
 				ALGEBRA_II.LAST_YEAR=list(
 					sgp.content.areas=c('MATHEMATICS', 'MATHEMATICS', 'ALGEBRA_I', 'ALGEBRA_II'),
-					sgp.panel.years=head(sgpData.years, -1),
+					sgp.panel.years=head(sgpData.years, -1L),
 					sgp.grade.sequences=list(c(7:8, 'EOCT', 'EOCT')))
 			)
 
@@ -2410,7 +2704,7 @@ function(
 			### Part 1
 
 			expression.to.evaluate <-
-				paste0("Demonstration_SGP <- abcSGP(state='DEMO_EOCT',\n\tsgp_object=sgpData_LONG[YEAR %in% head(sgpData.years, -1)],\n\tsteps=c('prepareSGP', 'analyzeSGP', 'combineSGP'),\n\tsgp.percentiles=TRUE,\n\tsgp.projections=TRUE,\n\tsgp.projections.lagged=TRUE,\n\tsgp.percentiles.baseline=FALSE,\n\tsgp.projections.baseline=FALSE,\n\tsgp.projections.lagged.baseline=FALSE,\n\tsimulate.sgps=FALSE,\n\tsgp.target.scale.scores=TRUE,\n\tsgp.config=sgp.config.PENULTIMATE,\n\tparallel.config=", parallel.config, "\n)\n")
+				paste0("Demonstration_SGP <- abcSGP(state='DEMO_EOCT',\n\tsgp_object=sgpData_LONG[YEAR %in% head(sgpData.years, -1L)],\n\tsteps=c('prepareSGP', 'analyzeSGP', 'combineSGP'),\n\tsgp.percentiles=TRUE,\n\tsgp.projections=TRUE,\n\tsgp.projections.lagged=TRUE,\n\tsgp.percentiles.baseline=FALSE,\n\tsgp.projections.baseline=FALSE,\n\tsgp.projections.lagged.baseline=FALSE,\n\tsimulate.sgps=FALSE,\n\tsgp.target.scale.scores=TRUE,\n\tsgp.config=sgp.config.PENULTIMATE,\n\tparallel.config=", parallel.config, "\n)\n")
 
 			cat("##### Begin testSGP test number 7 #####\n", fill=TRUE)
 			cat(paste0("EVALUATING Test Number 7, Part 1:\n", expression.to.evaluate), fill=TRUE)
@@ -2453,16 +2747,16 @@ function(
 			}
 
 			### TEST of SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1_CURRENT variable for MATHEMATICS.XXXX_XXXX scale score targets  :: sum 15097046  ::  dim 27207     9
-			setkey(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(head(sgpData.years, -1), 1), "TARGET_SCALE_SCORES", sep=".")]])
-			if (identical(digest::digest(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(head(sgpData.years, -1), 1), "TARGET_SCALE_SCORES", sep=".")]][['SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1_CURRENT']]), "1b39f58739785da3d0c5dda548b6ad3b")) { # bf576ec83a3f22420d87db5bea983baf  v14: cfdbc67cc171bb0f254f9768759078cb :: SNOW febf7c535de5ef1d4ccb3d7689b21b5a
+			setkey(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(head(sgpData.years, -1L), 1L), "TARGET_SCALE_SCORES", sep=".")]])
+			if (identical(digest::digest(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(head(sgpData.years, -1L), 1L), "TARGET_SCALE_SCORES", sep=".")]][['SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1_CURRENT']]), "1b39f58739785da3d0c5dda548b6ad3b")) { # bf576ec83a3f22420d87db5bea983baf  v14: cfdbc67cc171bb0f254f9768759078cb :: SNOW febf7c535de5ef1d4ccb3d7689b21b5a
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1_CURRENT: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1_CURRENT: FAIL\n")
 			}
 
 			### TEST of SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1 variable for MATHEMATICS.XXXX_XXXX scale score targets  :: sum 11284534  ::  dim = 20468    11
-			setkey(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(head(sgpData.years, -1), 1), "LAGGED.TARGET_SCALE_SCORES", sep=".")]])
-			if (identical(digest::digest(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(head(sgpData.years, -1), 1), "LAGGED.TARGET_SCALE_SCORES", sep=".")]][['SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1']]), "bb4bd2c3868b5089fa97e7bcca7d8918")) { # seq 0a0d9b6b1e85257964806039436a5101  ::  v14: 68538a5a21ccb1b6d544ecaf342081ad :: SNOW 7804cb64c45e41224b7249ff36149d3a
+			setkey(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(head(sgpData.years, -1L), 1L), "LAGGED.TARGET_SCALE_SCORES", sep=".")]])
+			if (identical(digest::digest(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(head(sgpData.years, -1L), 1L), "LAGGED.TARGET_SCALE_SCORES", sep=".")]][['SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1']]), "bb4bd2c3868b5089fa97e7bcca7d8918")) { # seq 0a0d9b6b1e85257964806039436a5101  ::  v14: 68538a5a21ccb1b6d544ecaf342081ad :: SNOW 7804cb64c45e41224b7249ff36149d3a
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1: FAIL\n")
@@ -2474,7 +2768,7 @@ function(
 			dup.ids <- unique(Demonstration_SGP@Data[duplicated(Demonstration_SGP@Data, by=setdiff(getKey(Demonstration_SGP@Data), "GRADE")), ID]) # Still check "GRADE excluded" dups
 			dup.data <- Demonstration_SGP@Data[ID %in% dup.ids, vars.to.check, with=FALSE]
 			setkey(dup.data)
-			if (identical(digest::digest(dup.data), "1f948cfd6f1c8940795cb339c5efb917")) { # with DUPS_FLAG: 2b85afc2857336aaa165dd04feb47ef4
+			if (identical(digest::digest(dup.data), "4f0ff253da62439b7bde584554e7ecee")) { # Pre 1.9-0.0 "1f948cfd6f1c8940795cb339c5efb917" # with DUPS_FLAG: 2b85afc2857336aaa165dd04feb47ef4
 				tmp.messages <- c(tmp.messages, "\t\tTest of duplicated cases in @Data: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of duplicated cases in @Data: FAIL\n")
@@ -2527,7 +2821,7 @@ function(
 			### Part 2
 
 			expression.to.evaluate <-
-				paste0("Demonstration_SGP <- updateSGP(state='DEMO_EOCT',\n\twhat_sgp_object=Demonstration_SGP,\n\twith_sgp_data_LONG=sgpData_LONG[YEAR == tail(sgpData.years, 1)],\n\tsteps=c('prepareSGP', 'analyzeSGP', 'combineSGP', 'outputSGP'), \n\tsgp.percentiles=TRUE,\n\tsgp.projections=TRUE,\n\tsgp.projections.lagged=TRUE,\n\tsgp.percentiles.baseline=FALSE,\n\tsgp.projections.baseline=FALSE,\n\tsgp.projections.lagged.baseline=FALSE,\n\tsimulate.sgps=FALSE,\n\tsgp.target.scale.scores=TRUE,\n\tsgp.config=sgp.config.ULTIMATE,\n\tparallel.config=", parallel.config, "\n)\n")
+				paste0("Demonstration_SGP <- updateSGP(state='DEMO_EOCT',\n\twhat_sgp_object=Demonstration_SGP,\n\twith_sgp_data_LONG=sgpData_LONG[YEAR == tail(sgpData.years, 1L)],\n\tsteps=c('prepareSGP', 'analyzeSGP', 'combineSGP', 'outputSGP'), \n\tsgp.percentiles=TRUE,\n\tsgp.projections=TRUE,\n\tsgp.projections.lagged=TRUE,\n\tsgp.percentiles.baseline=FALSE,\n\tsgp.projections.baseline=FALSE,\n\tsgp.projections.lagged.baseline=FALSE,\n\tsimulate.sgps=FALSE,\n\tsgp.target.scale.scores=TRUE,\n\tsgp.config=sgp.config.ULTIMATE,\n\tparallel.config=", parallel.config, "\n)\n")
 
 			if (save.results) expression.to.evaluate <- paste(expression.to.evaluate, "save(Demonstration_SGP, file='Data/Demonstration_SGP.Rdata')", sep="\n")
 
@@ -2571,16 +2865,16 @@ function(
 			}
 
 			### TEST of SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1_CURRENT variable for MATHEMATICS.XXXX_XXXX scale score targets  ::  dim 27834 x 9  ::  sum 15398506
-			setkey(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), "TARGET_SCALE_SCORES", sep=".")]])
-			if (identical(digest::digest(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), "TARGET_SCALE_SCORES", sep=".")]][['SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1_CURRENT']]), "94e2e53b97a5b64024b3d92f9619578b")) { # cfdbc67cc171bb0f254f9768759078cb
+			setkey(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), "TARGET_SCALE_SCORES", sep=".")]])
+			if (identical(digest::digest(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), "TARGET_SCALE_SCORES", sep=".")]][['SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1_CURRENT']]), "94e2e53b97a5b64024b3d92f9619578b")) { # cfdbc67cc171bb0f254f9768759078cb
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1_CURRENT: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1_CURRENT: FAIL\n")
 			}
 
 			### TEST of SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1 variable for MATHEMATICS.XXXX_XXXX scale score targets  SEQ sum 13934897 ::  dim 24956 x 11
-			setkey(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), "LAGGED.TARGET_SCALE_SCORES", sep=".")]])
-			if (identical(digest::digest(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1), "LAGGED.TARGET_SCALE_SCORES", sep=".")]][['SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1']]), "7c1d199dcde9c0187bf9efd4e5730ebf")) { # seq 296de3ef1829819cf3f6c0775c0ab76c v14 (?)
+			setkey(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), "LAGGED.TARGET_SCALE_SCORES", sep=".")]])
+			if (identical(digest::digest(Demonstration_SGP@SGP[['SGProjections']][[paste('MATHEMATICS', tail(sgpData.years, 1L), "LAGGED.TARGET_SCALE_SCORES", sep=".")]][['SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1']]), "7c1d199dcde9c0187bf9efd4e5730ebf")) { # seq 296de3ef1829819cf3f6c0775c0ab76c v14 (?)
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of variable SCALE_SCORE_SGP_TARGET_3_YEAR_PROJ_YEAR_1: FAIL\n")
@@ -2591,7 +2885,7 @@ function(
 			dup.ids <- unique(Demonstration_SGP@Data[duplicated(Demonstration_SGP@Data, by=setdiff(getKey(Demonstration_SGP@Data), "GRADE")), ID]) # Still check "GRADE excluded" dups
 			dup.data <- Demonstration_SGP@Data[ID %in% dup.ids, vars.to.check, with=FALSE]
 			setkey(dup.data)
-			if (identical(digest::digest(dup.data), "8b0d3fbf4e0149cab72383d17132b3be")) { # 1096ae04d748ba69d7dd63ef398ac434  #  With DUPS_FLAG: 12e253be3ce98f8f519b6a452f13cc93
+			if (identical(digest::digest(dup.data), "b807be39ea50348ac5d26e245ce260bc")) { # Pre 1.9-0.0 1096ae04d748ba69d7dd63ef398ac434  #  With DUPS_FLAG: 12e253be3ce98f8f519b6a452f13cc93
 				tmp.messages <- c(tmp.messages, "\t\tTest of duplicated cases in @Data: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of duplicated cases in @Data: FAIL\n")
@@ -2683,7 +2977,7 @@ function(
 
 			### TEST of School Summary Table  :: dim = 637 x 22
 			setkey(Demonstration_SGP@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__CONTENT_AREA__GRADE__SCHOOL_ENROLLMENT_STATUS"]])
-			if (identical(digest::digest(Demonstration_SGP@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__CONTENT_AREA__GRADE__SCHOOL_ENROLLMENT_STATUS"]]), "e13379b7384154f36d26eb0de40d79c2")) { # 3472a7f8a5ee67e248de158feb3da808
+			if (identical(digest::digest(Demonstration_SGP@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__CONTENT_AREA__GRADE__SCHOOL_ENROLLMENT_STATUS"]]), "a0e9fd5224e2ddcc0bc3e849f5663bdf")) { # Pre 1.9-0.0 e13379b7384154f36d26eb0de40d79c2 # 3472a7f8a5ee67e248de158feb3da808
 				# identical(sum(Demonstration_SGP@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__CONTENT_AREA__GRADE__SCHOOL_ENROLLMENT_STATUS"]]$MEDIAN_SGP_COUNT), 58069L) # Same as with YEAR!
 				tmp.messages <- c(tmp.messages, "\t\tTest of School Summary Table: OK\n")
 			} else {
@@ -2692,7 +2986,7 @@ function(
 
 			### TEST of Instructor Summary Table  :: dim = 3516 x 23
 			setkey(Demonstration_SGP@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__CONTENT_AREA__GRADE__INSTRUCTOR_ENROLLMENT_STATUS"]])
-			if (identical(digest::digest(Demonstration_SGP@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__CONTENT_AREA__GRADE__INSTRUCTOR_ENROLLMENT_STATUS"]]), "3f0d7039e96e44c9ccd445cc0d1bb098")) { # 059d0a7f18c704589cb38e0da0b3aeec
+			if (identical(digest::digest(Demonstration_SGP@Summary[["SCHOOL_NUMBER"]][["SCHOOL_NUMBER__INSTRUCTOR_NUMBER__CONTENT_AREA__GRADE__INSTRUCTOR_ENROLLMENT_STATUS"]]), "eee346ec649be4b422fca2f44443afc0")) { # Pre 1.9-0.0 3f0d7039e96e44c9ccd445cc0d1bb098 # 059d0a7f18c704589cb38e0da0b3aeec
 				tmp.messages <- c(tmp.messages, "\t\tTest of Instructor Summary Table: OK\n")
 			} else {
 				tmp.messages <- c(tmp.messages, "\t\tTest of Instructor Summary Table: FAIL\n")
