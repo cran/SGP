@@ -47,6 +47,7 @@ visualizeSGP(
         sgPlot.folder="Visualizations/studentGrowthPlots",
         sgPlot.folder.names="number",
         sgPlot.fan=TRUE,
+        sgPlot.custom.trajectory=FALSE,
         sgPlot.sgp.targets=FALSE,
         sgPlot.sgp.targets.timeframe=3,
         sgPlot.anonymize=FALSE,
@@ -172,6 +173,8 @@ provided the function produces \code{\link{studentGrowthPlot}}s for ALL students
   }
   \item{sgPlot.fan}{A Boolean argument (defaults to TRUE) indicating whether to produce projection fan on \code{\link{studentGrowthPlot}}s.
   }
+  \item{sgPlot.custom.trajectory}{A Boolean argument (defaults to FALSE) or a character vector indicating the variable name containing the custom trajectory coordinates to be plotted.
+  }
   \item{sgPlot.sgp.targets}{A Boolean argument (defaults to TRUE) indicating whether to indicate SGP growth targets on \code{\link{studentGrowthPlot}}s.
   }
   \item{sgPlot.sgp.targets.timeframe}{An integer argument specifying the number of years forward associated with targets to be added to the student growth plots.
@@ -253,7 +256,7 @@ Betebenner, D. W. (2009). Norm- and criterion-referenced student growth.
 Educational Measurement: Issues and Practice, 28(4):42-51.
 }
 
-\author{Damian W. Betebenner \email{dbetebenner@nciea.org} and Adam Van Iwaarden \email{vaniwaarden@colorado.edu}}
+\author{Damian W. Betebenner \email{dbetebenner@nciea.org} and Adam Van Iwaarden \email{avaniwaarden@nciea.org}}
 
 \seealso{\code{\link{bubblePlot}}, \code{\link{bubblePlot_Styles}}, \code{\link{studentGrowthPlot}}, \code{\link{growthAchievementPlot}}}
 

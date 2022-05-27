@@ -1,7 +1,7 @@
 `studentGrowthPlot` <-
-function(Scale_Scores,                  ## Vector of Scale Scores
-	Plotting_Scale_Scores,                ## Score used for plotting, if missing, then Scale_Scores are used for plotting,
-                                        ##   if supplied Scale_Scores used for text
+function(Scale_Scores,                    ## Vector of Scale Scores
+	Plotting_Scale_Scores,                ## Score used for plotting, if missing, then Scale_Scores are used
+                                          ## for plotting, if supplied Scale_Scores used for text
 	Achievement_Levels,                   ## NOTE: Achievement_Levels must/should be supplied as factors with appropriate level codings
 	SGP,                                  ## Vector of SGPs
 	SGP_Levels,                           ## Vector of SGP Levels
@@ -14,9 +14,8 @@ function(Scale_Scores,                  ## Vector of Scale Scores
 	Plotting_SGP_Scale_Score_Targets,     ## Vector of CUKU, CUKU_Current, MUSU, MUSU_Current scale score targets for plotting (transformed if non-vertical/equated scale)
 	Cutscores,                            ## data.frame of long formatted achievement level cutscores
 	Years,                                ## Vector of years corresponding to Scale_Scores, Content_Areas, ... arguments supplied
-	Report_Parameters) {                  ## list containing Current_Year, Content_Area, Content_Area_Title, State, Denote_Content_Area, SGP_Targets, Configuration, Language, Assessment_Transition,
-                                        ##   Fan
-
+	Report_Parameters) {                  ## list containing Current_Year, Content_Area, Content_Area_Title, State, Denote_Content_Area, SGP_Targets,
+                                          ## Configuration, Language, Assessment_Transition, Fan
 
 	############################################
 	### Create relevant variables
@@ -147,6 +146,7 @@ function(Scale_Scores,                  ## Vector of Scale Scores
 		if (all(c("sgp.projections", "sgp.projections.lagged") %in% Report_Parameters[['SGP_Targets']]) | all(c("sgp.projections.baseline", "sgp.projections.lagged.baseline") %in% Report_Parameters[['SGP_Targets']])) tmp.target.types <- names(unlist(SGP_Targets)[!is.na(unlist(SGP_Targets))])
 		if (identical("sgp.projections", Report_Parameters[['SGP_Targets']]) | identical("sgp.projections.baseline", Report_Parameters[['SGP_Targets']])) tmp.target.types <- grep("Current", names(unlist(SGP_Targets)[!is.na(unlist(SGP_Targets))]), value=TRUE)
 		if (identical("sgp.projections.lagged", Report_Parameters[['SGP_Targets']]) | identical("sgp.projections.lagged.baseline", Report_Parameters[['SGP_Targets']])) tmp.target.types <- grep("Current", names(unlist(SGP_Targets)[!is.na(unlist(SGP_Targets))]), value=TRUE, invert=TRUE)
+		if (identical("CUSTOM", Report_Parameters[['SGP_Targets']])) tmp.target.types <- grep("CUSTOM", names(unlist(SGP_Targets)[!is.na(unlist(SGP_Targets))]), value=TRUE)
 	}
 
 	if (!is.null(SGP::SGPstateData[[Report_Parameters$State]][['SGP_Configuration']][['sgPlot.show.content_area.progression']]) |
@@ -205,7 +205,7 @@ function(Scale_Scores,                  ## Vector of Scale Scores
 		target.label <- "Target"
 	}
 
-	if (identical(toupper(Report_Parameters[['Configuration']][['Language']]), "SPANISH")) {
+	if (identical(toupper(Report_Parameters[['Configuration']][['Language']]), "SPANISH")) { # WIDA_CO and NH
 		achievement.label <- "Resultado"
 		achievement_level.label <- "Nivel de Capacitaci\uF3n" # Hex code for accented o is \uF3 - http://www.ascii.cl/htmlcodes.htm
 		achievement_target.label <- "Meta de Capacitaci\uF3n"
@@ -223,6 +223,26 @@ function(Scale_Scores,                  ## Vector of Scale Scores
 		SU.label <- "Mantener"
 		target.label <- "Meta"
 		SGP_Levels <- SGP::SGPstateData[[Report_Parameters$State]][["Growth"]][["Levels"]][match(SGP_Levels, SGP::SGPstateData[[paste(head(unlist(strsplit(Report_Parameters$State, "_")), -1), collapse="_")]][["Growth"]][["Levels"]])]
+	}
+
+	if (!is.null(Report_Parameters[["Configuration"]][["Language"]][["Custom"]])) { # See WIDA_GA for example
+  		achievement.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["achievement.label"]]
+		achievement_level.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["achievement_level.label"]]
+		achievement_target.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["achievement_target.label"]]
+		growth.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["growth.label"]]
+		growth_percentile.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["growth_percentile.label"]]
+		growth_level.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["growth_level.label"]]
+		growth_target.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["growth_target.label"]]
+		level.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["level.label"]]
+		percentiles.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["percentiles.label"]]
+		scale_score.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["scale_score.label"]]
+		grade.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["grade.label"]]
+		CU.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["CU.label"]]
+		KU.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["KU.label"]]
+		MU.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["MU.label"]]
+		SU.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["SU.label"]]
+		target.label <- Report_Parameters[["Configuration"]][["Language"]][["Custom"]][["target.label"]]
+		SGP_Levels <- SGP::SGPstateData[[Report_Parameters$State]][["Growth"]][["Levels"]][match(SGP_Levels, SGP::SGPstateData[[paste(head(unlist(strsplit(Report_Parameters$State, "_")), -1), collapse = "_")]][["Growth"]][["Levels"]])]
 	}
 
 	if (is.null(Report_Parameters[['Fan']])) {
@@ -243,6 +263,8 @@ function(Scale_Scores,                  ## Vector of Scale Scores
 	##############################
 	### Utility functions
 	##############################
+
+	`%w/o%` <- function(x, y) x[!x %in% y]
 
 	ach.level.labels <- function(perlevel){
 		tmp <- unlist(sapply(achievement.level.labels, names), use.names=FALSE)[match(perlevel, unlist(achievement.level.labels))]
@@ -450,22 +472,22 @@ function(Scale_Scores,                  ## Vector of Scale Scores
 		invisible(g)
 	}
 
-	labelSplit <- function(label) {
+	labelSplit <- function(label, force.split.nchar=9) {
 			label.split <- unlist(strsplit(label, " "))
 			label.word.nchar <- cumsum(nchar(label.split))
-			if (length(label.word.nchar) > 1 & tail(label.word.nchar, 1) > 10) {
-				if (any(label.word.nchar <= 10)) {
-					label.split.position <- max(which(label.word.nchar <= 10))
+			if (length(label.word.nchar) > 1 & tail(label.word.nchar, 1) > force.split.nchar) {
+				if (any(label.word.nchar <= force.split.nchar)) {
+					label.split.position <- max(which(label.word.nchar <= force.split.nchar))
 					tmp.label <- paste(label.split[1:label.split.position], collapse=" ")
 					tmp.label[2] <- paste(label.split[(label.split.position+1):length(label.split)], collapse=" ")
-					tmp.cex <- c(title.ca.size - 0.25 - max(0, nchar(tmp.label[1])-10)*0.1, title.ca.size - 0.25 - max(0, nchar(tmp.label[2])-10)*0.1)
+					tmp.cex <- c(title.ca.size - 0.25 - max(0, nchar(tmp.label[1])-force.split.nchar)*0.1, title.ca.size - 0.25 - max(0, nchar(tmp.label[2])-force.split.nchar)*0.1)
 				} else {
 					tmp.label <- label.split
-					tmp.cex <- rep(title.ca.size - 0.25 - (max(nchar(tmp.label))-10)*0.1, length(tmp.label))
+					tmp.cex <- rep(title.ca.size - 0.25 - (max(nchar(tmp.label))-force.split.nchar)*0.1, length(tmp.label))
 				}
 				return(list(content_area.label.pieces=tmp.label, cex=tmp.cex))
 			} else {
-				return(list(content_area.label.pieces=label, cex=title.ca.size - max(0, nchar(label)-10)*0.1))
+				return(list(content_area.label.pieces=label, cex=title.ca.size - max(0, nchar(label)-force.split.nchar)*0.1))
 			}
 	}
 
@@ -808,14 +830,14 @@ function(Scale_Scores,                  ## Vector of Scale Scores
 			tmp.test.abbreviation.text[which((low.year:high.year >= Report_Parameters$Assessment_Transition$Year)[which(year.text!=" ")])] <-
 				tmp.test.abbreviation[2]
 			tmp.test.abbreviation.text[which(content_area.text==" ")] <- " "
-			grid.stext(tmp.test.abbreviation.text, x=unit(low.year:high.year, "native"), y=convertY(unit(0.07, "npc"), "native"), gp=gpar(cex=0.7))
-			grid.stext(sapply(content_area.text, capwords), x=unit(low.year:high.year, "native"), y=convertY(unit(0.03, "npc"), "native"), gp=gpar(cex=0.7))
+			grid.stext(tmp.test.abbreviation.text, x=unit(low.year:high.year, "native"), y=convertHeight(unit(0.07, "npc"), "native"), gp=gpar(cex=0.7))
+			grid.stext(sapply(content_area.text, capwords), x=unit(low.year:high.year, "native"), y=convertHeight(unit(0.03, "npc"), "native"), gp=gpar(cex=0.7))
 		}
 	}
 
 	if (is.null(Report_Parameters$Assessment_Transition) && sgPlot.show.content_area.progression) {
-		grid.stext(sapply(content_area.text, capwords), x=unit(low.year:high.year, "native"), y=convertY(unit(0.05, "npc"), "native"), gp=gpar(cex=0.75))
-		# grid.text(x=low.year:high.year, y=convertY(unit(0.05, "npc"), "native"), sapply(content_area.text, capwords), gp=gpar(col="white", cex=0.75), default.units="native")
+		grid.stext(sapply(content_area.text, capwords), x=unit(low.year:high.year, "native"), y=convertHeight(unit(0.05, "npc"), "native"), gp=gpar(cex=0.75))
+		# grid.text(x=low.year:high.year, y=convertHeight(unit(0.05, "npc"), "native"), sapply(content_area.text, capwords), gp=gpar(col="white", cex=0.75), default.units="native")
 	}
 
 	if (connect.points=="Arrows") {
@@ -827,8 +849,8 @@ function(Scale_Scores,                  ## Vector of Scale Scores
 			if (!is.na(gp.values[i]) & length(tmp.lag) > 0) {
 				lag.to.prior.score <- min(tmp.lag, na.rm=TRUE)
 				if (lag.to.prior.score == 1) my.lty <- 1 else my.lty <- 2
-				arrow.rise <- convertY(unit(scale.scores.values[i+1], "native") - unit(scale.scores.values[i+1-lag.to.prior.score], "native"), "inches")
-				arrow.run <- convertX(unit(lag.to.prior.score, "native") - unit(0, "native"), "inches")
+				arrow.rise <- convertHeight(unit(scale.scores.values[i+1], "native") - unit(scale.scores.values[i+1-lag.to.prior.score], "native"), "inches")
+				arrow.run <- convertWidth(unit(lag.to.prior.score, "native") - unit(0, "native"), "inches")
 				arrow.angle <- atan2(as.numeric(arrow.rise),as.numeric(arrow.run))*180/pi
 
 				## Arrows connecting achievement scores
@@ -898,25 +920,31 @@ function(Scale_Scores,                  ## Vector of Scale Scores
 				if (length(grep("CUKU", i))>0 & tmp.achievement.level <= level.to.get.cuku[[tmp.index]]) {
 					label.position <- c(label.position, "center")
 					tmp.target.label <- c(CU.label, target.label)
-					y.coordinates <- c(as.numeric(convertY(convertY(unit(Plotting_SGP_Scale_Score_Targets[[i]][['NY1']], "native"), "inches")+unit(0.0375, "inches"), "native")),
-							as.numeric(convertY(convertY(unit(Plotting_SGP_Scale_Score_Targets[[i]][['NY1']], "native"), "inches")-unit(0.0375, "inches"), "native")))
+					y.coordinates <- c(as.numeric(convertHeight(convertHeight(unit(Plotting_SGP_Scale_Score_Targets[[i]][['NY1']], "native"), "inches")+unit(0.0375, "inches"), "native")),
+							as.numeric(convertHeight(convertHeight(unit(Plotting_SGP_Scale_Score_Targets[[i]][['NY1']], "native"), "inches")-unit(0.0375, "inches"), "native")))
 				}
 				if (length(grep("CUKU", i))>0 & tmp.achievement.level > level.to.get.cuku[[tmp.index]]) {
 					label.position <- c(label.position, "top")
 					tmp.target.label <- c(KU.label, target.label)
 					y.coordinates <- c(Plotting_SGP_Scale_Score_Targets[[i]][['NY1']],
-						as.numeric(convertY(convertY(unit(Plotting_SGP_Scale_Score_Targets[[i]][['NY1']], "native"), "inches")-unit(0.1, "inches"), "native")))
+						as.numeric(convertHeight(convertHeight(unit(Plotting_SGP_Scale_Score_Targets[[i]][['NY1']], "native"), "inches")-unit(0.1, "inches"), "native")))
 				}
 				if (length(grep("MUSU", i))>0 & tmp.achievement.level <= level.to.get.musu[[tmp.index]]) {
 					label.position <- c(label.position, "bottom")
 					tmp.target.label <- c(MU.label, target.label)
-					y.coordinates <- c(as.numeric(convertY(convertY(unit(Plotting_SGP_Scale_Score_Targets[[i]][['NY1']], "native"), "inches")+unit(0.1, "inches"), "native")),
+					y.coordinates <- c(as.numeric(convertHeight(convertHeight(unit(Plotting_SGP_Scale_Score_Targets[[i]][['NY1']], "native"), "inches")+unit(0.1, "inches"), "native")),
 						Plotting_SGP_Scale_Score_Targets[[i]][['NY1']])
 				}
 				if (length(grep("MUSU", i))>0 & tmp.achievement.level > level.to.get.musu[[tmp.index]]) {
 					label.position <- c(label.position, "bottom")
 					tmp.target.label <- c(SU.label, target.label)
-					y.coordinates <- c(as.numeric(convertY(convertY(unit(Plotting_SGP_Scale_Score_Targets[[i]][['NY1']], "native"), "inches")+unit(0.1, "inches"), "native")),
+					y.coordinates <- c(as.numeric(convertHeight(convertHeight(unit(Plotting_SGP_Scale_Score_Targets[[i]][['NY1']], "native"), "inches")+unit(0.1, "inches"), "native")),
+						Plotting_SGP_Scale_Score_Targets[[i]][['NY1']])
+				}
+				if (length(grep("CUSTOM", i))>0) {
+					label.position <- c(label.position, "bottom")
+					tmp.target.label <- NULL
+					y.coordinates <- c(as.numeric(convertHeight(convertHeight(unit(Plotting_SGP_Scale_Score_Targets[[i]][['NY1']], "native"), "inches")+unit(0.1, "inches"), "native")),
 						Plotting_SGP_Scale_Score_Targets[[i]][['NY1']])
 				}
 				grid.lines(x=c(current.year.x.coor-current.year.x.coor.lag, current.year.x.coor),
@@ -924,55 +952,90 @@ function(Scale_Scores,                  ## Vector of Scale Scores
 					gp=gpar(lwd=0.8, col=border.color), default.units="native")
 				grid.circle(x=current.year.x.coor, y=Plotting_SGP_Scale_Score_Targets[[i]][['NY1']], r=unit(c(0.05, 0.04, 0.025, 0.0125), "inches"),
 					gp=gpar(col=c("black", "white", "black", "white"), lwd=0.01, fill=c("black", "white", "black", "white")), default.units="native")
-				grid.text(x=current.year.x.coor+x.coor.label.adjustment, y=y.coordinates, tmp.target.label, default.units="native", just=label.position, gp=gpar(cex=0.5, col=border.color))
+				if (!is.null(tmp.target.label)) grid.text(x=current.year.x.coor+x.coor.label.adjustment, y=y.coordinates, tmp.target.label, default.units="native", just=label.position, gp=gpar(cex=0.5, col=border.color))
 			}
 		}
 	}
 
 	grid.circle(x=low.year:high.year, y=scale.scores.values, r=unit(0.04, "inches"), gp=gpar(col=border.color, lwd=0.7, fill="white"), default.units="native")
 
-	popViewport()
+	# popViewport() Don't pop until after next section - extra mid-level distinction may be needed (first code chunk in 'Left Viewport')
 
 
 	#################################
 	### Left Viewport
 	#################################
 
-	pushViewport(left.vp)
+    unq.labels <- names(achievement.level.labels[[1]])
+    if (length(unique(unq.labels)) != number.achievement.level.regions[[1]]) {
+        # WIDA_GA for example - extra "mid-level" used for state exit criteria cut
+        tmp.n.achlev.regions <- length(unique(unq.labels))
+        dup.levels <- which(duplicated(unq.labels))
+        unq.levels <- which(!duplicated(unq.labels))
+        unq.levels <- unq.levels + c(diff(unq.levels) - 1, 0) # use (last) duplicate level for boundaries
+        max.level <- max(unq.levels)
+        mid.levels <- unq.levels %w/o% c(1, max.level)
 
-	y.boundary.legend.1 <- c(yscale.range[1], yscale.range[1], rep(level_1_1_curve(xscale.range[1]), 2))
-	assign(paste0("y.boundary.legend.", number.achievement.level.regions[[1]]),
-		c(yscale.range[2], yscale.range[2], rep(eval(parse(text=paste0("level_1", "_", number.achievement.level.regions[[1]]-1, "_curve(xscale.range[1])"))), 2)))
+        for (k in dup.levels) {
+            tmp_fun <- get(paste0("level_1_", k - 1, "_curve"))
+            y.dup.points <- tmp_fun(tmp.x.points)
 
-	if (number.achievement.level.regions[[1]] > 2) {
-		for (i in 2:(number.achievement.level.regions[[1]]-1)) {
-			assign(paste0("y.boundary.legend.", i),
-				eval(parse(text=paste0("c(rep(level_1", "_", i-1, "_curve(xscale.range[1]), 2), rep(level_1", "_", i, "_curve(xscale.range[1]), 2))"))))
-		}
-	}
+            grid.lines(x = tmp.x.points, y = y.dup.points,
+                       gp = gpar(lty = "dashed", col = "black"), default.units = "native")
+        }
+    } else {
+        tmp.n.achlev.regions <- max.level <- number.achievement.level.regions[[1]]
+        unq.levels <- seq(tmp.n.achlev.regions)
+        mid.levels <- 2:(tmp.n.achlev.regions - 1)
+    }
 
-	for (i in seq(number.achievement.level.regions[[1]])){
-	grid.polygon(x=c(0,1,1,0),
-		y=get(paste0("y.boundary.legend.", i)),
-		default.units="native",
-		gp=gpar(fill=achievement.level.region.colors[[1]][i], lwd=0.5, col=border.color, alpha=0.7))
-	}
+    popViewport() # growth.chart.vp
 
-	grid.text(x=0.94, y=(level_1_1_curve(xscale.range[1]) + yscale.range[1])/2, names(achievement.level.labels[[1]])[1],
-		gp=gpar(col=border.color, fontface=2, fontfamily="Helvetica-Narrow", cex=.85), default.units="native", just="right")
-	grid.text(x=0.94, y=(eval(parse(text=paste0("level_1", "_", number.achievement.level.regions[[1]]-1, "_curve(xscale.range[1])"))) + yscale.range[2])/2,
-		names(achievement.level.labels[[1]])[number.achievement.level.regions[[1]]],
-		gp=gpar(col=border.color, fontface=2, fontfamily="Helvetica-Narrow", cex=.85), default.units="native", just="right")
+    pushViewport(left.vp)
 
-	if (number.achievement.level.regions[[1]] > 2) {
-		for (i in 2:(number.achievement.level.regions[[1]]-1)) {
-		grid.text(x=.94, y=(eval(parse(text=paste0("(level_1", "_", i-1, "_curve(xscale.range[1]) + level_1", "_", i, "_curve(xscale.range[1]))/2")))),
-			names(achievement.level.labels[[1]])[i],
-			gp=gpar(col=border.color, fontface=2, fontfamily="Helvetica-Narrow", cex=.85), default.units="native", just="right")
-		}
-	}
+    y.boundary.legend.1 <- c(yscale.range[1], yscale.range[1], rep(level_1_1_curve(xscale.range[1]), 2))
+    assign(paste0("y.boundary.legend.", max.level),
+        c(yscale.range[2], yscale.range[2], rep(eval(parse(text = paste0("level_1", "_", max.level-1, "_curve(xscale.range[1])"))), 2)))
 
-	grid.lines(0, c(yscale.range[1], yscale.range[2]), gp=gpar(lwd=.8, col=border.color), default.units="native")
+    if (tmp.n.achlev.regions > 2) {
+        for (i in mid.levels) {
+            ii <- unq.levels[which(unq.levels == i) - 1]
+            assign(paste0("y.boundary.legend.", i), eval(parse(text = 
+                   paste0("c(rep(level_1", "_", ii, "_curve(xscale.range[1]), 2), rep(level_1", 
+                          "_", i, "_curve(xscale.range[1]), 2))"))))
+        }
+    }
+
+    for (i in unq.levels){
+        grid.polygon(x = c(0,1,1,0), y = get(paste0("y.boundary.legend.", i)),
+                     default.units = "native",
+                     gp = gpar(fill = achievement.level.region.colors[[1]][i], lwd = 0.5, col = border.color, alpha = 0.7))
+    }
+
+    grid.text(x = 0.94,
+              y = (level_1_1_curve(xscale.range[1]) + yscale.range[1])/2, 
+              label = unq.labels[1],
+              gp = gpar(col = border.color, fontface = 2, fontfamily = "Helvetica-Narrow", cex = .85),
+              default.units = "native", just = "right")
+    grid.text(x = 0.94,
+              y = (eval(parse(text = paste0("level_1", "_", max.level-1, "_curve(xscale.range[1])"))) + yscale.range[2])/2,
+              label = unq.labels[max.level],
+              gp = gpar(col = border.color, fontface = 2, fontfamily = "Helvetica-Narrow", cex = .85),
+              default.units = "native", just = "right")
+
+    if (tmp.n.achlev.regions > 2) {
+        for (i in mid.levels) {
+            ii <- unq.levels[which(unq.levels == i) - 1]
+            grid.text(x = .94,
+                      y = (eval(parse(text = paste0("(level_1", "_", ii, "_curve(xscale.range[1]) + level_1",
+                                                    "_", i, "_curve(xscale.range[1]))/2")))),
+                      unq.labels[i],
+                      gp = gpar(col = border.color, fontface = 2, fontfamily = "Helvetica-Narrow", cex = .85),
+                      default.units = "native", just = "right")
+        }
+    }
+
+	grid.lines(0, c(yscale.range[1], yscale.range[2]), gp = gpar(lwd = 0.8, col = border.color), default.units = "native")
 
 	popViewport()
 
@@ -1053,31 +1116,41 @@ function(Scale_Scores,                  ## Vector of Scale Scores
 				tmp.achievement.level <- which(tail(head(Achievement_Levels, tmp.projection.year.lag+1), 1)==achievement.level.labels[[achievement.level.label.index.from]])
 			}
 
-			if ((length(grep("CUKU", tmp.projection.names)) > 0 & tmp.achievement.level <= level.to.get.cuku[[achievement.level.label.index.from]]) |
-				length(grep("MUSU", tmp.projection.names))==0) {
-				level.to.get.cuku.label <- names(achievement.level.labels[[achievement.level.label.index.to]])[level.to.get.cuku[[achievement.level.label.index.to]]+1]
-				grid.text(x=tmp.projection.year.to, y=1.35,
-					paste0(level.to.get.cuku.label, " (", SGP_Scale_Score_Targets[[grep("CUKU", tmp.projection.names, value=TRUE)]][['NY1']], ")"),
-					gp=gpar(col=border.color, cex=.4), default.units="native")
-				grid.text(x=tmp.projection.year.to, y=0.25,
-					paste0(CU.label, " (", SGP_Targets[[grep("CUKU", tmp.projection.names, value=TRUE)]], ")"),
-					gp=gpar(col=border.color, cex=.4), default.units="native")
-			} else {
-				level.to.get.cuku.label <- names(achievement.level.labels[[achievement.level.label.index.to]])[level.to.get.cuku[[achievement.level.label.index.to]]+1]
-				level.to.get.musu.label <- names(achievement.level.labels[[achievement.level.label.index.to]])[level.to.get.musu[[achievement.level.label.index.to]]+1]
-				grid.text(x=tmp.projection.year.to, y=1.35,
-					paste0(level.to.get.cuku.label, " (", SGP_Scale_Score_Targets[[grep("CUKU", tmp.projection.names, value=TRUE)]][['NY1']], ")/", level.to.get.musu.label, " (", SGP_Scale_Score_Targets[[grep("MUSU", tmp.projection.names, value=TRUE)]][['NY1']], ")"),
-					gp=gpar(col=border.color, cex=.4), default.units="native")
-				if (tmp.achievement.level <= level.to.get.musu[[achievement.level.label.index.from]]) {
-					grid.text(x=tmp.projection.year.to, y=0.25,
-					paste0(KU.label, " (", SGP_Targets[[grep('CUKU', tmp.projection.names, value=TRUE)]], ")/Move Up (", SGP_Targets[[grep('MUSU', tmp.projection.names, value=TRUE)]], ")"),
-					gp=gpar(col=border.color, cex=.4), default.units="native")
+			if (length(grep("CUSTOM", tmp.projection.names))==0) { ### Achievement/Growth Target Text associated with CUKU/MUSU targets
+				if ((length(grep("CUKU", tmp.projection.names)) > 0 & tmp.achievement.level <= level.to.get.cuku[[achievement.level.label.index.from]]) |
+					length(grep("MUSU", tmp.projection.names))==0) {
+						level.to.get.cuku.label <- names(achievement.level.labels[[achievement.level.label.index.to]])[level.to.get.cuku[[achievement.level.label.index.to]]+1]
+						grid.text(x=tmp.projection.year.to-0.5, y=1.35,
+							paste0(level.to.get.cuku.label, " (", SGP_Scale_Score_Targets[[grep("CUKU", tmp.projection.names, value=TRUE)]][['NY1']], ")"),
+							gp=gpar(col=border.color, cex=.4), default.units="native")
+						grid.text(x=tmp.projection.year.to-0.5, y=0.25,
+							paste0(CU.label, " (", SGP_Targets[[grep("CUKU", tmp.projection.names, value=TRUE)]], ")"),
+							gp=gpar(col=border.color, cex=.4), default.units="native")
+				} else {
+					level.to.get.cuku.label <- names(achievement.level.labels[[achievement.level.label.index.to]])[level.to.get.cuku[[achievement.level.label.index.to]]+1]
+					level.to.get.musu.label <- names(achievement.level.labels[[achievement.level.label.index.to]])[level.to.get.musu[[achievement.level.label.index.to]]+1]
+					grid.text(x=tmp.projection.year.to-0.5, y=1.35,
+						paste0(level.to.get.cuku.label, " (", SGP_Scale_Score_Targets[[grep("CUKU", tmp.projection.names, value=TRUE)]][['NY1']], ")/", level.to.get.musu.label, " (", SGP_Scale_Score_Targets[[grep("MUSU", tmp.projection.names, value=TRUE)]][['NY1']], ")"),
+						gp=gpar(col=border.color, cex=.4), default.units="native")
+					if (tmp.achievement.level <= level.to.get.musu[[achievement.level.label.index.from]]) {
+						grid.text(x=tmp.projection.year.to-0.5, y=0.25,
+							paste0(KU.label, " (", SGP_Targets[[grep('CUKU', tmp.projection.names, value=TRUE)]], ")/Move Up (", SGP_Targets[[grep('MUSU', tmp.projection.names, value=TRUE)]], ")"),
+							gp=gpar(col=border.color, cex=.4), default.units="native")
+					}
+					if (tmp.achievement.level > level.to.get.musu[[achievement.level.label.index.from]]) {
+						grid.text(x=tmp.projection.year.to-0.5, y=0.25,
+							paste0(KU.label, " (", SGP_Targets[[grep('CUKU', tmp.projection.names, value=TRUE)]], ")/Stay Up (", SGP_Targets[[grep('MUSU', tmp.projection.names, value=TRUE)]], ")"),
+							gp=gpar(col=border.color, cex=.4), default.units="native")
+					}
 				}
-				if (tmp.achievement.level > level.to.get.musu[[achievement.level.label.index.from]]) {
-					grid.text(x=tmp.projection.year.to, y=0.25,
-					paste0(KU.label, " (", SGP_Targets[[grep('CUKU', tmp.projection.names, value=TRUE)]], ")/Stay Up (", SGP_Targets[[grep('MUSU', tmp.projection.names, value=TRUE)]], ")"),
+			} else { ### Achievement/Growth Target text associated with CUSTOM plotting
+				level.to.get.cuku.label <- names(achievement.level.labels[[achievement.level.label.index.to]])[level.to.get.cuku[[achievement.level.label.index.to]]+1]
+				grid.text(x=tmp.projection.year.to-0.5, y=1.35,
+					paste0(level.to.get.cuku.label, " (", SGP_Scale_Score_Targets[[grep("CUSTOM", tmp.projection.names, value=TRUE)]][['NY1']], ")"),
 					gp=gpar(col=border.color, cex=.4), default.units="native")
-				}
+				grid.text(x=tmp.projection.year.to-0.5, y=0.25,
+					paste0(CU.label, " (", SGP_Targets[[grep("CUSTOM", tmp.projection.names, value=TRUE)]], ")"),
+					gp=gpar(col=border.color, cex=.4), default.units="native")
 			}
 		}
 	}

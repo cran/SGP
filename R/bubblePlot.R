@@ -38,8 +38,9 @@
 	bubble_plot_configs.BUBBLE_PLOT_FORMAT="print",
 	bubble_plot_configs.BUBBLE_PLOT_LEGEND=FALSE,
 	bubble_plot_configs.BUBBLE_PLOT_TITLE=TRUE,
+	bubble_plot_configs.BUBBLE_PLOT_SUMMARY_STATISTICS=TRUE,
 	bubble_plot_configs.BUBBLE_PLOT_BACKGROUND_LABELS=c("Growth", "Achievement"),
-	bubble_plot_configs.BUBBLE_PLOT_EXTRAS=NULL,
+	bubble_plot_configs.BUBBLE_PLOT_EXTRAS="BASE_LINE",
     bubble_plot_configs.BUBBLE_PLOT_DIMENSION=NULL, ## List of WIDTH and HEIGHT
 	bubble_plot_configs.BUBBLE_PLOT_NAME="bubblePlot.pdf",
 	bubble_plot_configs.BUBBLE_PLOT_PATH="Figures",
@@ -338,12 +339,13 @@ grid.text(x=0.95, y=0.92, paste("Higher",  bubble_plot_configs.BUBBLE_PLOT_BACKG
 # Add BUBBLE_PLOT_EXTRAS
 
 base.line <- "grid.lines(x=unit(50, 'native'), y=c(0.03,0.97), gp=gpar(col='grey40', lwd=1.25, lty=2, alpha=0.5))"
-if (!is.null(bubble_plot_configs.BUBBLE_PLOT_EXTRAS)) {
-   for (i in c(base.line, bubble_plot_configs.BUBBLE_PLOT_EXTRAS)) {
+if (identical(bubble_plot_configs.BUBBLE_PLOT_EXTRAS, "BASE_LINE")) {
+      eval(parse(text=base.line))
+}
+if (!is.null(bubble_plot_configs.BUBBLE_PLOT_EXTRAS) && !identical(bubble_plot_configs.BUBBLE_PLOT_EXTRAS, "BASE_LINE")) {
+   for (i in bubble_plot_configs.BUBBLE_PLOT_EXTRAS) {
       eval(parse(text=i))
    }
-} else {
-      eval(parse(text=base.line))
 }
 
 if (bubble_plot_configs.BUBBLE_TIPS) {
@@ -359,8 +361,8 @@ if (bubble_plot_configs.BUBBLE_TIPS) {
 
      if (!is.null(bubble_plot_data.INDICATE)) {
           for (i in bubble_plot_data.INDICATE) {
-              indicate.coordinates <- indicate.tip(as.numeric(convertX(unit(bubble_plot_data.X[i], "native"), "npc")),
-                                               as.numeric(convertY(unit(bubble_plot_data.Y[i], "native"), "npc")))
+              indicate.coordinates <- indicate.tip(as.numeric(convertWidth(unit(bubble_plot_data.X[i], "native"), "npc")),
+                                               as.numeric(convertHeight(unit(bubble_plot_data.Y[i], "native"), "npc")))
               grid.segments(unit(indicate.coordinates$x, "npc"), unit(indicate.coordinates$y, "npc"),
                             unit(bubble_plot_data.X[i], "native"), unit(bubble_plot_data.Y[i], "native"),
                             gp=gpar(lwd=0.5))
@@ -421,8 +423,8 @@ if (bubble_plot_configs.BUBBLE_TIPS) {
 
      if (!is.null(bubble_plot_data.INDICATE)) {
           for (i in bubble_plot_data.INDICATE) {
-              indicate.coordinates <- indicate.tip(as.numeric(convertX(unit(bubble_plot_data.X[i], "native"), "npc")),
-                                               as.numeric(convertY(unit(bubble_plot_data.Y[i], "native"), "npc")))
+              indicate.coordinates <- indicate.tip(as.numeric(convertWidth(unit(bubble_plot_data.X[i], "native"), "npc")),
+                                               as.numeric(convertHeight(unit(bubble_plot_data.Y[i], "native"), "npc")))
               grid.segments(unit(indicate.coordinates$x, "npc"), unit(indicate.coordinates$y, "npc"),
                             unit(bubble_plot_data.X[i], "native"), unit(bubble_plot_data.Y[i], "native"),
                             gp=gpar(lwd=0.5))
@@ -487,8 +489,8 @@ else {
                   alpha=bubblealpha(length(bubble_plot_data.X), bubble_plot_configs.BUBBLE_SUBSET_ALPHA$Opaque)), default.units="native")
 
    if (!is.null(bubble_plot_data.INDICATE)) {
-          indicate.coordinates <- indicate.tip(as.numeric(convertX(unit(bubble_plot_data.X[bubble_plot_data.INDICATE], "native"), "npc")),
-                                           as.numeric(convertY(unit(bubble_plot_data.Y[bubble_plot_data.INDICATE], "native"), "npc")))
+          indicate.coordinates <- indicate.tip(as.numeric(convertWidth(unit(bubble_plot_data.X[bubble_plot_data.INDICATE], "native"), "npc")),
+                                           as.numeric(convertHeight(unit(bubble_plot_data.Y[bubble_plot_data.INDICATE], "native"), "npc")))
           grid.segments(unit(indicate.coordinates$x, "npc"), unit(indicate.coordinates$y, "npc"),
                         unit(bubble_plot_data.X[bubble_plot_data.INDICATE], "native"), unit(bubble_plot_data.Y[bubble_plot_data.INDICATE], "native"),
                         gp=gpar(lwd=0.5))
@@ -532,8 +534,8 @@ else {
                alpha=bubblealpha(length(bubble_plot_data.X), bubble_plot_configs.BUBBLE_SUBSET_ALPHA$Opaque)), default.units="native")
 
    if (!is.null(bubble_plot_data.INDICATE)) {
-          indicate.coordinates <- indicate.tip(as.numeric(convertX(unit(bubble_plot_data.X[bubble_plot_data.INDICATE], "native"), "npc")),
-                                           as.numeric(convertY(unit(bubble_plot_data.Y[bubble_plot_data.INDICATE], "native"), "npc")))
+          indicate.coordinates <- indicate.tip(as.numeric(convertWidth(unit(bubble_plot_data.X[bubble_plot_data.INDICATE], "native"), "npc")),
+                                           as.numeric(convertHeight(unit(bubble_plot_data.Y[bubble_plot_data.INDICATE], "native"), "npc")))
           grid.segments(unit(indicate.coordinates$x, "npc"), unit(indicate.coordinates$y, "npc"),
                         unit(bubble_plot_data.X[bubble_plot_data.INDICATE], "native"), unit(bubble_plot_data.Y[bubble_plot_data.INDICATE], "native"),
                         gp=gpar(lwd=0.5))
@@ -680,11 +682,13 @@ if (is.null(bubble_plot_data.LEVELS) & !is.null(bubble_plot_titles.NOTE)){
 
 # Summary statistics
 
-y.coors <- 0.2
-coors.size <- max(min(bubble_plot_data.SIZE), 10)
-grid.text(x=0.5, y=y.coors+0.05, "Summary Statistics", gp=gpar(col=format.colors.font[1], fontface=2, cex=1.2))
-grid.text(x=0.5, y=y.coors, paste("Correlation:", round(cor(bubble_plot_data.X, bubble_plot_data.Y, use="complete.obs"), digits=2)))
-grid.text(x=0.5, y=y.coors-0.03, substitute(paste("Correlation (", N >= coor.size, "): ", correlation), list(coor.size=coors.size, correlation=round(cor(bubble_plot_data.X[bubble_plot_data.SIZE >= coors.size], bubble_plot_data.Y[bubble_plot_data.SIZE >= coors.size], use="complete.obs"), digits=2))))
+if (bubble_plot_configs.BUBBLE_PLOT_SUMMARY_STATISTICS) {
+	y.coors <- 0.1
+	coors.size <- max(min(bubble_plot_data.SIZE), 10)
+	grid.text(x=0.5, y=y.coors+0.05, "Summary Statistics", gp=gpar(col=format.colors.font[1], fontface=2, cex=1.2))
+	grid.text(x=0.5, y=y.coors, paste("Correlation:", round(cor(bubble_plot_data.X, bubble_plot_data.Y, use="complete.obs"), digits=2)))
+	grid.text(x=0.5, y=y.coors-0.03, substitute(paste("Correlation (", N >= coor.size, "): ", correlation), list(coor.size=coors.size, correlation=round(cor(bubble_plot_data.X[bubble_plot_data.SIZE >= coors.size], bubble_plot_data.Y[bubble_plot_data.SIZE >= coors.size], use="complete.obs"), digits=2))))
+}
 
 popViewport() ## pop right.legend.vp
 }

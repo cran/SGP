@@ -185,7 +185,7 @@ function(sgp_object,
 			setkeyv(long_data_tmp, getKey(long_data_tmp))
 		}
 		assign(paste(tmp.state, "SGP_WIDE_Data", sep="_"), ddcast(long_data_tmp, ID ~ YEAR_BY_CONTENT_AREA,
-			value.var=setdiff(names(long_data_tmp), c("ID", "YEAR_BY_CONTENT_AREA", "VALID_CASE", "CONTENT_AREA", "YEAR", "GRADE")), sep="."))
+			value.var=setdiff(names(long_data_tmp), c("ID", "YEAR_BY_CONTENT_AREA", "VALID_CASE", "CONTENT_AREA", "YEAR")), sep="."))
 		if (dups.tf) eval(parse(text=paste0("invisible(", paste(tmp.state, "SGP_WIDE_Data", sep="_"), "[, ID := gsub('_DUPS_[0-9]*', '', ID)])")))
 		save(list=paste(tmp.state, "SGP_WIDE_Data", sep="_"), file=file.path(outputSGP.directory, paste(tmp.state, "SGP_WIDE_Data.Rdata", sep="_")))
 		fwrite(get(paste(tmp.state, "SGP_WIDE_Data", sep="_")), file=file.path(outputSGP.directory, paste(tmp.state, "SGP_WIDE_Data.txt", sep="_")), sep="|", quote=FALSE)
@@ -379,7 +379,7 @@ function(sgp_object,
 				return(NA)
 			} else {
 				if (!is.null(tmp.domain <- SGP::SGPstateData[[state]][["Student_Report_Information"]][["Content_Areas_Domains"]][[content_area]]) & increment != 0) {
-					if (!is.numeric(type.convert(grade))) {
+					if (!is.numeric(type.convert(grade, as.is=FALSE))) {
 						tmp.index <- which(SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]][[tmp.domain]] == content_area)
 						} else tmp.index <- which(SGP::SGPstateData[[state]][["SGP_Configuration"]][["grade.projection.sequence"]][[tmp.domain]] == grade)
 						return(SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]][[tmp.domain]][tmp.index + increment])

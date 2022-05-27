@@ -201,7 +201,7 @@ function(
 			tmp.list[['target.level']] <- "CATCH_UP_KEEP_UP"
 		}
 		if (!is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][['sgp.target.types']]) &&
-			!grepl("MUSU", SGP::SGPstateData[[state]][["SGP_Configuration"]][['sgp.target.types']])) {
+			!any(grepl("MUSU", SGP::SGPstateData[[state]][["SGP_Configuration"]][['sgp.target.types']]))) {
 				tmp.list[['target.level']] <- "CATCH_UP_KEEP_UP"
 		}
 
@@ -380,7 +380,7 @@ function(
 
 	if (!sgp.target.scale.scores.only && length(tmp.names <- getPercentileTableNames(sgp_object, content_areas, state, years, "sgp.percentiles", sgp.percentiles.equated=TRUE))==0 && sgp.percentiles.equated) {
 		 tmp.messages <- c(tmp.messages, "\tNOTE: No equated SGP results available in SGP slot. No equated SGP results will be merged.\n")
-		 sgp.percentiles.equated <- TRUE
+		 sgp.percentiles.equated <- FALSE
 	}
 
 	if (sgp.percentiles.equated & !sgp.target.scale.scores.only) {
@@ -527,8 +527,7 @@ function(
 		}
 
 		### SGP_TARGET_CONTENT_AREA calculation
-
-		terminal.content_areas <- unique(na.omit(slot.data, cols=paste("SGP_TARGET", max.sgp.target.years.forward, "YEAR", sep="_")), by='CONTENT_AREA')[['CONTENT_AREA']]
+		terminal.content_areas <- unique(slot.data[!slot.data[,all(is.na(.SD)), .SDcols=grep("SGP_TARGET", grep(paste(max(max.sgp.target.years.forward), "YEAR", sep="_"), names(slot.data), value=TRUE), value=TRUE), by=seq_len(nrow(slot.data))][['V1']]][['CONTENT_AREA']])
 		if (!is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]])) {
 			terminal.content_areas <- intersect(terminal.content_areas, sapply(SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]], tail, 1))
 		}
@@ -536,7 +535,7 @@ function(
 		if (identical(sgp.target.content_areas, TRUE)) {
 			for (my.sgp.target.content_area.iter in seq_along(target.args[['my.sgp.target.content_area']])) {
 				slot.data[!is.na(get(target.args[['my.sgp.target']][my.sgp.target.content_area.iter])), target.args[['my.sgp.target.content_area']][my.sgp.target.content_area.iter] :=
-					getTargetSGPContentArea(GRADE[1L], CONTENT_AREA[1L], state, max.sgp.target.years.forward, target.args[['my.sgp.target.content_area']][my.sgp.target.content_area.iter]),
+					getTargetSGPContentArea(GRADE[1L], CONTENT_AREA[1L], state, my.sgp.target.content_area.iter, target.args[['my.sgp.target.content_area']][my.sgp.target.content_area.iter]),
 					by=list(GRADE, CONTENT_AREA)]
 			}
 		}
@@ -705,7 +704,7 @@ function(
 			}
 		}
 		if (!identical(sgp.target.scale.scores.merge, FALSE)) {
-			slot.data <- mergeScaleScoreTarget(sgp_object, slot.data, years, sgp.target.scale.scores.merge)
+			slot.data <- mergeScaleScoreTarget(sgp_object, state, slot.data, years, sgp.target.scale.scores.merge)
 		}
 	} ### END if (sgp.target.scale.scores)
 

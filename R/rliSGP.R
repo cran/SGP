@@ -2,7 +2,7 @@
 function(sgp_object,
 	additional.data=NULL,
 	state=NULL,
-	content_areas=c("MATHEMATICS", "READING", "READING_UNIFIED", "EARLY_LITERACY"),
+	content_areas=c("MATHEMATICS", "MATHEMATICS_SPANISH", "READING", "READING_SPANISH", "READING_UNIFIED", "EARLY_LITERACY", "EARLY_LITERACY_SPANISH"),
 	testing.window=NULL, ### FALL, WINTER, SPRING
 	eow.or.update="UPDATE", ### UPDATE or EOW
 	update.save.shell.only=FALSE,
@@ -22,6 +22,8 @@ function(sgp_object,
 	eow.calculate.sgps=FALSE,
 	score.type="RASCH",
 	cutscore.file.name="Cutscores.csv",
+	get.cohort.data.info=FALSE,
+	use.latest.rliMatrices=TRUE,
 	parallel.config=NULL) {
 
 	YEAR <- GRADE <- ID <- NEW_ID <- .EACHI <- DATE <- CONTENT_AREA <- NULL
@@ -39,7 +41,7 @@ function(sgp_object,
 
 	if (!score.type %in% c("RASCH", "STAR")) stop("\tNOTE: 'score.type argument must be set to either RASCH or STAR.'")
 
-	if (score.type=="STAR") content_areas <- setdiff(content_areas, "READING_UNIFIED")
+	if (score.type=="STAR") content_areas <- setdiff(content_areas, c("EARLY_LITERACY_SPANISH", "MATHEMATICS_SPANISH", "READING_SPANISH", "READING_UNIFIED"))
 
 
 	### Utility functions
@@ -217,6 +219,7 @@ function(sgp_object,
 			update.old.data.with.new=FALSE,
 			SGPt=SGPt,
 			fix.duplicates=fix.duplicates,
+			get.cohort.data.info=get.cohort.data.info,
 			parallel.config=parallel.config,
 			sgp.config=getRLIConfig(content_areas, configuration.year, testing.window, score.type))
 
@@ -247,8 +250,10 @@ function(sgp_object,
 			save(list=update.shell.name, file=paste(update.shell.name, "Rdata", sep="."))
 		} else {
 			if (eow.calculate.sgps) my.steps <- c("prepareSGP", "analyzeSGP", "combineSGP", "outputSGP") else steps <- c("prepareSGP", "analyzeSGP")
-			latest.RLImatrices.version <- sub("-", ".", unlist(strsplit(read.table("https://raw.githubusercontent.com/CenterForAssessment/RLImatrices/master/DESCRIPTION", sep="!", colClasses="character")$V1[4L], ": "))[2L])
-			if (as.character(packageVersion("RLImatrices"))!=latest.RLImatrices.version) stop(paste0("Installed 'RLImatrices' package is not most current version. Install latest version (", latest.RLImatrices.version, ") using install_github('centerforassessment/RLImatrices')."))
+			if (use.latest.rliMatrices) {
+				latest.RLImatrices.version <- sub("-", ".", unlist(strsplit(read.table("https://raw.githubusercontent.com/CenterForAssessment/RLImatrices/master/DESCRIPTION", sep="!", colClasses="character")$V1[4L], ": "))[2L])
+				if (as.character(packageVersion("RLImatrices"))!=latest.RLImatrices.version) stop(paste0("Installed 'RLImatrices' package is not most current version. Install latest version (", latest.RLImatrices.version, ") using install_github('centerforassessment/RLImatrices')."))
+			}
 			sgp_object <- updateSGP(
 				what_sgp_object=sgp_object,
 				with_sgp_data_LONG=additional.data,
@@ -270,6 +275,7 @@ function(sgp_object,
 				SGPt=SGPt,
 				fix.duplicates=fix.duplicates,
 				sgp.percentiles.calculate.sgps=eow.calculate.sgps,
+				get.cohort.data.info=get.cohort.data.info,
 				parallel.config=parallel.config,
 				sgp.config=getRLIConfig(content_areas, configuration.year, testing.window, score.type))
 
@@ -292,7 +298,7 @@ function(sgp_object,
 			new.matrices <-convertToBaseline(sgp_object@SGP$Coefficient_Matrices[grep(configuration.year, names(sgp_object@SGP$Coefficient_Matrices))])
 			old.matrix.label <- paste0(paste(state, "SGPt_Baseline_Matrices", sep="_"), "$", tail(sort(names(get(paste(state, "SGPt_Baseline_Matrices", sep="_")))), 1L))
 			old.matrices <- eval(parse(text=old.matrix.label))
-			if (score.type=="RASCH") tmp.content_areas <- paste0(c("EARLY_LITERACY", "MATHEMATICS", "READING", "READING_UNIFIED"), "_RASCH.BASELINE") else tmp.content_areas <- paste0(c("EARLY_LITERACY", "MATHEMATICS", "READING"), ".BASELINE")
+			if (score.type=="RASCH") tmp.content_areas <- paste0(c("EARLY_LITERACY", "EARLY_LITERACY_SPANISH", "MATHEMATICS", "MATHEMATICS_SPANISH", "READING", "READING_SPANISH", "READING_UNIFIED"), "_RASCH.BASELINE") else tmp.content_areas <- paste0(c("EARLY_LITERACY", "MATHEMATICS", "READING"), ".BASELINE")
 			year.to.replace <- head(sort(unique(sapply(lapply(sapply(names(old.matrices[[tmp.content_areas[3]]]), strsplit, '[.]'), '[', 2:3), paste, collapse="."))), 1L)
 			for (content_area.iter in tmp.content_areas) {
 				old.matrices[[content_area.iter]][grep(year.to.replace, names(old.matrices[[content_area.iter]]))] <- NULL

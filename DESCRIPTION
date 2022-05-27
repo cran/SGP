@@ -1,8 +1,8 @@
 Package: SGP
 Type: Package
 Title: Student Growth Percentiles & Percentile Growth Trajectories
-Version: 1.9-5.0
-Date: 2020-1-30
+Version: 2.0-0.0
+Date: 2022-5-25
 Authors@R: c(person(given=c("Damian", "W."), family="Betebenner", email="dbetebenner@nciea.org", role=c("aut", "cre")),
 		person(given=c("Adam", "R."), family="Van Iwaarden", email="avaniwaarden@nciea.org", role="aut"),
 		person(given="Ben", family="Domingue", email="ben.domingue@gmail.com", role="aut"),
@@ -72,10 +72,10 @@ Authors@R: c(person(given=c("Damian", "W."), family="Betebenner", email="dbetebe
 		person(given="Nathan", family="Wall", role="ctb", comment="eMetric working with Nevada Department of Education and South Dakota Department of Education"),
 		person(given="Narek", family="Sahakyan", role="ctb", comment="World Class Instruction and Design (WIDA)"))
 Maintainer: Damian W. Betebenner <dbetebenner@nciea.org>
-Depends: R (>= 3.6.0)
-Suggests: SGPdata (>= 23.0-0), knitr, rmarkdown
+Depends: R (>= 4.0.0)
+Suggests: SGPdata (>= 26.0-0), knitr, rmarkdown
 Imports: Cairo, callr, colorspace, crayon, datasets, data.table (>=
-        1.12.4), digest, doParallel, doRNG (>= 1.8.2), equate (>=
+        1.14.0), digest, doParallel, doRNG (>= 1.8.2), equate (>=
         2.0-5), foreach, graphics, grid, grDevices, gridBase,
         iterators, gtools, jsonlite, matrixStats, methods, parallel,
         plotly, quantreg, randomNames (>= 0.0-5), rngtools (>= 1.5),
@@ -93,7 +93,7 @@ LazyDataCompression: xz
 License: GPL-3
 ByteCompile: TRUE
 NeedsCompilation: no
-Packaged: 2020-01-30 18:45:23 UTC; conet
+Packaged: 2022-05-26 17:36:51 UTC; conet
 Author: Damian W. Betebenner [aut, cre],
   Adam R. Van Iwaarden [aut],
   Ben Domingue [aut],
@@ -171,4 +171,4 @@ Author: Damian W. Betebenner [aut, cre],
     and South Dakota Department of Education),
   Narek Sahakyan [ctb] (World Class Instruction and Design (WIDA))
 Repository: CRAN
-Date/Publication: 2020-01-30 22:40:09 UTC
+Date/Publication: 2022-05-27 23:40:06 UTC

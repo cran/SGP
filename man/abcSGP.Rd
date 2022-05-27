@@ -32,6 +32,8 @@ abcSGP(sgp_object,
 	simulate.sgps=TRUE,
 	calculate.simex=NULL,
 	calculate.simex.baseline=NULL,
+    calculate.srs=NULL,
+    calculate.srs.baseline=NULL,
 	goodness.of.fit.print=TRUE,
 	parallel.config=NULL,
 	save.intermediate.results=FALSE,
@@ -118,6 +120,11 @@ If missing the function will use the data to infer all the grade progressions fo
   \item{calculate.simex.baseline}{A character state acronym or list including state/csem variable, csem.data.vnames, csem.loss.hoss, simulation.iterations, lambda and extrapolation method. Defaults to NULL, no simex calculations performed.
   Alternatively, setting the argument to TRUE uses the same defaults as above along with \code{simex.use.my.coefficient.matrices = TRUE}. This argument is passed to \code{\link{analyzeSGP}}.
   }
+  \item{calculate.srs}{A character state acronym or list including [FILL IN LATER]. Creates a longitudinal data set based upon a stratified random sample of variables and proportions for the United States (default) or provided by the user. The argument defaults to NULL, Alternatively, setting the argument to TRUE uses the defaults specified above. This argument is passed to \code{\link{analyzeSGP}}.
+  }
+  \item{calculate.srs.baseline}{A character state acronym or list including [FILL IN LATER]. Calculates SGPs based upon previosly established coefficient matrices derived from a stratified random sample of data. Defaults to NULL, no stratified random sample SGPs are calculated. Alternatively, setting the
+  argument to TRUE uses the defaults specified above. This argument is passed to \code{\link{analyzeSGP}}.
+  }
   \item{goodness.of.fit.print}{Boolean variable passed to \code{\link{analyzeSGP}} indicating whether to print goodness of fit results.
   }
  \item{parallel.config}{A named list with, at a minimum, two elements indicating 1) the BACKEND package to be used for parallel computation and 2) the WORKERS list to specify the number of processors to be used in each major analysis.  The BACKEND element can be set = to \code{FOREACH} or \code{PARALLEL}.  Please consult the manuals and vignettes for information of these packages!  The \code{\link{analyzeSGP}} help page contains more thorough explanation and examples of the \code{parallel.config} setup.
@@ -191,7 +198,7 @@ matrices.
 \code{@Summary} slot.
 }
 
-\author{Damian W. Betebenner \email{dbetebenner@nciea.org} and Adam Van Iwaarden \email{vaniwaarden@colorado.edu}}
+\author{Damian W. Betebenner \email{dbetebenner@nciea.org} and Adam Van Iwaarden \email{avaniwaarden@nciea.org}}
 
 \seealso{\code{\link{prepareSGP}}, \code{\link{analyzeSGP}}, \code{\link{combineSGP}}, \code{\link{summarizeSGP}},  \cr
 \code{\link{studentGrowthPercentiles}}, and \code{\link{studentGrowthProjections}}}

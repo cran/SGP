@@ -11,6 +11,7 @@ function(sgp_object,
          sgp.projections.baseline=TRUE,
          sgp.projections.lagged.baseline=TRUE,
          sgp.percentiles.baseline.max.order=3,
+         sgp.percentiles.srs.baseline.max.order=3,
          sgp.projections.baseline.max.order=3,
          sgp.projections.lagged.baseline.max.order=3,
          sgp.projections.max.forward.progression.years=3,
@@ -24,6 +25,9 @@ function(sgp_object,
          simulate.sgps=TRUE,
          calculate.simex=NULL,
          calculate.simex.baseline=NULL,
+         calculate.simex.srs.baseline=NULL,
+         calculate.srs=NULL,
+         calculate.srs.baseline=NULL,
          goodness.of.fit.print=TRUE,
          sgp.config=NULL,
          sgp.config.drop.nonsequential.grade.progression.variables=TRUE,
@@ -50,9 +54,10 @@ function(sgp_object,
 	VALID_CASE <- CONTENT_AREA <- YEAR <- GRADE <- ID <- YEAR_WITHIN <- SCALE_SCORE <- SCALE_SCORE_EQUATED <- NULL
 	SGPstateData <- SGP::SGPstateData ### Needed due to possible assignment of values to SGPstateData
 
-	###
+
+	#######################################################
 	### Create relevant analyzeSGP variables
-	###
+	#######################################################
 
 	### Create state (if NULL) from sgp_object (if possible)
 
@@ -62,28 +67,28 @@ function(sgp_object,
 	}
 
 
-	###
-	### Tests associated with provided arguments
-	###
+	###############################################################
+	### Tests associated with supplied arguments
+	###############################################################
 
 	if (!(sgp.percentiles | sgp.percentiles.baseline)) {
 		simulate.sgps <- FALSE
 	}
 
 	if (simulate.sgps) {
-        csem.variable <- NULL
-		calculate.confidence.intervals.list <- list(state=state)
+    csem.variable <- NULL
+    calculate.confidence.intervals.list <- list(state=state)
 		if (is.null(SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
 			messageSGP("\tNOTE: CSEMs are required in 'SGPstateData' (either as a data.frame of CSEMs or as a variable name of CSEMsin @Data) to simulate SGPs for confidence interval calculations. SGP standard errors will not be calculated.")
 			calculate.confidence.intervals.list <- NULL
 		} else {
-            if (is.character(SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
-                csem.variable <- SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]]
-            }
-            if (is.numeric(SGPstateData[[state]][["SGP_Configuration"]][["calculate.confidence.intervals"]][["confidence.quantiles"]])) {
-                calculate.confidence.intervals.list[['confidence.quantiles']] <-
-					SGPstateData[[state]][["SGP_Configuration"]][["calculate.confidence.intervals"]][["confidence.quantiles"]]
-            }
+      if (is.character(SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
+        csem.variable <- SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]]
+      }
+      if (is.numeric(SGPstateData[[state]][["SGP_Configuration"]][["calculate.confidence.intervals"]][["confidence.quantiles"]])) {
+        calculate.confidence.intervals.list[['confidence.quantiles']] <-
+          SGPstateData[[state]][["SGP_Configuration"]][["calculate.confidence.intervals"]][["confidence.quantiles"]]
+      }
 		}
 	} else {
 		calculate.confidence.intervals.list <- csem.variable <- NULL
@@ -130,7 +135,7 @@ function(sgp_object,
 	}
 
   if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][["percentile.trajectory.values"]])) {
-    percentile.trajectory.values <- sort(unique(c(percentile.trajectory.values, SGPstateData[[state]][["SGP_Configuration"]][["percentile.trajectory.values"]])))
+      percentile.trajectory.values <- sort(unique(c(percentile.trajectory.values, SGPstateData[[state]][["SGP_Configuration"]][["percentile.trajectory.values"]])))
   }
 
 	if (!is.null(SGPstateData[[state]][["Student_Report_Information"]][["Projection_Fan_Limits"]])) {
@@ -138,7 +143,7 @@ function(sgp_object,
 	}
 
   if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][["gaPlot.back.extrapolated.cuts"]])) {
-    percentile.trajectory.values <- sort(unique(c(percentile.trajectory.values, 1:9*10)))
+      percentile.trajectory.values <- sort(unique(c(percentile.trajectory.values, 1:9*10)))
   }
 
 	if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][["sgp.projections.baseline.max.order"]])) {
@@ -181,7 +186,8 @@ function(sgp_object,
 		if (.Platform$OS.type != "unix" | "SNOW_TEST" %in% names(parallel.config)) stop("Both TAUS and PERCENTILES cannot be executed in Parallel at the same time in Windows OS or using SNOW type backends.")
 		messageSGP("\n\tCAUTION:  Running higher- and lower-level processes in parallel at the same time.  Make sure you have enough CPU cores and memory to support this.\n")
 	}
-	if (all(c("PERCENTILES", "SIMEX") %in% names(parallel.config[['WORKERS']]))) {
+
+    if (all(c("PERCENTILES", "SIMEX") %in% names(parallel.config[['WORKERS']]))) {
 		if (.Platform$OS.type != "unix" | "SNOW_TEST" %in% names(parallel.config)) stop("Both SIMEX and PERCENTILES cannot be executed in Parallel at the same time in Windows OS or using SNOW type backends.")
 		messageSGP("\n\tCAUTION:  Running higher- and lower-level processes in parallel at the same time.  Make sure you have enough CPU cores and memory to support this.\n")
 	}
@@ -190,7 +196,8 @@ function(sgp_object,
 		if (.Platform$OS.type != "unix" | "SNOW_TEST" %in% names(parallel.config)) stop("Both TAUS and BASELINE_PERCENTILES cannot be executed in Parallel at the same time in Windows OS or using SNOW type backends.")
 		messageSGP("\n\tCAUTION:  Running higher- and lower-level processes in parallel at the same time.  Make sure you have enough CPU cores and memory to support this.\n")
 	}
-	if (all(c("BASELINE_PERCENTILES", "SIMEX") %in% names(parallel.config[['WORKERS']]))) {
+
+    if (all(c("BASELINE_PERCENTILES", "SIMEX") %in% names(parallel.config[['WORKERS']]))) {
 		if (.Platform$OS.type != "unix" | "SNOW_TEST" %in% names(parallel.config)) stop("Both SIMEX and BASELINE_PERCENTILES cannot be executed in Parallel at the same time in Windows OS or using SNOW type backends.")
 		messageSGP("\n\tCAUTION:  Running higher- and lower-level processes in parallel at the same time.  Make sure you have enough CPU cores and memory to support this.\n")
 	}
@@ -209,10 +216,11 @@ function(sgp_object,
 	}
 
   if (is.list(calculate.simex) && "csem.data.vnames" %in% names(calculate.simex)) {
-      csem.variable <- calculate.simex[["csem.data.vnames"]]
+    csem.variable <- calculate.simex[["csem.data.vnames"]]
   }
+
   if (is.list(calculate.simex.baseline) && "csem.data.vnames" %in% names(calculate.simex.baseline)) {
-      csem.variable <- calculate.simex.baseline[["csem.data.vnames"]]
+    csem.variable <- calculate.simex.baseline[["csem.data.vnames"]]
   }
 
 	if (identical(calculate.simex, TRUE)) {
@@ -253,6 +261,7 @@ function(sgp_object,
 	if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][['print.other.gp']])) {
 		print.other.gp <- SGPstateData[[state]][["SGP_Configuration"]][['print.other.gp']]
 	}
+
 	if (is.null(print.other.gp)) print.other.gp <- FALSE
 
 	if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][['sgp.projections.max.forward.progression.years']])) {
@@ -293,7 +302,7 @@ function(sgp_object,
 	if (!is.null(SGPstateData[[state]][["Assessment_Program_Information"]][["Assessment_Transition"]][["Year"]])) {
 		if (SGPstateData[[state]][["Assessment_Program_Information"]][["Assessment_Transition"]][["Year"]]!={tmp.last.year <- tail(sort(unique(sgp_object@Data, by='YEAR')[['YEAR']]), 1)}) {
 			sgp.percentiles.equated <- FALSE
-            if ("SCALE_SCORE_EQUATED" %in% names(sgp_object@Data)) sgp_object@Data[["SCALE_SCORE_EQUATED"]][sgp_object@Data[["YEAR"]] >= tmp.last.year] <- sgp_object@Data[["SCALE_SCORE"]][sgp_object@Data[["YEAR"]] >= tmp.last.year]
+      if ("SCALE_SCORE_EQUATED" %in% names(sgp_object@Data)) sgp_object@Data[["SCALE_SCORE_EQUATED"]][sgp_object@Data[["YEAR"]] >= tmp.last.year] <- sgp_object@Data[["SCALE_SCORE"]][sgp_object@Data[["YEAR"]] >= tmp.last.year]
 		} else {
 			if (!identical(sgp.percentiles.equated, FALSE)) sgp.percentiles.equated <- TRUE
 		}
@@ -341,17 +350,18 @@ function(sgp_object,
 		return.projection.group.scale.scores <- TRUE
 	}
 
-	###
+
+	###########################################################################################################
 	### Utility functions
-	###
+	###########################################################################################################
 
 	## Function to export/print goodness of fit results as pdf files to directory Goodness_of_Fit
 
 	gof.print <- function(sgp_object) {
 		if (length(sgp_object@SGP[["Goodness_of_Fit"]]) > 0L) {
 			for (i in names(sgp_object@SGP[["Goodness_of_Fit"]])) {
-				dir.create(paste0("Goodness_of_Fit/", i), recursive=TRUE, showWarnings=FALSE)
-					for (output.format in c("PDF", "PNG")) {
+				dir.create(paste0("Goodness_of_Fit/", i, "/Decile_Tables"), recursive=TRUE, showWarnings=FALSE)
+					for (output.format in c("PDF", "PNG", "DECILE_TABLES")) {
 						for (j in names(sgp_object@SGP[["Goodness_of_Fit"]][[i]])) {
 							tmp.path <- file.path("Goodness_of_Fit", i, j)
 							if (!identical(.Platform$OS.type, "unix") & nchar(tmp.path) > 250L) {
@@ -360,13 +370,19 @@ function(sgp_object,
 							}
 							if (output.format=="PDF") {
 								pdf(file=paste0(tmp.path, ".pdf"), width=8.5, height=11)
+							       grid.draw(sgp_object@SGP[["Goodness_of_Fit"]][[i]][[j]][["PLOT"]])
+							    dev.off()
 							}
 							if (output.format=="PNG") {
 								Cairo(file=paste0(tmp.path, ".png"),
 								      width=8.5, height=11, units="in", dpi=144, pointsize=10.5, bg="transparent")
+							       grid.draw(sgp_object@SGP[["Goodness_of_Fit"]][[i]][[j]][["PLOT"]])
+							    dev.off()
 							}
-							grid.draw(sgp_object@SGP[["Goodness_of_Fit"]][[i]][[j]])
-							dev.off()
+              if (output.format=="DECILE_TABLES") {
+                decile.table <- sgp_object@SGP[["Goodness_of_Fit"]][[i]][[j]][["TABLE"]]
+                save(decile.table, file=paste0("Goodness_of_Fit/", i, "/Decile_Tables/", j, "_Decile_Table.Rdata"))
+              }
 						}
 					}
 				}
@@ -401,7 +417,7 @@ function(sgp_object,
             calculate.confidence.intervals.list[['variable']] <-
                 gsub("[.]+$", "", paste(SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]], tail(sgp.iter[['sgp.panel.years']], 1), tail(sgp.iter[['sgp.content.areas']], 1),  tail(sgp.iter[['sgp.panel.years.within']], 1), sep="."))
 		}
-        return(calculate.confidence.intervals.list)
+    return(calculate.confidence.intervals.list)
 	}
 
 	get.calculate.simex.arg <- function(calculate.simex, sgp.iter) {
@@ -426,6 +442,7 @@ function(sgp_object,
 		}
 	}
 
+
 	#######################################################################################################################
 	##   Set up the temporary sgp list object.  Fill with necessary old results if they exist first.
 	##   Create subset of @Data containing essential data elements for analyses
@@ -443,7 +460,7 @@ function(sgp_object,
         if (is.null(sgp.use.my.coefficient.matrices)) {
             Scale_Score_Linkages <- list()
             dir.create(file.path("Data", paste("Linkages", year.for.equate, sep="_"), "Figures"), recursive=TRUE, showWarnings=FALSE)
-		    content_areas.for.equate <- unique(sgp_object@Data[YEAR==year.for.equate], by="CONTENT_AREA")[['CONTENT_AREA']]
+            content_areas.for.equate <- unique(sgp_object@Data[YEAR==year.for.equate], by="CONTENT_AREA")[['CONTENT_AREA']]
 
             if (is.null(sgp.percentiles.equating.method)) {
                 messageSGP("\tNOTE: Analyses involving equating will be performed using each of: 'identity', 'mean', 'linear', and 'equipercentile' methods.\n\t\tSee documentation associated with the 'sgp.percentiles.equating.method' argument in 'analyzeSGP'.")
@@ -532,9 +549,9 @@ function(sgp_object,
 	}
 
 
-	#######################################################################################################################
-	##   Baseline SGP - compute matrices first if they are not in SGPstateData or merge them into sgp_object if in SGPstateData
-	#######################################################################################################################
+	##############################################################################################################################
+	###   Baseline SGP - compute matrices first if they are not in SGPstateData or merge them into sgp_object if in SGPstateData
+	##############################################################################################################################
 
 	if (sgp.percentiles.baseline | sgp.projections.baseline | sgp.projections.lagged.baseline) {
 
@@ -563,7 +580,7 @@ function(sgp_object,
 					}
           if (any(tmp.tf <- sapply(tmp, function(x) any(class(x) %in% c("try-error", "simpleError"))))) {
             tmp_sgp_object[['Error_Reports']] <- c(tmp_sgp_object[['Error_Reports']],
-              sgp.percentiles.baseline.=getErrorReports(tmp, tmp.tf, par.sgp.config[['sgp.percentiles.baseline']]))
+              sgp.percentiles.baseline.=getErrorReports(tmp, tmp.tf, sgp.baseline.config[['sgp.percentiles.baseline']]))
           }
           tmp_sgp_object <- mergeSGP(Reduce(mergeSGP, tmp[!tmp.tf]), tmp_sgp_object)
 				} else {
@@ -634,17 +651,16 @@ function(sgp_object,
 
 		###  Calculate BASELINE SIMEX matrices if they are not present
 		if (!all(find.matrices <- paste0(tmp.subjects, ".BASELINE.SIMEX") %in% names(tmp_sgp_object[["Coefficient_Matrices"]]))) {
-
       if (length(grep("BASELINE", names(sgp_object@SGP[["Coefficient_Matrices"]])))==0){
         sgp_object@SGP[["Coefficient_Matrices"]] <- c(sgp_object@SGP[["Coefficient_Matrices"]], tmp_sgp_object[["Coefficient_Matrices"]][grep("BASELINE", names(tmp_sgp_object[["Coefficient_Matrices"]]))])
       }
 
-      if (is.null(SGPstateData[[state]][["Baseline_splineMatrix"]])) { #  Put in SGPstateData to bypass re-running baseline matrices (either already exist or calculated above)
+      if (is.null(SGPstateData[[state]][["Baseline_splineMatrix"]])) {# Put in SGPstateData to bypass re-running baseline matrices (either already exist or calculated above)
         SGPstateData[[state]][["Baseline_splineMatrix"]] <- tmp_sgp_object[["Coefficient_Matrices"]][grep("BASELINE", names(tmp_sgp_object[["Coefficient_Matrices"]]))]
       }
 
 			if (is.null(sgp.baseline.config)) {
-				sgp.baseline.config <- getSGPBaselineConfig(sgp_object, content_areas = tmp.subjects, grades, sgp.baseline.panel.years, sgp.percentiles.baseline.max.order, calculate.simex.baseline)
+				sgp.baseline.config <- getSGPBaselineConfig(sgp_object, content_areas=tmp.subjects, grades, sgp.baseline.panel.years, sgp.percentiles.baseline.max.order, calculate.simex.baseline)
 			} else {
 				sgp.baseline.config <- checkConfig(sgp.baseline.config, "Baseline")
 			}
@@ -676,10 +692,10 @@ function(sgp_object,
 					}
           if (any(tmp.tf <- sapply(tmp, function(x) any(class(x) %in% c("try-error", "simpleError"))))) {
             tmp_sgp_object[['Error_Reports']] <- c(tmp_sgp_object[['Error_Reports']],
-              sgp.percentiles.baseline.=getErrorReports(tmp, tmp.tf, par.sgp.config[['sgp.percentiles.baseline']]))
+                sgp.percentiles.baseline.=getErrorReports(tmp, tmp.tf, sgp.baseline.config[['sgp.percentiles.baseline']]))
           }
           tmp_sgp_object <- mergeSGP(Reduce(mergeSGP, tmp[!tmp.tf]), tmp_sgp_object)
-				} else {  ## SNOW and MULTICORE flavors
+        } else {  ## SNOW and MULTICORE flavors
 					if (par.start$par.type=="SNOW") {
 						tmp <- clusterApplyLB(par.start$internal.cl, sgp.baseline.config, function(sgp.iter) baselineSGP(
 							sgp_object,
@@ -742,11 +758,168 @@ function(sgp_object,
 		##  Enforce that simex.use.my.coefficient.matrices must be TRUE and save.matrices is FALSE for BASELINE SIMEX calculations below
 		calculate.simex.baseline[['simex.use.my.coefficient.matrices']] <- TRUE
 		calculate.simex.baseline[['save.matrices']] <- FALSE
-
 	} # END check for SIMEX baseline matrices presence
 
 
+	######################################################################################################################
+	###   Stratified Random Sample (SRS) SGP - calculate cohort and baseline referenced matrices first
+	#######################################################################################################################
+
+#    if (!is.null(calculate.srs) || !is.null(calculate.srs.baseline)) {
+#
+#        if (!is.null(sgp.config)) {
+#            tmp.subjects <- unique(sapply(sgp.config, function(x) tail(x[["sgp.content.areas"]],1)))
+#        } else {
+#            if (!is.null(content_areas)) tmp.subjects <- content_areas else tmp.subjects <- unique(sgp_object@Data["VALID_CASE"], by="CONTENT_AREA")[["CONTENT_AREA"]]
+#        }
+#
+#        ## Identify BASELINE SRS matrices if they are not present
+#        if (!all(find.srs.matrices <- paste0(tmp.subjects, ".BASELINE.SRS") %in% names(tmp_sgp_object[["Coefficient_Matrices"]]))) {
+#            if (length(grep("SRS", names(sgp_object@SGP[["Coefficient_Matrices"]])))==0){
+#                sgp_object@SGP[["Coefficient_Matrices"]] <- c(sgp_object@SGP[["Coefficient_Matrices"]], tmp_sgp_object[["Coefficient_Matrices"]][grep("SRS", names(tmp_sgp_object[["Coefficient_Matrices"]]))])
+#            }
+#
+#            if (is.null(SGPstateData[[state]][["SRS_Baseline_splineMatrix"]])) {# Put in SGPstateData to bypass re-running SRS baseline matrices (either already exist or calculated above)
+#                SGPstateData[[state]][["SRS_Baseline_splineMatrix"]] <- tmp_sgp_object[["Coefficient_Matrices"]][grep("SRS", names(tmp_sgp_object[["Coefficient_Matrices"]]))]
+#            }
+#
+#			if (is.null(sgp.baseline.srs.config)) {
+#				sgp.srs.baseline.config <- getSGPSRSBaselineConfig(sgp_object, content_areas=tmp.subjects, grades, sgp.srs.baseline.panel.years, sgp.percentiles.srs.baseline.max.order, calculate.simex.srs.baseline)
+#			} else {
+#				sgp.srs.baseline.config <- checkConfig(sgp.srs.baseline.config, "SRS_Baseline")
+#			}
+#
+#
+#
+#
+#        }
+#
+#        ## Cohort referenced SRS matrices
+#        if (!is.null(calculate.srs)) { ### Create data and parameters (if not supplied) to calculate annual SRS SGPs
+#
+#
+#
+#        } ### END calculate.srs
+#
+#
+#        ## Baseline referenced SRS martrices
+#        if (!is.null(calculate.srs.baseline) & !all(find.srs.matrices)) {
+#
+#            if (length(grep("BASELINE", names(sgp_object@SGP[["Coefficient_Matrices"]])))==0){
+#
+#                sgp_object@SGP[["Coefficient_Matrices"]] <- c(sgp_object@SGP[["Coefficient_Matrices"]], tmp_sgp_object[["Coefficient_Matrices"]][grep("BASELINE", names(tmp_sgp_object[["Coefficient_Matrices"]]))])
+#            }
+#
+#            if (is.null(SGPstateData[[state]][["Baseline_splineMatrix"]])) {# Put in SGPstateData to bypass re-running baseline matrices (either already exist or calculated above)
+#                SGPstateData[[state]][["Baseline_splineMatrix"]] <- tmp_sgp_object[["Coefficient_Matrices"]][grep("BASELINE", names(tmp_sgp_object[["Coefficient_Matrices"]]))]
+#            }
+#
+#			if (is.null(sgp.baseline.config)) {
+#				sgp.baseline.config <- getSGPBaselineConfig(sgp_object, content_areas=tmp.subjects, grades, sgp.baseline.panel.years, sgp.percentiles.baseline.max.order, calculate.simex.baseline)
+#			} else {
+#				sgp.baseline.config <- checkConfig(sgp.baseline.config, "Baseline")
+#			}
+#
+#			sgp.baseline.config <- sgp.baseline.config[which(sapply(sgp.baseline.config, function(x) tail(x[["sgp.baseline.content.areas"]],1)) %in% tmp.subjects[!find.matrices])]
+#
+#			messageSGP("\n\tStarted SIMEX Baseline Coefficient Matrix Calculation:\n")
+#
+#			##  Enforce that simex.use.my.coefficient.matrices must be FALSE for BASELINE SIMEX matrix production
+#			calculate.simex.baseline[['simex.use.my.coefficient.matrices']] <- NULL
+#
+#			if (!is.null(parallel.config)) { ### PARALLEL BASELINE COEFFICIENT MATRIX CONSTRUCTION
+#
+#				par.start <- startParallel(parallel.config, 'BASELINE_MATRICES')
+#
+#				##  FOREACH flavor
+#				if (toupper(parallel.config[["BACKEND"]]) == "FOREACH") {
+#					tmp <- foreach(sgp.iter=iter(sgp.baseline.config), .packages="SGP", .errorhandling = "pass", .inorder=FALSE,
+#						.options.multicore=par.start$foreach.options, .options.mpi=par.start$foreach.options, .options.redis=par.start$foreach.options) %dopar% {
+#						return(baselineSGP(
+#							sgp_object,
+#							state=state,
+#							sgp.baseline.config=list(sgp.iter), ## NOTE: list of sgp.iter must be passed for proper iteration
+#							return.matrices.only=TRUE,
+#							calculate.baseline.sgps=FALSE,
+#							calculate.simex.baseline=calculate.simex.baseline,
+#							parallel.config=parallel.config,
+#							panel.data.vnames=getPanelDataVnames("baseline.sgp", sgp.iter, sgp.data.names)))
+#					}
+#                    if (any(tmp.tf <- sapply(tmp, function(x) any(class(x) %in% c("try-error", "simpleError"))))) {
+#                        tmp_sgp_object[['Error_Reports']] <- c(tmp_sgp_object[['Error_Reports']],
+#                        sgp.percentiles.baseline.=getErrorReports(tmp, tmp.tf, sgp.baseline.config[['sgp.percentiles.baseline']]))
+#                    }
+#                    tmp_sgp_object <- mergeSGP(Reduce(mergeSGP, tmp[!tmp.tf]), tmp_sgp_object)
+#                } else {  ## SNOW and MULTICORE flavors
+#					if (par.start$par.type=="SNOW") {
+#						tmp <- clusterApplyLB(par.start$internal.cl, sgp.baseline.config, function(sgp.iter) baselineSGP(
+#							sgp_object,
+#							state=state,
+#							sgp.baseline.config=list(sgp.iter), ## NOTE: list of sgp.iter must be passed for proper iteration
+#							return.matrices.only=TRUE,
+#							calculate.baseline.sgps=FALSE,
+#							calculate.simex.baseline=calculate.simex.baseline,
+#							parallel.config=parallel.config,
+#							panel.data.vnames=getPanelDataVnames("baseline.sgp", sgp.iter, sgp.data.names)))
+#
+#						tmp_sgp_object <- mergeSGP(tmp_sgp_object, list(Coefficient_Matrices=merge.coefficient.matrices(tmp, simex=TRUE)))
+#					} # END if (SNOW)
+#
+#					if (par.start$par.type=="MULTICORE") {
+#						tmp <- mclapply(sgp.baseline.config, function(sgp.iter) baselineSGP(
+#							sgp_object,
+#							state=state,
+#							sgp.baseline.config=list(sgp.iter), ## NOTE: list of sgp.iter must be passed for proper iteration
+#							return.matrices.only=TRUE,
+#							calculate.baseline.sgps=FALSE,
+#							calculate.simex.baseline=calculate.simex.baseline,
+#							parallel.config=parallel.config,
+#							panel.data.vnames=getPanelDataVnames("baseline.sgp", sgp.iter, sgp.data.names)),
+#							mc.cores=par.start$workers, mc.preschedule=FALSE)
+#
+#						tmp_sgp_object <- mergeSGP(tmp_sgp_object, list(Coefficient_Matrices=merge.coefficient.matrices(tmp, simex=TRUE)))
+#					} # END if (MULTICORE)
+#					stopParallel(parallel.config, par.start)
+#				} #  END FOREACH, SNOW and MULTICORE
+#			} else {
+#				## SEQUENTIAL BASELINE COEFFICIENT MATRIX CONSTRUCTION
+#				##  Or, run SIMEX simulation iterations in parallel in studentGrowthPercentiles using lower.level.parallel.config
+#				##  Useful if many more cores/workers available than configs to iterate over.
+#				tmp <- list()
+#				for (sgp.iter in seq_along(sgp.baseline.config)) {
+#					tmp[[sgp.iter]] <- baselineSGP(
+#						sgp_object,
+#						state=state,
+#						sgp.baseline.config=sgp.baseline.config[sgp.iter], ## NOTE: must pass list, [...], not vector, [[...]].
+#						return.matrices.only=TRUE,
+#						calculate.baseline.sgps=FALSE,
+#						calculate.simex.baseline=calculate.simex.baseline,
+#						parallel.config=lower.level.parallel.config,
+#						panel.data.vnames=getPanelDataVnames("baseline.sgp", sgp.baseline.config[[sgp.iter]], sgp.data.names))
+#				}
+#				tmp_sgp_object <- mergeSGP(tmp_sgp_object, list(Coefficient_Matrices=merge.coefficient.matrices(tmp, simex=TRUE)))
+#			}
+#
+#			###  Save SIMEX BASELINE matrices
+#			assign(paste0(state, "_SIMEX_Baseline_Matrices"), list())
+#			for (tmp.matrix.label in grep("BASELINE.SIMEX", names(tmp_sgp_object$Coefficient_Matrices), value=TRUE)) {
+#				eval(parse(text=paste0(state, "_SIMEX_Baseline_Matrices[['", tmp.matrix.label, "']] <- tmp_sgp_object[['Coefficient_Matrices']][['", tmp.matrix.label, "']]")))
+#			}
+#			save(list=paste0(state, "_SRS_Baseline_Matrices"), file=paste0(state, "_SRS_Baseline_Matrices.Rdata"), compress="xz")
+#
+#			messageSGP("\n\tFinished Calculating SRS Baseline Coefficient Matrices\n")
+#
+#        ##  Enforce that simex.use.my.coefficient.matrices must be TRUE and save.matrices is FALSE for BASELINE SIMEX calculations below
+#		calculate.simex.baseline[['simex.use.my.coefficient.matrices']] <- TRUE
+#		calculate.simex.baseline[['save.matrices']] <- FALSE
+#
+#        } ### END calculate.srs.baseline
+#    } # END check for SRS analyses
+
+
+	#######################################################################################################################
 	### Create par.sgp.config (for both parallel and sequential implementations) and par.sgp.config.projections for projections
+	#######################################################################################################################
 
 	setkeyv(sgp_object@Data, getKey(sgp_object))
 	par.sgp.config <- getSGPConfig(sgp_object, state, tmp_sgp_object, content_areas, years, grades, sgp.config, trim.sgp.config, sgp.percentiles, sgp.projections, sgp.projections.lagged,
@@ -774,13 +947,13 @@ function(sgp_object,
 		sgp.projections.baseline <- sgp.projections.lagged.baseline <- FALSE
 	}
 
-  if (sgp.percentiles) {
-    if (!is.null(tmp.transition.year <- SGPstateData[[state]][["Assessment_Program_Information"]][["Assessment_Transition"]][["Year"]]) &&
-        sort(unique(unlist(sapply(par.sgp.config[['sgp.percentiles']], function(x) x[['sgp.panel.years']]))))[1L] < tmp.transition.year) {
-            messageSGP(paste0("\tNOTE: Configurations include years prior to assessment transition (", tmp.transition.year, ").\n\t\tOutput will include SGPs of all orders to accomodate investigations.\n"))
-            print.other.gp <- TRUE
+    if (sgp.percentiles) {
+        if (!is.null(tmp.transition.year <- SGPstateData[[state]][["Assessment_Program_Information"]][["Assessment_Transition"]][["Year"]]) &&
+            sort(unique(unlist(sapply(par.sgp.config[['sgp.percentiles']], function(x) x[['sgp.panel.years']]))))[1L] < tmp.transition.year) {
+                messageSGP(paste0("\tNOTE: Configurations include years prior to assessment transition (", tmp.transition.year, ").\n\t\tOutput will include SGPs of all orders to accomodate investigations.\n"))
+                print.other.gp <- TRUE
+        }
     }
-  }
 
 	### Produce cohort data information
 
@@ -794,7 +967,7 @@ function(sgp_object,
 
 	#######################################################################################################################
 	#######################################################################################################################
-	##   Percentiles, Equated Percentiles, Baseline Percentiles, Projections, Lagged Projections -  PARALLEL FLAVORS FIRST
+	###   Percentiles, Equated Percentiles, Baseline Percentiles, Projections, Lagged Projections -  PARALLEL FLAVORS FIRST
 	#######################################################################################################################
 	#######################################################################################################################
 
@@ -940,7 +1113,7 @@ function(sgp_object,
 						sgp.test.cohort.size=sgp.test.cohort.size,
 						return.norm.group.scale.scores=return.norm.group.scale.scores,
 						return.norm.group.dates=return.norm.group.dates,
-                        return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
+            return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
 						return.prior.scale.score.standardized=return.prior.scale.score.standardized,
 						goodness.of.fit=goodness.of.fit.print.arg,
 						goodness.of.fit.minimum.n=SGPstateData[[state]][["SGP_Configuration"]][["goodness.of.fit.minimum.n"]],
@@ -976,6 +1149,21 @@ function(sgp_object,
 				} else {
 					tmp_sgp_data_for_analysis <- tmp_sgp_data_for_analysis[ID %in% test.ids]
 				}
+        if (sgp.projections|sgp.projections.baseline) {
+          tmp.proj.lookup <- unique(SJ(sapply(seq(length(par.sgp.config[['sgp.projections']])), function(f) tail(par.sgp.config[['sgp.projections']][[f]][["sgp.projection.content.areas"]], 1)),
+                                    sapply(seq(length(par.sgp.config[['sgp.projections']])), function(f) tail(par.sgp.config[['sgp.projections']][[f]][["sgp.panel.years"]], 1)),
+                                    sapply(seq(length(par.sgp.config[['sgp.projections']])), function(f) tail(par.sgp.config[['sgp.projections']][[f]][["sgp.projection.grade.sequences"]], 1))))
+          setnames(tmp.proj.lookup, c("CONTENT_AREA", "YEAR", "GRADE"))
+          setkey(tmp.proj.lookup)
+          setkeyv(tmp_sgp_data_for_analysis, key(tmp.proj.lookup))
+          missing.lookup <- tmp.proj.lookup[!tmp_sgp_data_for_analysis] # data.table anti join
+          if (nrow(missing.lookup) > 0){
+            setkeyv(sgp_object@Data, key(missing.lookup))
+            tmp_data_to_add <- sgp_object@Data[missing.lookup][VALID_CASE=="VALID_CASE",intersect(names(sgp_object@Data), variables.to.get), with=FALSE][, .SD[sample(.N, sgp.test.cohort.size)], by=key(missing.lookup)]
+            tmp_sgp_data_for_analysis <- rbindlist(list(tmp_sgp_data_for_analysis, tmp_sgp_data_for_analysis))
+            setkeyv(tmp_sgp_data_for_analysis, getKey(tmp_sgp_data_for_analysis))
+          }
+        }
 			}
 		} #END if (sgp.percentiles)
 
@@ -1015,9 +1203,10 @@ function(sgp_object,
 						sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
 						sgp.cohort.size=tmp.cohort.size,
 						sgp.less.than.sgp.cohort.size.return=sgp.less.than.sgp.cohort.size.return,
+            sgp.test.cohort.size=sgp.test.cohort.size,
 						return.norm.group.scale.scores=return.norm.group.scale.scores,
 						return.norm.group.dates=return.norm.group.dates,
-                        return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
+            return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
 						return.prior.scale.score.standardized=return.prior.scale.score.standardized,
 						goodness.of.fit=goodness.of.fit.print.arg,
 						goodness.of.fit.minimum.n=SGPstateData[[state]][["SGP_Configuration"]][["goodness.of.fit.minimum.n"]],
@@ -1062,9 +1251,10 @@ function(sgp_object,
 						sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
 						sgp.cohort.size=tmp.cohort.size,
 						sgp.less.than.sgp.cohort.size.return=sgp.less.than.sgp.cohort.size.return,
+            sgp.test.cohort.size=sgp.test.cohort.size,
 						return.norm.group.scale.scores=return.norm.group.scale.scores,
 						return.norm.group.dates=return.norm.group.dates,
-                        return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
+            return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
 						return.prior.scale.score.standardized=return.prior.scale.score.standardized,
 						goodness.of.fit=goodness.of.fit.print.arg,
 						goodness.of.fit.minimum.n=SGPstateData[[state]][["SGP_Configuration"]][["goodness.of.fit.minimum.n"]],
@@ -1110,9 +1300,10 @@ function(sgp_object,
 						sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
 						sgp.cohort.size=tmp.cohort.size,
 						sgp.less.than.sgp.cohort.size.return=sgp.less.than.sgp.cohort.size.return,
+            sgp.test.cohort.size=sgp.test.cohort.size,
 						return.norm.group.scale.scores=return.norm.group.scale.scores,
 						return.norm.group.dates=return.norm.group.dates,
-                        return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
+            return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
 						return.prior.scale.score.standardized=return.prior.scale.score.standardized,
 						goodness.of.fit=goodness.of.fit.print.arg,
 						goodness.of.fit.minimum.n=SGPstateData[[state]][["SGP_Configuration"]][["goodness.of.fit.minimum.n"]],
@@ -1170,9 +1361,10 @@ function(sgp_object,
 						drop.nonsequential.grade.progression.variables=FALSE, # taken care of with config
 						exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
 						sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
+            sgp.test.cohort.size=sgp.test.cohort.size,
 						return.norm.group.scale.scores=return.norm.group.scale.scores,
 						return.norm.group.dates=return.norm.group.dates,
-                        return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
+            return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
 						return.prior.scale.score.standardized=return.prior.scale.score.standardized,
 						goodness.of.fit=goodness.of.fit.print.arg,
 						goodness.of.fit.minimum.n=SGPstateData[[state]][["SGP_Configuration"]][["goodness.of.fit.minimum.n"]],
@@ -1213,9 +1405,10 @@ function(sgp_object,
 						drop.nonsequential.grade.progression.variables=FALSE, # taken care of with config
 						exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
 						sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
+            sgp.test.cohort.size=sgp.test.cohort.size,
 						return.norm.group.scale.scores=return.norm.group.scale.scores,
 						return.norm.group.dates=return.norm.group.dates,
-                        return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
+            return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
 						return.prior.scale.score.standardized=return.prior.scale.score.standardized,
 						goodness.of.fit=goodness.of.fit.print.arg,
 						goodness.of.fit.minimum.n=SGPstateData[[state]][["SGP_Configuration"]][["goodness.of.fit.minimum.n"]],
@@ -1257,9 +1450,10 @@ function(sgp_object,
 						drop.nonsequential.grade.progression.variables=FALSE, # taken care of with config
 						exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
 						sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
+            sgp.test.cohort.size=sgp.test.cohort.size,
 						return.norm.group.scale.scores=return.norm.group.scale.scores,
 						return.norm.group.dates=return.norm.group.dates,
-                        return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
+            return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
 						return.prior.scale.score.standardized=return.prior.scale.score.standardized,
 						goodness.of.fit=goodness.of.fit.print.arg,
 						goodness.of.fit.minimum.n=SGPstateData[[state]][["SGP_Configuration"]][["goodness.of.fit.minimum.n"]],
@@ -1281,6 +1475,37 @@ function(sgp_object,
 			} # END parallel flavors
 			stopParallel(parallel.config, par.start)
 		} ## END if sgp.percentiles.baseline
+
+    if (!is.null(sgp.test.cohort.size) & !sgp.percentiles) {
+      test.ids <- unique(rbindlist(tmp_sgp_object[["SGPercentiles"]], fill=TRUE), by='ID')[['ID']]
+      if (is(tmp_sgp_data_for_analysis, "DBIObject")) {
+        con <- dbConnect(SQLite(), dbname = file.path(tempdir(), "TMP_SGP_Data.sqlite"))
+        tmp_sgp_data_for_analysis <- data.table(dbGetQuery(con, paste0("select * from sgp_data where ID in ('", paste(test.ids, collapse="', '"), "')")))
+        dbDisconnect(con)
+        if ("YEAR_WITHIN" %in% sgp.data.names) {
+          setkey(tmp_sgp_data_for_analysis, VALID_CASE, CONTENT_AREA, YEAR, GRADE, YEAR_WITHIN)
+        } else {
+          setkey(tmp_sgp_data_for_analysis, VALID_CASE, CONTENT_AREA, YEAR, GRADE)
+        }
+      } else {
+        tmp_sgp_data_for_analysis <- tmp_sgp_data_for_analysis[ID %in% test.ids]
+      }
+      if (sgp.projections|sgp.projections.baseline) {
+        tmp.proj.lookup <- unique(SJ(sapply(seq(length(par.sgp.config[['sgp.projections']])), function(f) tail(par.sgp.config[['sgp.projections']][[f]][["sgp.projection.content.areas"]], 1)),
+                                  sapply(seq(length(par.sgp.config[['sgp.projections']])), function(f) tail(par.sgp.config[['sgp.projections']][[f]][["sgp.panel.years"]], 1)),
+                                  sapply(seq(length(par.sgp.config[['sgp.projections']])), function(f) tail(par.sgp.config[['sgp.projections']][[f]][["sgp.projection.grade.sequences"]], 1))))
+        setnames(tmp.proj.lookup, c("CONTENT_AREA", "YEAR", "GRADE"))
+        setkey(tmp.proj.lookup)
+        setkeyv(tmp_sgp_data_for_analysis, key(tmp.proj.lookup))
+        missing.lookup <- tmp.proj.lookup[!tmp_sgp_data_for_analysis] # data.table anti join
+        if (nrow(missing.lookup) > 0){
+          setkeyv(sgp_object@Data, key(missing.lookup))
+          tmp_data_to_add <- sgp_object@Data[missing.lookup][VALID_CASE=="VALID_CASE",intersect(names(sgp_object@Data), variables.to.get), with=FALSE][, .SD[sample(.N, sgp.test.cohort.size)], by=key(missing.lookup)]
+          tmp_sgp_data_for_analysis <- rbindlist(list(tmp_sgp_data_for_analysis, tmp_sgp_data_for_analysis))
+          setkeyv(tmp_sgp_data_for_analysis, getKey(tmp_sgp_data_for_analysis))
+        }
+      }
+    }
 
 
 	#######################################################
@@ -1308,8 +1533,8 @@ function(sgp_object,
 						performance.level.cutscores=state,
 						max.forward.progression.grade=sgp.projections.max.forward.progression.grade,
 						max.forward.progression.years=sgp.iter[['sgp.projections.max.forward.progression.years']],
-						max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.projection.panel.years"]], 1), tail(sgp.iter[["sgp.projection.content.areas"]], 1),
-							state, sgp.projections.equated),
+						max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.projection.panel.years"]], 1),
+              tail(sgp.iter[["sgp.projection.content.areas"]], 1), state, sgp.projections.equated),
 						percentile.trajectory.values=unique(c(1, percentile.trajectory.values, 99)),
 						panel.data.vnames=getPanelDataVnames("sgp.projections", sgp.iter, sgp.data.names, equate.variable),
 						grade.progression=sgp.iter[["sgp.projection.grade.sequences"]],
@@ -1354,8 +1579,8 @@ function(sgp_object,
 						performance.level.cutscores=state,
 						max.forward.progression.grade=sgp.projections.max.forward.progression.grade,
 						max.forward.progression.years=sgp.iter[['sgp.projections.max.forward.progression.years']],
-						max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.projection.panel.years"]], 1), tail(sgp.iter[["sgp.projection.content.areas"]], 1),
-							state, sgp.projections.equated),
+						max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.projection.panel.years"]], 1),
+              tail(sgp.iter[["sgp.projection.content.areas"]], 1), state, sgp.projections.equated),
 						percentile.trajectory.values=unique(c(1, percentile.trajectory.values, 99)),
 						panel.data.vnames=getPanelDataVnames("sgp.projections", sgp.iter, sgp.data.names, equate.variable),
 						grade.progression=sgp.iter[["sgp.projection.grade.sequences"]],
@@ -1401,8 +1626,8 @@ function(sgp_object,
 						performance.level.cutscores=state,
 						max.forward.progression.grade=sgp.projections.max.forward.progression.grade,
 						max.forward.progression.years=sgp.iter[['sgp.projections.max.forward.progression.years']],
-						max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.projection.panel.years"]], 1), tail(sgp.iter[["sgp.projection.content.areas"]], 1),
-							state, sgp.projections.equated),
+						max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.projection.panel.years"]], 1),
+              tail(sgp.iter[["sgp.projection.content.areas"]], 1), state, sgp.projections.equated),
 						percentile.trajectory.values=unique(c(1, percentile.trajectory.values, 99)),
 						panel.data.vnames=getPanelDataVnames("sgp.projections", sgp.iter, sgp.data.names, equate.variable),
 						grade.progression=sgp.iter[["sgp.projection.grade.sequences"]],
@@ -1606,8 +1831,8 @@ function(sgp_object,
 							my.subject=tail(sgp.iter[["sgp.content.areas"]], 1), my.extra.label=equate.label),
 						use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
 						performance.level.cutscores=state,
-						max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.panel.years"]], 1), tail(sgp.iter[["sgp.content.areas"]], 1), state,
-							sgp.projections.equated),
+						max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.panel.years"]], 1),
+              tail(sgp.iter[["sgp.content.areas"]], 1), state, sgp.projections.equated),
 						percentile.trajectory.values=lagged.percentile.trajectory.values,
 						max.forward.progression.grade=sgp.projections.max.forward.progression.grade,
 						panel.data.vnames=getPanelDataVnames("sgp.projections.lagged", sgp.iter, sgp.data.names, equate.variable),
@@ -1653,8 +1878,8 @@ function(sgp_object,
 							my.subject=tail(sgp.iter[["sgp.content.areas"]], 1), my.extra.label=equate.label),
 						use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
 						performance.level.cutscores=state,
-						max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.panel.years"]], 1), tail(sgp.iter[["sgp.content.areas"]], 1), state,
-							sgp.projections.equated),
+						max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.panel.years"]], 1),
+              tail(sgp.iter[["sgp.content.areas"]], 1), state, sgp.projections.equated),
 						percentile.trajectory.values=lagged.percentile.trajectory.values,
 						max.forward.progression.grade=sgp.projections.max.forward.progression.grade,
 						panel.data.vnames=getPanelDataVnames("sgp.projections.lagged", sgp.iter, sgp.data.names, equate.variable),
@@ -1701,8 +1926,8 @@ function(sgp_object,
 							my.subject=tail(sgp.iter[["sgp.content.areas"]], 1), my.extra.label=equate.label),
 						use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
 						performance.level.cutscores=state,
-						max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.panel.years"]], 1), tail(sgp.iter[["sgp.content.areas"]], 1), state,
-							sgp.projections.equated),
+						max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.panel.years"]], 1),
+              tail(sgp.iter[["sgp.content.areas"]], 1), state, sgp.projections.equated),
 						percentile.trajectory.values=lagged.percentile.trajectory.values,
 						max.forward.progression.grade=sgp.projections.max.forward.progression.grade,
 						panel.data.vnames=getPanelDataVnames("sgp.projections.lagged", sgp.iter, sgp.data.names, equate.variable),
@@ -1931,7 +2156,7 @@ function(sgp_object,
 					sgp.test.cohort.size=sgp.test.cohort.size,
 					return.norm.group.scale.scores=return.norm.group.scale.scores,
 					return.norm.group.dates=return.norm.group.dates,
-                    return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
+          return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
 					return.prior.scale.score.standardized=return.prior.scale.score.standardized,
 					goodness.of.fit=goodness.of.fit.print.arg,
 					goodness.of.fit.minimum.n=SGPstateData[[state]][["SGP_Configuration"]][["goodness.of.fit.minimum.n"]],
@@ -1959,6 +2184,22 @@ function(sgp_object,
 				} else {
 					tmp_sgp_data_for_analysis <- tmp_sgp_data_for_analysis[ID %in% test.ids]
 				}
+        if (sgp.projections|sgp.projections.baseline) {
+          tmp.proj.lookup <-
+              unique(SJ(sapply(seq(length(par.sgp.config[['sgp.projections']])), function(f) tail(par.sgp.config[['sgp.projections']][[f]][["sgp.projection.content.areas"]], 1)),
+                        sapply(seq(length(par.sgp.config[['sgp.projections']])), function(f) tail(par.sgp.config[['sgp.projections']][[f]][["sgp.panel.years"]], 1)),
+                        sapply(seq(length(par.sgp.config[['sgp.projections']])), function(f) tail(par.sgp.config[['sgp.projections']][[f]][["sgp.projection.grade.sequences"]], 1))))
+          setnames(tmp.proj.lookup, c("CONTENT_AREA", "YEAR", "GRADE"))
+          setkey(tmp.proj.lookup)
+          setkeyv(tmp_sgp_data_for_analysis, key(tmp.proj.lookup))
+          missing.lookup <- tmp.proj.lookup[!tmp_sgp_data_for_analysis] # data.table anti join
+          if (nrow(missing.lookup) > 0){
+            setkeyv(sgp_object@Data, key(missing.lookup))
+            tmp_data_to_add <- sgp_object@Data[missing.lookup][VALID_CASE=="VALID_CASE",intersect(names(sgp_object@Data), variables.to.get), with=FALSE][, .SD[sample(.N, sgp.test.cohort.size)], by=key(missing.lookup)]
+            tmp_sgp_data_for_analysis <- rbindlist(list(tmp_sgp_data_for_analysis, tmp_data_to_add), use.names=TRUE)
+            setkeyv(tmp_sgp_data_for_analysis, getKey(tmp_sgp_data_for_analysis))
+          }
+        }
 			}
 		} ## END if sgp.percentiles
 
@@ -1994,9 +2235,10 @@ function(sgp_object,
 					sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
 					sgp.cohort.size=tmp.cohort.size,
 					sgp.less.than.sgp.cohort.size.return=sgp.less.than.sgp.cohort.size.return,
+          sgp.test.cohort.size=sgp.test.cohort.size,
 					return.norm.group.scale.scores=return.norm.group.scale.scores,
 					return.norm.group.dates=return.norm.group.dates,
-                    return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
+          return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
 					return.prior.scale.score.standardized=return.prior.scale.score.standardized,
 					goodness.of.fit=goodness.of.fit.print.arg,
 					goodness.of.fit.minimum.n=SGPstateData[[state]][["SGP_Configuration"]][["goodness.of.fit.minimum.n"]],
@@ -2040,9 +2282,10 @@ function(sgp_object,
 					drop.nonsequential.grade.progression.variables=FALSE,
 					exact.grade.progression.sequence=sgp.iter[["sgp.exact.grade.progression"]],
 					sgp.loss.hoss.adjustment=sgp.loss.hoss.adjustment,
+          sgp.test.cohort.size=sgp.test.cohort.size,
 					return.norm.group.scale.scores=return.norm.group.scale.scores,
 					return.norm.group.dates=return.norm.group.dates,
-                    return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
+          return.norm.group.preference=sgp.iter[["sgp.norm.group.preference"]],
 					return.prior.scale.score.standardized=return.prior.scale.score.standardized,
 					goodness.of.fit=goodness.of.fit.print.arg,
 					goodness.of.fit.minimum.n=SGPstateData[[state]][["SGP_Configuration"]][["goodness.of.fit.minimum.n"]],
@@ -2071,15 +2314,15 @@ function(sgp_object,
 				tmp_sgp_object <- studentGrowthProjections(
 					panel.data=panel.data,
 					sgp.labels=list(my.year=tail(sgp.iter[["sgp.projection.panel.years"]], 1),
-                    my.subject=tail(sgp.iter[["sgp.projection.content.areas"]], 1), my.grade=tail(sgp.iter[["sgp.projection.grade.sequences"]], 1)),
+            my.subject=tail(sgp.iter[["sgp.projection.content.areas"]], 1), my.grade=tail(sgp.iter[["sgp.projection.grade.sequences"]], 1)),
 					use.my.coefficient.matrices=list(my.year=tail(sgp.iter[["sgp.projection.panel.years"]], 1),
 						my.subject=tail(sgp.iter[["sgp.projection.content.areas"]], 1), my.extra.label=equate.label),
 					use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.projection.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.projection.content.areas"]], 1)),
 					performance.level.cutscores=state,
 					max.forward.progression.years=sgp.iter[['sgp.projections.max.forward.progression.years']],
 					max.forward.progression.grade=sgp.projections.max.forward.progression.grade,
-					max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.projection.panel.years"]], 1), tail(sgp.iter[["sgp.projection.content.areas"]], 1), state,
-						sgp.projections.equated),
+					max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.projection.panel.years"]], 1),
+            tail(sgp.iter[["sgp.projection.content.areas"]], 1), state, sgp.projections.equated),
 					percentile.trajectory.values=unique(c(1, percentile.trajectory.values, 99)),
 					panel.data.vnames=getPanelDataVnames("sgp.projections", sgp.iter, sgp.data.names, equate.variable),
 					grade.progression=sgp.iter[["sgp.projection.grade.sequences"]],
@@ -2168,8 +2411,8 @@ function(sgp_object,
 						my.subject=tail(sgp.iter[["sgp.content.areas"]], 1), my.extra.label=equate.label),
 					use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
 					performance.level.cutscores=state,
-					max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.panel.years"]], 1), tail(sgp.iter[["sgp.content.areas"]], 1), state,
-						sgp.projections.equated),
+					max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.panel.years"]], 1),
+            tail(sgp.iter[["sgp.content.areas"]], 1), state, sgp.projections.equated),
 					percentile.trajectory.values=lagged.percentile.trajectory.values,
 					max.forward.progression.grade=sgp.projections.max.forward.progression.grade,
 					panel.data.vnames=getPanelDataVnames("sgp.projections.lagged", sgp.iter, sgp.data.names, equate.variable),

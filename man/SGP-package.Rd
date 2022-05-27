@@ -19,8 +19,8 @@ growth projections to be calculated across assessment transitions by equating th
 \tabular{ll}{
 Package: \tab SGP\cr
 Type: \tab Package\cr
-Version: \tab 1.9-5.0\cr
-Date: \tab 2020-1-30\cr
+Version: \tab 2.0-0.0\cr
+Date: \tab 2022-5-25\cr
 License: \tab GPL-3\cr
 LazyLoad: \tab yes\cr
 }
@@ -29,7 +29,7 @@ calculation must be specifically formatted.  See \code{\link[SGPdata]{sgpData}} 
 provided in the examples of the \code{\link{studentGrowthPercentiles}} and \code{\link{studentGrowthProjections}} using the higher level functions
 \code{\link{prepareSGP}}, \code{\link{analyzeSGP}}, \code{\link{combineSGP}}, \code{\link{summarizeSGP}}, and \code{\link{visualizeSGP}}.}
 
-\author{Damian W. Betebenner \email{dbetebenner@nciea.org}, Adam Van Iwaarden \email{avaniwaarden@gmail.com}, Ben Domingue \email{ben.domingue@gmail.com} and Yi Shang \email{shangyi@gmail.com}}
+\author{Damian W. Betebenner \email{dbetebenner@nciea.org}, Adam Van Iwaarden \email{avaniwaarden@nciea.org}, Ben Domingue \email{ben.domingue@gmail.com} and Yi Shang \email{shangyi@gmail.com}}
 
 \references{
 Betebenner, D. W. (2008). Toward a normative understanding of student growth. In K. E. Ryan &

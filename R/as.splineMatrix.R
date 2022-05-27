@@ -6,11 +6,11 @@ function(matrix_argument,
 	sgp_object=NULL) {
 
 		if (!class(matrix_argument) %in% c("matrix", "splineMatrix")) stop("Supplied object must be of class 'matrix' or 'splineMatrix'.")
-		if (class(matrix_argument) == "splineMatrix" && validObject(matrix_argument, test=TRUE)==TRUE) return(matrix_argument)
+		if (inherits(matrix_argument, "splineMatrix") && validObject(matrix_argument, test=TRUE)==TRUE) return(matrix_argument)
 
-		### Create relvant variables
+		### Create relevant variables
 
-			if (class(matrix_argument)=="matrix") tmp.matrix <- matrix_argument else tmp.matrix <- matrix_argument@.Data
+			if (!inherits(matrix_argument, "splineMatrix")) tmp.matrix <- matrix_argument else tmp.matrix <- matrix_argument@.Data
 
 			rn <- rownames(tmp.matrix)[-1]
 			rn <- gsub("\"", "'", rn)
@@ -31,7 +31,7 @@ function(matrix_argument,
 
 		### Matrix case ###
 
-		if (class(matrix_argument)=="matrix") {
+		if (!inherits(matrix_argument, "splineMatrix")) {
 
 			if (is.null(sgp_object)) {
 				stop("splineMatrix creation with an object of class 'matrix' requires that an sgp_object be supplied.")
@@ -61,7 +61,7 @@ function(matrix_argument,
 			### Grade Progression
 
 			grade_progression <- as.character(c(rev(sapply(rn.knots2, function(x) x[1])), tmp.last.grade))
-			if (!is.numeric(type.convert(grade_progression))) {
+			if (!is.numeric(type.convert(grade_progression, as.is=FALSE))) {
 				stop("Automatic conversion of older to newer version spline matrices is only available when grade progressions are integers. Please contact package maintainer for help on update of your splineMatrices.")
 			}
 
@@ -73,7 +73,7 @@ function(matrix_argument,
 
 			### Time Lag
 
-			time_lags <- as.integer(diff(type.convert(grade_progression)))
+			time_lags <- as.integer(diff(type.convert(grade_progression, as.is=FALSE)))
 
 
 			### Time
@@ -107,12 +107,12 @@ function(matrix_argument,
 				Time_Lags=list(time_lags),
 				Version=version)
 
-		} ### END if class(matrix_argument)=="matrix"
+		} ### END if !inherits(matrix_argument, "splineMatrix")
 
 
 		### splineMatrix case ###
 
-		if (class(matrix_argument)=="splineMatrix") {
+		if (inherits(matrix_argument, "splineMatrix")) {
 
 			knots <- matrix_argument@Knots
 			boundaries <- matrix_argument@Boundaries
@@ -124,7 +124,7 @@ function(matrix_argument,
 				grade_progression <- as.character(matrix_argument@Grade_Progression[[1]])
 			} else {
 				grade_progression <- as.character(c(rev(sapply(rn.knots2, function(x) x[1])), tmp.last.grade))
-				if (!is.numeric(type.convert(grade_progression))) {
+				if (!is.numeric(type.convert(grade_progression, as.is=FALSE))) {
 					stop("Automatic conversion of older to newer version spline matrices is only available when grade progressions are integers. Please contact package maintainer for help on update of your splineMatrices.")
 				}
 			}
@@ -144,7 +144,7 @@ function(matrix_argument,
 			if (.hasSlot(matrix_argument, "Time_Lags")) {
 				time_lags <- as.numeric(matrix_argument@Time_Lags[[1]])
 			} else {
-				time_lags <- as.numeric(diff(type.convert(grade_progression)))
+				time_lags <- as.numeric(diff(type.convert(grade_progression, as.is=FALSE)))
 			}
 
 
@@ -183,6 +183,6 @@ function(matrix_argument,
 				Time_Lags=list(time_lags),
 				Version=version)
 
-		} ### END if class(matrix_argument)=="splineMatrix"
+		} ### END if inherits(matrix_argument, "splineMatrix")
 
 } ### END as.splineMatrix
