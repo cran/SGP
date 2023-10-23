@@ -10,10 +10,14 @@ function(sgp.data,
 
 	YEAR <- CONTENT_AREA <- VALID_CASE <- V3 <- V5 <- ID <- GRADE <- SCALE_SCORE <- YEAR_WITHIN <- tmp.timevar <- FIRST_OBSERVATION <- LAST_OBSERVATION <- ACHIEVEMENT_LEVEL <- DATE <- SGP_PROJECTION_GROUP_SCALE_SCORES <- DUPS_FLAG <- NULL
 
-	if (is(sgp.data, "DBIObject")) {
-		con <- dbConnect(SQLite(), dbname = attributes(sgp.data)$dbname)
-		var.names <- dbListFields(con, "sgp_data")
-		sqlite.tf <- TRUE
+    if (is(sgp.data, "DBIObject")) {
+        con <-
+            dbConnect(
+                RSQLite::SQLite(),
+                dbname = attributes(sgp.data)$dbname
+            )
+        var.names <- dbListFields(con, "sgp_data")
+        sqlite.tf <- TRUE
 	} else {
 		var.names <- names(sgp.data)
 		sqlite.tf <- FALSE
@@ -204,30 +208,34 @@ function(sgp.data,
 			if (is.null(sgp.targets)) {
 				tmp.data <- ddcast(rbindlist(tmp.lookup.list),
 						ID ~ tmp.timevar, value.var=c("GRADE", "SCALE_SCORE", "YEAR_WITHIN", state, sgp.scale.score.equated, SGPt), sep=".")
-				setnames(tmp.data, tail(sort(grep("YEAR_WITHIN", names(tmp.data), value=TRUE)), 1L), "YEAR_WITHIN")
-				if (length(setdiff(grep("YEAR_WITHIN", names(tmp.data), value=TRUE), "YEAR_WITHIN")) > 0) {
-					tmp.data[,setdiff(grep("YEAR_WITHIN", names(tmp.data), value=TRUE), "YEAR_WITHIN"):=NULL]
-				}
-				if ("STATE" %in% var.names && dim(tmp.data)[1L]!=0L) {
-					setnames(tmp.data, tail(sort(grep("STATE", names(tmp.data), value=TRUE)), 1L), "STATE")
-					if (length(setdiff(grep("STATE", names(tmp.data), value=TRUE), "STATE")) > 0L) {
-						tmp.data[,setdiff(grep("STATE", names(tmp.data), value=TRUE), "STATE"):=NULL]
+				if (dim(tmp.data)[1] > 0) {
+					setnames(tmp.data, tail(sort(grep("YEAR_WITHIN", names(tmp.data), value=TRUE)), 1L), "YEAR_WITHIN")
+					if (length(setdiff(grep("YEAR_WITHIN", names(tmp.data), value=TRUE), "YEAR_WITHIN")) > 0) {
+						tmp.data[,setdiff(grep("YEAR_WITHIN", names(tmp.data), value=TRUE), "YEAR_WITHIN"):=NULL]
 					}
-				}
+					if ("STATE" %in% var.names && dim(tmp.data)[1L]!=0L) {
+						setnames(tmp.data, tail(sort(grep("STATE", names(tmp.data), value=TRUE)), 1L), "STATE")
+						if (length(setdiff(grep("STATE", names(tmp.data), value=TRUE), "STATE")) > 0L) {
+							tmp.data[,setdiff(grep("STATE", names(tmp.data), value=TRUE), "STATE"):=NULL]
+						}
+					}
+				}																																																
 				return(tmp.data)
 			} else {
 				tmp.data <- ddcast(rbindlist(tmp.lookup.list),
 					ID ~ tmp.timevar, value.var=c("GRADE", "SCALE_SCORE", "YEAR_WITHIN", state, sgp.scale.score.equated, SGPt), sep=".")[
 					sgp.targets[CONTENT_AREA==tail(sgp.iter[[sgp.projection.content.areas.label]], 1L) & YEAR==tail(sgp.iter[["sgp.panel.years"]], 1L) & GRADE==tail(sgp.iter[[sgp.projection.grade.sequences.label]], 1L)], nomatch=0][,
 					!c("CONTENT_AREA", "YEAR"), with=FALSE]
-				setnames(tmp.data, tail(sort(grep("YEAR_WITHIN", names(tmp.data), value=TRUE)), 1L), "YEAR_WITHIN")
-				if (length(setdiff(grep("YEAR_WITHIN", names(tmp.data), value=TRUE), "YEAR_WITHIN")) > 0L) {
-					tmp.data[,setdiff(grep("YEAR_WITHIN", names(tmp.data), value=TRUE), "YEAR_WITHIN"):=NULL]
-				}
-				if ("STATE" %in% var.names && dim(tmp.data)[1L]!=0L) {
-					setnames(tmp.data, tail(sort(grep("STATE", names(tmp.data), value=TRUE)), 1L), "STATE")
-					if (length(setdiff(grep("STATE", names(tmp.data), value=TRUE), "STATE")) > 0L) {
-						tmp.data[,setdiff(grep("STATE", names(tmp.data), value=TRUE), "STATE"):=NULL]
+				if (dim(tmp.data)[1] > 0) {
+					setnames(tmp.data, tail(sort(grep("YEAR_WITHIN", names(tmp.data), value=TRUE)), 1L), "YEAR_WITHIN")
+					if (length(setdiff(grep("YEAR_WITHIN", names(tmp.data), value=TRUE), "YEAR_WITHIN")) > 0L) {
+						tmp.data[,setdiff(grep("YEAR_WITHIN", names(tmp.data), value=TRUE), "YEAR_WITHIN"):=NULL]
+					}
+					if ("STATE" %in% var.names && dim(tmp.data)[1L]!=0L) {
+						setnames(tmp.data, tail(sort(grep("STATE", names(tmp.data), value=TRUE)), 1L), "STATE")
+						if (length(setdiff(grep("STATE", names(tmp.data), value=TRUE), "STATE")) > 0L) {
+							tmp.data[,setdiff(grep("STATE", names(tmp.data), value=TRUE), "STATE"):=NULL]
+						}
 					}
 				}
 				return(tmp.data)
@@ -430,25 +438,27 @@ function(sgp.data,
 				tmp.data <- ddcast(rbindlist(tmp.lookup.list),
 					ID ~ tmp.timevar, value.var=c("GRADE", "SCALE_SCORE", "ACHIEVEMENT_LEVEL", "YEAR_WITHIN", state, sgp.scale.score.equated, SGPt), sep=".")
 
-				setnames(tmp.data, names(tmp.data)[grep(achievement.level.prior.vname, names(tmp.data))], achievement.level.prior.vname)
-				setnames(tmp.data, tail(sort(grep("YEAR_WITHIN", names(tmp.data), value=TRUE)), 1L), "YEAR_WITHIN")
+				if (dim(tmp.data)[1] > 0) {
+					setnames(tmp.data, names(tmp.data)[grep(achievement.level.prior.vname, names(tmp.data))], achievement.level.prior.vname)
+					setnames(tmp.data, tail(sort(grep("YEAR_WITHIN", names(tmp.data), value=TRUE)), 1L), "YEAR_WITHIN")
 
-				if (length(setdiff(grep("YEAR_WITHIN", names(tmp.data), value=TRUE), "YEAR_WITHIN")) > 0L) {
-					tmp.data[,setdiff(grep("YEAR_WITHIN", names(tmp.data), value=TRUE), "YEAR_WITHIN"):=NULL]
-				}
-
-				if ("STATE" %in% var.names && dim(tmp.data)[1L]!=0L) {
-					setnames(tmp.data, tail(sort(grep("STATE", names(tmp.data), value=TRUE)), 1L), "STATE")
-					if (length(setdiff(grep("STATE", names(tmp.data), value=TRUE), "STATE")) > 0L) {
-						tmp.data[,setdiff(grep("STATE", names(tmp.data), value=TRUE), "STATE"):=NULL]
+					if (length(setdiff(grep("YEAR_WITHIN", names(tmp.data), value=TRUE), "YEAR_WITHIN")) > 0L) {
+						tmp.data[,setdiff(grep("YEAR_WITHIN", names(tmp.data), value=TRUE), "YEAR_WITHIN"):=NULL]
 					}
-				}
+
+					if ("STATE" %in% var.names && dim(tmp.data)[1L]!=0L) {
+						setnames(tmp.data, tail(sort(grep("STATE", names(tmp.data), value=TRUE)), 1L), "STATE")
+						if (length(setdiff(grep("STATE", names(tmp.data), value=TRUE), "STATE")) > 0L) {
+							tmp.data[,setdiff(grep("STATE", names(tmp.data), value=TRUE), "STATE"):=NULL]
+						}
+					}
+				} 
 				return(tmp.data)
 			} else {
 				tmp.data <- ddcast(rbindlist(tmp.lookup.list),
 					ID ~ tmp.timevar, value.var=c("GRADE", "SCALE_SCORE", "ACHIEVEMENT_LEVEL", "YEAR_WITHIN", state, sgp.scale.score.equated, SGPt), sep=".")[
 						sgp.targets[CONTENT_AREA==tail(sgp.iter[["sgp.content.areas"]], 1L) &
-						YEAR==tail(sgp.iter[["sgp.panel.years"]], 1L) & GRADE==tail(sgp.iter[[sgp.projection.grade.sequences.label]], 1L)], nomatch=0][,!c("CONTENT_AREA", "YEAR"), with=FALSE]
+						YEAR==tail(sgp.iter[["sgp.panel.years"]], 1L) & GRADE==tail(sgp.iter[["sgp.grade.sequences"]], 1L)], nomatch=0][,!c("CONTENT_AREA", "YEAR"), with=FALSE]
 
 				setnames(tmp.data, names(tmp.data)[grep(achievement.level.prior.vname, names(tmp.data))], achievement.level.prior.vname)
 				setnames(tmp.data, tail(sort(grep("YEAR_WITHIN", names(tmp.data), value=TRUE)), 1L), "YEAR_WITHIN")

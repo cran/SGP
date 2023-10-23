@@ -28,16 +28,17 @@ function(
 	### Set up parameters based upon the existence of ACHIEVEMENT_LEVEL_PRIOR
 
 	if (grepl("BASELINE", use.sgp)) norm.group.var <- "SGP_NORM_GROUP_BASELINE" else norm.group.var <- "SGP_NORM_GROUP"
+	my.width <- 8.5; my.height <- 11
+
 	if ("ACHIEVEMENT_LEVEL_PRIOR" %in% names(tmp.data)) {
 		with.prior.achievement.level <- TRUE; ceiling.floor <- TRUE # force ceiling.floor when with.prior.achievement.level (for now?)
-		my.width <- 8.5; my.height <- 11
 		variables.to.get <- c("SCALE_SCORE", "SCALE_SCORE_PRIOR", "ACHIEVEMENT_LEVEL_PRIOR", "CONTENT_AREA_PRIOR", "YEAR_PRIOR", use.sgp, "GRADE", norm.group.var)
 	} else {
 		with.prior.achievement.level <- FALSE
-		my.width <- 8.5; my.height <- 8
+		my.height <- my.height - 3
 		variables.to.get <- c("SCALE_SCORE", "SCALE_SCORE_PRIOR", use.sgp, "GRADE", norm.group.var)
 	}
-	if (!ceiling.floor) my.height <- 5.5
+	if (!ceiling.floor) my.height <- my.height - 2.5
 
 
 	### Utility functions
@@ -68,7 +69,8 @@ function(
 				dev.off()
 			}
 			if ("SVG" %in% output.format) {
-				CairoSVG(file=paste0(file_path, "/", tmp.plot.name, ".svg"), width=my.width, height=my.height, dpi=72, pointsize=10.5, bg="transparent")
+				svglite(filename = paste0(file_path, "/", tmp.plot.name, ".svg"),
+				        width = my.width, height = my.height, pointsize = 11, bg = "transparent")
 				grid.draw(.goodness.of.fit(content_area.year.grade.data, content_area, year, grade, color.scale=color.scale,
 					with.prior.achievement.level=with.prior.achievement.level, content_areas_prior=content_areas_prior, years_prior)[["PLOT"]])
 				dev.off()
@@ -589,8 +591,8 @@ function(
 							grade=grades.iter,
 							file.extra.label=file.extra.label,
 							plot.name= if (!is.na(norm.group.iter)) gsub("MATHEMATICS", "MATH", norm.group.iter) else norm.group.iter,
-							my.width=8.5,
-							my.height=8,
+							my.width=my.width,
+							my.height=my.height,
 							with.prior.achievement.level=FALSE)
 					}
 					if (!is.null(gof.object)) return(gof.object)

@@ -427,11 +427,14 @@ function(panel.data,         ## REQUIRED
       } ### END createBigData function
 
       get.simex.ranking.info <- function(table_list, cap, gp, yp, ylp) {
-        table.index <- which(sapply(table_list, function(f) {
-          attr(f, "content_area_progression") == cap &&
-          attr(f, "grade_progression") == gp &&
-          attr(f, "year_progression") == yp &&
-          attr(f, "year_lags_progression") == ylp}))
+        table.index <-
+            which(sapply(table_list,
+                         function(f) {
+                             identical(attr(f, "content_area_progression"), cap) &
+                             identical(attr(f, "grade_progression"), gp) &
+                             identical(attr(f, "year_progression"), yp) &
+                             identical(attr(f, "year_lags_progression"), ylp)
+                         }))
         return(table_list[[table.index]])
       }
 
@@ -702,21 +705,47 @@ function(panel.data,         ## REQUIRED
           }
         }
         if (ranked.simex.tf) {
-          if (use.cohort.for.ranking) { # Use `use.cohort.for.ranking=TRUE` if reproducing values with original data OR to rank against the updated/new cohort data ONLY
-            tmp.quantiles.simex[[k]] <- data.table(ID=tmp.data[["ID"]], SIMEX_ORDER=k,
-            SGP_SIMEX = .get.quantiles(extrap[[paste0("order_", k)]], tmp.data[[tmp.num.variables]]),
-            SGP_SIMEX_RANKED = as.integer(round(100*(data.table::frank(ties.method = "average", x =
-            .get.quantiles(extrap[[paste0("order_", k)]], tmp.data[[tmp.num.variables]], ranked.simex=ifelse(reproduce.old.values, "reproduce.old.values", TRUE)))/n.records), 0)))
-          } else { # creates a new "average" rank of the original data and the updated/new cohort
-            tmp.quantiles.simex[[k]] <- data.table(ID=tmp.data[["ID"]], SIMEX_ORDER=k,
-            SGP_SIMEX = .get.quantiles(extrap[[paste0("order_", k)]], tmp.data[[tmp.num.variables]]),
-            SGP_SIMEX_RANKED = head(as.integer(round(100*(data.table::frank(ties.method = "average", x =
-                c(.get.quantiles(extrap[[paste0("order_", k)]], tmp.data[[tmp.num.variables]], ranked.simex=ifelse(reproduce.old.values, "reproduce.old.values", TRUE)),
-                as.numeric(rep(names(ranked.simex.info), ranked.simex.info))))/(n.records+attr(ranked.simex.info, "n_records"))), 0)), n.records))
-          }
+            tmp.quantiles.simex[[k]] <-
+                data.table(
+                    ID = tmp.data[["ID"]],
+                    SIMEX_ORDER = k,
+                    SGP_SIMEX =
+                    .get.quantiles(extrap[[paste0("order_", k)]], tmp.data[[tmp.num.variables]])
+                )
+          if (use.cohort.for.ranking) {
+			# Use `use.cohort.for.ranking=TRUE` if reproducing values with original data OR to rank against the updated/new cohort data ONLY
+            tmp.quantiles.simex[[k]][,
+                SGP_SIMEX_RANKED :=
+                    as.integer(round(100*(
+                        data.table::frank(
+                            ties.method = "average",
+                            x = .get.quantiles(
+                                extrap[[paste0("order_", k)]],
+                                tmp.data[[tmp.num.variables]],
+                                    ranked.simex =
+                                        ifelse(reproduce.old.values, "reproduce.old.values", TRUE)
+                                    ))/n.records
+                                ), 0))
+                    ]
+                } else {
+                    # creates a new "average" rank of the original data and the updated/new cohort
+                    tmp.quantiles.simex[[k]][,
+                        SGP_SIMEX_RANKED :=
+                            head(as.integer(round(100*(
+                                data.table::frank(
+                                    ties.method = "average",
+                                    x = c(.get.quantiles(
+                                            extrap[[paste0("order_", k)]],
+                                            tmp.data[[tmp.num.variables]],
+                                            ranked.simex =
+                                                ifelse(reproduce.old.values, "reproduce.old.values", TRUE)
+                                          ),
+                                          as.numeric(rep(names(ranked.simex.info), ranked.simex.info))))/(n.records+attr(ranked.simex.info, "n_records"))
+                            ), 0)), n.records)
+                    ]
+                }
+            }
         }
-      }
-      # }
     }### END for (k in simex.matrix.priors)
 
 		if (verbose) messageSGP(c("\tFinished SIMEX SGP calculation ", rev(content_area.progression)[1L], " Grade ", rev(tmp.gp)[1L], " ", prettyDate()))
@@ -730,7 +759,10 @@ function(panel.data,         ## REQUIRED
         invisible(quantile.data.simex[SGP_SIMEX_RANKED==100L, SGP_SIMEX_RANKED := 99L])
       }
 			setkey(quantile.data.simex, ID) # first key on ID and SIMEX_ORDER, then re-key on ID only to insure sorted order. Don't rely on rbindlist/k ordering...
-		} else quantile.data.simex <- data.table("ID"=NA, "SIMEX_ORDER"=NA, "SGP_SIMEX"=NA, "SGP_SIMEX_RANKED"=NA) # set up empty data.table for ddcast and subsets below.
+		} else { # set up empty data.table for ddcast and subsets below.
+			quantile.data.simex <-
+				data.table("ID"=NA, "SIMEX_ORDER"=NA, "SGP_SIMEX"=NA, "SGP_SIMEX_RANKED"=NA)
+		}
 		if (print.other.gp) {
 			tmp.quantile.data.simex <- ddcast(quantile.data.simex, ID ~ SIMEX_ORDER, value.var=setdiff(names(quantile.data.simex), c("ID", "SIMEX_ORDER")), sep="_ORDER_")
 			quantile.data.simex <- data.table(tmp.quantile.data.simex,
@@ -1813,19 +1845,45 @@ function(panel.data,         ## REQUIRED
 			}
 		}
 
-		if (identical(sgp.labels[['my.extra.label']], "BASELINE")) setnames(quantile.data, "SGP", "SGP_BASELINE")
-		if (identical(sgp.labels[['my.extra.label']], "BASELINE") && tf.growth.levels) setnames(quantile.data, "SGP_LEVEL", "SGP_LEVEL_BASELINE")
-		if (identical(sgp.labels[['my.extra.label']], "BASELINE") && "SGP_STANDARD_ERROR" %in% names(quantile.data)) setnames(quantile.data, gsub("SGP_STANDARD_ERROR", "SGP_BASELINE_STANDARD_ERROR", names(quantile.data)))
-		if (identical(sgp.labels[['my.extra.label']], "BASELINE") && "SGP_ORDER" %in% names(quantile.data)) setnames(quantile.data, gsub("SGP_ORDER", "SGP_BASELINE_ORDER", names(quantile.data)))
-		if (identical(sgp.labels[['my.extra.label']], "BASELINE") && "SGP_NORM_GROUP" %in% names(quantile.data)) setnames(quantile.data, gsub("SGP_NORM_GROUP", "SGP_NORM_GROUP_BASELINE", names(quantile.data)))
-		if (identical(sgp.labels[['my.extra.label']], "BASELINE") && simex.tf) setnames(quantile.data, gsub("_SIMEX", "_SIMEX_BASELINE", names(quantile.data))) # SGP_SIMEX and SGP_SIMEX_RANKED
-        if (identical(sgp.labels[["my.extra.label"]], "BASELINE") && return.prior.scale.score) setnames(quantile.data, "SCALE_SCORE_PRIOR", "SCALE_SCORE_PRIOR_BASELINE")
-        if (identical(sgp.labels[["my.extra.label"]], "BASELINE") && return.prior.scale.score.standardized) setnames(quantile.data, "SCALE_SCORE_PRIOR_STANDARDIZED", "SCALE_SCORE_PRIOR_STANDARDIZED_BASELINE")
-        if (identical(sgp.labels[["my.extra.label"]], "BASELINE") && !is.null(percentile.cuts)) setnames(quantile.data, gsub("PERCENTILE_CUT_", "PERCENTILE_CUT_BASELINE_", names(quantile.data)))
+		if (identical(sgp.labels[['my.extra.label']], "BASELINE")) {
+			setnames(quantile.data, "SGP", "SGP_BASELINE")
+			if (tf.growth.levels) setnames(quantile.data, "SGP_LEVEL", "SGP_LEVEL_BASELINE")
+			if ("SGP_STANDARD_ERROR" %in% names(quantile.data)) {
+				setnames(quantile.data, gsub("SGP_STANDARD_ERROR", "SGP_BASELINE_STANDARD_ERROR", names(quantile.data)))
+			}
+			if (any(grepl("CONFIDENCE_BOUND", names(quantile.data)))) { #Needs to be before 'SGP_ORDER' check
+				setnames(quantile.data,
+					grep("CONFIDENCE_BOUND", names(quantile.data), value = TRUE),
+					gsub("SGP_", "SGP_BASELINE_", grep("CONFIDENCE_BOUND", names(quantile.data), value = T))
+				)
+			}
+			if (any(c("SGP_ORDER", "SGP_ORDER_1") %in% names(quantile.data))) {
+				setnames(quantile.data, gsub("SGP_ORDER", "SGP_BASELINE_ORDER", names(quantile.data)))
+			}
+			if ("SGP_NORM_GROUP" %in% names(quantile.data)) {
+				setnames(quantile.data, gsub("SGP_NORM_GROUP", "SGP_NORM_GROUP_BASELINE", names(quantile.data)))
+			}
+			if (simex.tf) {
+				setnames(quantile.data, gsub("_SIMEX", "_SIMEX_BASELINE", names(quantile.data))) # SGP_SIMEX and SGP_SIMEX_RANKED
+			}
+			if (return.prior.scale.score) {
+				setnames(quantile.data, "SCALE_SCORE_PRIOR", "SCALE_SCORE_PRIOR_BASELINE")
+			}
+			if (return.prior.scale.score.standardized) {
+				setnames(quantile.data, "SCALE_SCORE_PRIOR_STANDARDIZED", "SCALE_SCORE_PRIOR_STANDARDIZED_BASELINE")
+			}
+			if (!is.null(percentile.cuts)) {
+				setnames(quantile.data, gsub("PERCENTILE_CUT_", "PERCENTILE_CUT_BASELINE_", names(quantile.data)))
+			}
+		}
 
-		if (identical(sgp.labels[['my.extra.label']], "EQUATED")) setnames(quantile.data, "SGP", "SGP_EQUATED")
-		if (identical(sgp.labels[['my.extra.label']], "EQUATED") && tf.growth.levels) setnames(quantile.data, "SGP_LEVEL", "SGP_LEVEL_EQUATED")
-		if (identical(sgp.labels[['my.extra.label']], "EQUATED") && "SGP_NORM_GROUP" %in% names(quantile.data)) setnames(quantile.data, gsub("SGP_NORM_GROUP", "SGP_NORM_GROUP_EQUATED", names(quantile.data)))
+		if (identical(sgp.labels[['my.extra.label']], "EQUATED")) {
+			setnames(quantile.data, "SGP", "SGP_EQUATED")
+			if (tf.growth.levels) setnames(quantile.data, "SGP_LEVEL", "SGP_LEVEL_EQUATED")
+			if ("SGP_NORM_GROUP" %in% names(quantile.data)) {
+				setnames(quantile.data, gsub("SGP_NORM_GROUP", "SGP_NORM_GROUP_EQUATED", names(quantile.data)))
+			}
+		}
 
 		if (!is.null(additional.vnames.to.return)) {
 			quantile.data <- panel.data[["Panel_Data"]][,c("ID", names(additional.vnames.to.return)), with=FALSE][quantile.data, on="ID"]

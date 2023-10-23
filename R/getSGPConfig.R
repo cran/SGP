@@ -129,7 +129,9 @@ function(sgp_object,
 			### Convert NO_PROJECTIONS to list if supplied as a single character vector.
 
 			if (identical(sgp.config[[a]][['sgp.projection.grade.sequences']], "NO_PROJECTIONS")) sgp.config[[a]][['sgp.projection.grade.sequences']] <- rep(list("NO_PROJECTIONS"), length(sgp.config[[a]][['sgp.grade.sequences']]))
+			if (identical(sgp.config[[a]][['sgp.projection.baseline.grade.sequences']], "NO_PROJECTIONS")) sgp.config[[a]][['sgp.projection.baseline.grade.sequences']] <- rep(list("NO_PROJECTIONS"), length(sgp.config[[a]][['sgp.grade.sequences']]))
 			if (is.character(sgp.config[[a]][['sgp.projection.grade.sequences']])) sgp.config[[a]][['sgp.projection.grade.sequences']] <- as.list(sgp.config[[a]][['sgp.projection.grade.sequences']])
+			if (is.character(sgp.config[[a]][['sgp.projection.baseline.grade.sequences']])) sgp.config[[a]][['sgp.projection.baseline.grade.sequences']] <- as.list(sgp.config[[a]][['sgp.projection.baseline.grade.sequences']])
 
 			### Loop over grade distinct grade sequences
 			b.iter <- seq(from=length(par.sgp.config)+1, length.out=length(sgp.config[[a]][['sgp.grade.sequences']]))
@@ -490,30 +492,30 @@ function(sgp_object,
 
 
 	## test.projection.iter function
-
 	test.projection.iter <- function(sgp.iter) {
 		if (identical(sgp.iter[['sgp.projection.grade.sequences']], "NO_PROJECTIONS")) return(FALSE)
-		if (!is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]]) & !is.null(sgp.iter[["sgp.projection.sequence"]])) {
-			if (!is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][["Skip_Year_Projections"]])) Skip_Year_Projections.tf <- TRUE else Skip_Year_Projections.tf <- FALSE
-			if (tail(sgp.iter[["sgp.grade.sequences"]], 1) == "EOCT" & !Skip_Year_Projections.tf) { # Only check EOCT configs/iters
-				for (sps in sgp.iter[["sgp.projection.sequence"]]) {
-					if (is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]][[sps]])) return(FALSE)
-					tmp.index <- match(tail(sgp.iter[["sgp.content.areas"]], 1),
-						SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]][[sps]])
-					tmp.content_area.projection.sequence <-
-						SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]][[sps]][1:tmp.index]
-					tmp.grade.projection.sequence <-
-						SGP::SGPstateData[[state]][["SGP_Configuration"]][["grade.projection.sequence"]][[sps]][1:tmp.index]
-					tmp.year_lags.projection.sequence <-
-						SGP::SGPstateData[[state]][["SGP_Configuration"]][["year_lags.projection.sequence"]][[sps]][1:(tmp.index-1)]
-					if (!all(identical(sgp.iter[["sgp.content.areas"]], tail(tmp.content_area.projection.sequence, length(sgp.iter[["sgp.content.areas"]]))) &
-						identical(sgp.iter[["sgp.grade.sequences"]], tail(tmp.grade.projection.sequence, length(sgp.iter[["sgp.grade.sequences"]]))) &
-						identical(as.numeric(sgp.iter[["sgp.panel.years.lags"]]), as.numeric(tail(tmp.year_lags.projection.sequence, length(sgp.iter[["sgp.panel.years.lags"]])))))) return(FALSE)
-				}
-			}	else return(TRUE)
-		}	else return(TRUE)
+		if (identical(sgp.iter[['sgp.projection.baseline.grade.sequences']], "NO_PROJECTIONS")) return(FALSE)
+#		if (!is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]]) & !is.null(sgp.iter[["sgp.projection.sequence"]])) {
+#			if (!is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][["Skip_Year_Projections"]])) Skip_Year_Projections.tf <- TRUE else Skip_Year_Projections.tf <- FALSE
+#			if (tail(sgp.iter[["sgp.grade.sequences"]], 1) == "EOCT" & !Skip_Year_Projections.tf) { # Only check EOCT configs/iters
+#				for (sps in sgp.iter[["sgp.projection.sequence"]]) {
+#					if (is.null(SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]][[sps]])) return(FALSE)
+#					tmp.index <- match(tail(sgp.iter[["sgp.content.areas"]], 1),
+#						SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]][[sps]])
+#					tmp.content_area.projection.sequence <-
+#						SGP::SGPstateData[[state]][["SGP_Configuration"]][["content_area.projection.sequence"]][[sps]][1:tmp.index]
+#					tmp.grade.projection.sequence <-
+#						SGP::SGPstateData[[state]][["SGP_Configuration"]][["grade.projection.sequence"]][[sps]][1:tmp.index]
+#					tmp.year_lags.projection.sequence <-
+#						SGP::SGPstateData[[state]][["SGP_Configuration"]][["year_lags.projection.sequence"]][[sps]][1:(tmp.index-1)]
+#					if (!all(identical(sgp.iter[["sgp.content.areas"]], tail(tmp.content_area.projection.sequence, length(sgp.iter[["sgp.content.areas"]]))) &
+#						identical(sgp.iter[["sgp.grade.sequences"]], tail(tmp.grade.projection.sequence, length(sgp.iter[["sgp.grade.sequences"]]))) &
+#						identical(as.numeric(sgp.iter[["sgp.panel.years.lags"]]), as.numeric(tail(tmp.year_lags.projection.sequence, length(sgp.iter[["sgp.panel.years.lags"]])))))) return(FALSE)
+#				}
+#			}	else return(TRUE)
+#		}	else return(TRUE)
 		return(TRUE)
-	}
+	} ## END test.projection.iter function
 
 
 	###
@@ -626,11 +628,12 @@ function(sgp_object,
 
 		if (length(sgp.config.list[['sgp.percentiles.baseline']]) > 0) {
 			for (i in seq_along(sgp.config.list[['sgp.percentiles.baseline']])) sgp.config.list[['sgp.percentiles.baseline']][[i]][['sgp.matrices']] <- NULL
-			tmp.config <- sgp.config.list[['sgp.percentiles.baseline']][sapply(sgp.config.list[['sgp.percentiles.baseline']], test.projection.iter)]
-			sgp.config.list[['sgp.percentiles.baseline']] <- tmp.config
+#			tmp.config <- sgp.config.list[['sgp.percentiles.baseline']][sapply(sgp.config.list[['sgp.percentiles.baseline']], test.projection.iter)]
+#			sgp.config.list[['sgp.percentiles.baseline']] <- tmp.config
 		}
 
 		if (sgp.projections.baseline | sgp.projections.lagged.baseline) {
+			tmp.config <- par.sgp.config[sapply(par.sgp.config, test.projection.iter)]
 			while (any(sapply(tmp.config, function(x) length(x$sgp.projection.sequence)>1))) {
 				tmp.index <- which(any(sapply(tmp.config, function(x) length(x$sgp.projection.sequence)>1)))[1]
 				tmp.iter <- tmp.config[[tmp.index]]

@@ -134,17 +134,17 @@ function(sgp_object,
 		percentile.trajectory.values <- c(35, 50, 65)
 	}
 
-  if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][["percentile.trajectory.values"]])) {
-      percentile.trajectory.values <- sort(unique(c(percentile.trajectory.values, SGPstateData[[state]][["SGP_Configuration"]][["percentile.trajectory.values"]])))
-  }
+	if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][["percentile.trajectory.values"]])) {
+		percentile.trajectory.values <- sort(unique(c(percentile.trajectory.values, SGPstateData[[state]][["SGP_Configuration"]][["percentile.trajectory.values"]])))
+	}
 
 	if (!is.null(SGPstateData[[state]][["Student_Report_Information"]][["Projection_Fan_Limits"]])) {
 		percentile.trajectory.values <- sort(c(SGPstateData[[state]][["Student_Report_Information"]][["Projection_Fan_Limits"]], percentile.trajectory.values))
 	}
 
-  if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][["gaPlot.back.extrapolated.cuts"]])) {
-      percentile.trajectory.values <- sort(unique(c(percentile.trajectory.values, 1:9*10)))
-  }
+	if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][["gaPlot.back.extrapolated.cuts"]])) {
+		percentile.trajectory.values <- sort(unique(c(percentile.trajectory.values, 1:9*10)))
+	}
 
 	if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][["sgp.projections.baseline.max.order"]])) {
 		sgp.projections.baseline.max.order <- SGPstateData[[state]][["SGP_Configuration"]][["sgp.projections.baseline.max.order"]]
@@ -182,6 +182,14 @@ function(sgp_object,
 		sgp.config.drop.nonsequential.grade.progression.variables <- FALSE
 	}
 
+	if (!any(
+		grepl("PERCENTILES|BASELINE_PERCENTILES|TAUS|SIMEX|BASELINE_MATRICES|PROJECTIONS|LAGGED_PROJECTIONS",
+		      names(parallel.config[['WORKERS']])
+			)
+	)) {
+		parallel.config <- NULL
+	}
+
 	if (all(c("PERCENTILES", "TAUS") %in% names(parallel.config[['WORKERS']]))) {
 		if (.Platform$OS.type != "unix" | "SNOW_TEST" %in% names(parallel.config)) stop("Both TAUS and PERCENTILES cannot be executed in Parallel at the same time in Windows OS or using SNOW type backends.")
 		messageSGP("\n\tCAUTION:  Running higher- and lower-level processes in parallel at the same time.  Make sure you have enough CPU cores and memory to support this.\n")
@@ -215,13 +223,13 @@ function(sgp_object,
 		}
 	}
 
-  if (is.list(calculate.simex) && "csem.data.vnames" %in% names(calculate.simex)) {
-    csem.variable <- calculate.simex[["csem.data.vnames"]]
-  }
+	if (is.list(calculate.simex) && "csem.data.vnames" %in% names(calculate.simex)) {
+		csem.variable <- calculate.simex[["csem.data.vnames"]]
+	}
 
-  if (is.list(calculate.simex.baseline) && "csem.data.vnames" %in% names(calculate.simex.baseline)) {
-    csem.variable <- calculate.simex.baseline[["csem.data.vnames"]]
-  }
+	if (is.list(calculate.simex.baseline) && "csem.data.vnames" %in% names(calculate.simex.baseline)) {
+		csem.variable <- calculate.simex.baseline[["csem.data.vnames"]]
+	}
 
 	if (identical(calculate.simex, TRUE)) {
 		if (is.character(csem.variable <- SGPstateData[[state]][["Assessment_Program_Information"]][["CSEM"]])) {
@@ -230,6 +238,7 @@ function(sgp_object,
 			calculate.simex <- list(state=state, lambda=seq(0,2,0.5), simulation.iterations=75, simex.sample.size=5000, extrapolation="linear", save.matrices=TRUE)
 			csem.variable <- NULL
 		}
+		if (identical(sgp.use.my.coefficient.matrices, TRUE)) calculate.simex[['simex.use.my.coefficient.matrices']] <- TRUE
 	}
 
 	if (identical(calculate.simex.baseline, TRUE)) {
@@ -288,14 +297,14 @@ function(sgp_object,
 			goodness.of.fit.print.arg <- state
 		} else goodness.of.fit.print <- as.logical(goodness.of.fit.print)
 	} else {
-		if (!goodness.of.fit.print){
+		if (!goodness.of.fit.print) {
 			goodness.of.fit.print.arg <- FALSE
 		} else {
-      if (identical(SGPstateData[[state]][["SGP_Configuration"]][["goodness.of.fit.achievement.level.prior"]], FALSE)) {   ### For RLI and RLI_UK
-        goodness.of.fit.print.arg <- TRUE
-      } else {
-        goodness.of.fit.print.arg <- state
-      }
+    		if (identical(SGPstateData[[state]][["SGP_Configuration"]][["goodness.of.fit.achievement.level.prior"]], FALSE)) {   ### For RLI and RLI_UK
+        		goodness.of.fit.print.arg <- TRUE
+      		} else {
+        		goodness.of.fit.print.arg <- state
+      		}
 		}
 	}
 
@@ -319,10 +328,10 @@ function(sgp_object,
 			tmp.messages <- c(tmp.messages, "\t\tNOTE: Variables", paste(SGPt, collapse=", "), "are not all contained in the supplied 'sgp_object@Data'. 'SGPt' is set to NULL.\n")
 			SGPt <- NULL
 		}
-    SGPt.max.time <- SGPstateData[[state]][['SGP_Configuration']][['SGPt.max.time']]
+    	SGPt.max.time <- SGPstateData[[state]][['SGP_Configuration']][['SGPt.max.time']]
 	} else {
-    SGPt.max.time <- NULL
-  }
+    	SGPt.max.time <- NULL
+	}
 
 	if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][['sgp.use.my.sgp_object.baseline.coefficient.matrices']]) && is.null(sgp.use.my.sgp_object.baseline.coefficient.matrices)) {
 		sgp.use.my.sgp_object.baseline.coefficient.matrices <- SGPstateData[[state]][["SGP_Configuration"]][['sgp.use.my.sgp_object.baseline.coefficient.matrices']]
@@ -337,12 +346,12 @@ function(sgp_object,
 	if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][['lagged.percentile.trajectory.values']])) {
 		lagged.percentile.trajectory.values <- sort(SGPstateData[[state]][["SGP_Configuration"]][['lagged.percentile.trajectory.values']])
 	} else {
-    lagged.percentile.trajectory.values <- NULL
-  }
+	    lagged.percentile.trajectory.values <- NULL
+	}
 
 	if (!is.null(SGPstateData[[state]][["SGP_Configuration"]][['sgp.projections.use.only.complete.matrices']])) {
-    sgp.projections.use.only.complete.matrices <- SGPstateData[[state]][["SGP_Configuration"]][['sgp.projections.use.only.complete.matrices']]
-  }
+	    sgp.projections.use.only.complete.matrices <- SGPstateData[[state]][["SGP_Configuration"]][['sgp.projections.use.only.complete.matrices']]
+	}
 
 	if (is.null(fix.duplicates) & !is.null(SGPstateData[[state]][["SGP_Configuration"]][["fix.duplicates"]])) {
 		fix.duplicates <- SGPstateData[[state]][["SGP_Configuration"]][["fix.duplicates"]]
@@ -350,6 +359,9 @@ function(sgp_object,
 		return.projection.group.scale.scores <- TRUE
 	}
 
+	if (sgp.percentiles.calculate.sgps==FALSE) {
+		goodness.of.fit.print <- FALSE
+	}
 
 	###########################################################################################################
 	### Utility functions
@@ -357,39 +369,39 @@ function(sgp_object,
 
 	## Function to export/print goodness of fit results as pdf files to directory Goodness_of_Fit
 
-	gof.print <- function(sgp_object) {
-		if (length(sgp_object@SGP[["Goodness_of_Fit"]]) > 0L) {
-			for (i in names(sgp_object@SGP[["Goodness_of_Fit"]])) {
-				dir.create(paste0("Goodness_of_Fit/", i, "/Decile_Tables"), recursive=TRUE, showWarnings=FALSE)
-					for (output.format in c("PDF", "PNG", "DECILE_TABLES")) {
-						for (j in names(sgp_object@SGP[["Goodness_of_Fit"]][[i]])) {
-							tmp.path <- file.path("Goodness_of_Fit", i, j)
-							if (!identical(.Platform$OS.type, "unix") & nchar(tmp.path) > 250L) {
-								tmp.content_area <- unlist(strsplit(j, "[.]"))[1L]
-								tmp.path <- gsub(tmp.content_area, substr(tmp.content_area, 1, 1), tmp.path)
-							}
-							if (output.format=="PDF") {
-								pdf(file=paste0(tmp.path, ".pdf"), width=8.5, height=11)
-							       grid.draw(sgp_object@SGP[["Goodness_of_Fit"]][[i]][[j]][["PLOT"]])
-							    dev.off()
-							}
-							if (output.format=="PNG") {
-								Cairo(file=paste0(tmp.path, ".png"),
-								      width=8.5, height=11, units="in", dpi=144, pointsize=10.5, bg="transparent")
-							       grid.draw(sgp_object@SGP[["Goodness_of_Fit"]][[i]][[j]][["PLOT"]])
-							    dev.off()
-							}
-              if (output.format=="DECILE_TABLES") {
-                decile.table <- sgp_object@SGP[["Goodness_of_Fit"]][[i]][[j]][["TABLE"]]
-                save(decile.table, file=paste0("Goodness_of_Fit/", i, "/Decile_Tables/", j, "_Decile_Table.Rdata"))
-              }
-						}
-					}
-				}
-		} else {
-			messageSGP("\tNOTE: No Goodness of Fit tables available to print. No tables will be produced.")
-		}
-	}
+	# gof.print <- function(sgp_object) {
+	# 	if (length(sgp_object@SGP[["Goodness_of_Fit"]]) > 0L) {
+	# 		for (i in names(sgp_object@SGP[["Goodness_of_Fit"]])) {
+	# 			dir.create(paste0("Goodness_of_Fit/", i, "/Decile_Tables"), recursive=TRUE, showWarnings=FALSE)
+	# 				for (output.format in c("PDF", "PNG", "DECILE_TABLES")) {
+	# 					for (j in names(sgp_object@SGP[["Goodness_of_Fit"]][[i]])) {
+	# 						tmp.path <- file.path("Goodness_of_Fit", i, j)
+	# 						if (!identical(.Platform$OS.type, "unix") & nchar(tmp.path) > 250L) {
+	# 							tmp.content_area <- unlist(strsplit(j, "[.]"))[1L]
+	# 							tmp.path <- gsub(tmp.content_area, substr(tmp.content_area, 1, 1), tmp.path)
+	# 						}
+	# 						if (output.format=="PDF") {
+	# 							pdf(file=paste0(tmp.path, ".pdf"), width=8.5, height=11)
+	# 						       grid.draw(sgp_object@SGP[["Goodness_of_Fit"]][[i]][[j]][["PLOT"]])
+	# 						    dev.off()
+	# 						}
+	# 						if (output.format=="PNG") {
+	# 							Cairo(file=paste0(tmp.path, ".png"),
+	# 							      width=8.5, height=11, units="in", dpi=144, pointsize=10.5, bg="transparent")
+	# 						       grid.draw(sgp_object@SGP[["Goodness_of_Fit"]][[i]][[j]][["PLOT"]])
+	# 						    dev.off()
+	# 						}
+    #           if (output.format=="DECILE_TABLES") {
+    #             decile.table <- sgp_object@SGP[["Goodness_of_Fit"]][[i]][[j]][["TABLE"]]
+    #             save(decile.table, file=paste0("Goodness_of_Fit/", i, "/Decile_Tables/", j, "_Decile_Table.Rdata"))
+    #           }
+	# 					}
+	# 				}
+	# 			}
+	# 	} else {
+	# 		messageSGP("\tNOTE: No Goodness of Fit tables available to print. No tables will be produced.")
+	# 	}
+	# }
 
 	## Function to merge coefficient matrices from coefficient matrix productions
 
@@ -532,12 +544,16 @@ function(sgp_object,
 	if (as.numeric(strsplit(format(object.size(sgp_object@Data), units="GB"), " Gb")[[1L]]) > 1) sgp.sqlite <- TRUE
 	if (!is.null(SGPt)) sgp.sqlite <- FALSE # Ultimate case of whether or not to use SQLite?
 
-	if (sgp.sqlite) {
-		tmp_sgp_data_for_analysis <- dbConnect(SQLite(), dbname = file.path(tempdir(), "TMP_SGP_Data.sqlite"))
-		dbWriteTable(tmp_sgp_data_for_analysis, name = "sgp_data", overwrite = TRUE,
-			value=sgp_object@Data[,intersect(names(sgp_object@Data), variables.to.get), with=FALSE]["VALID_CASE"], row.names=FALSE)
-		sgp.data.names <- dbListFields(tmp_sgp_data_for_analysis, "sgp_data")
-		dbDisconnect(tmp_sgp_data_for_analysis)
+    if (sgp.sqlite) {
+        tmp_sgp_data_for_analysis <-
+            dbConnect(
+                SQLite(),
+                dbname = file.path(tempdir(), "TMP_SGP_Data.sqlite")
+            )
+        dbWriteTable(tmp_sgp_data_for_analysis, name = "sgp_data", overwrite = TRUE,
+            value=sgp_object@Data[,intersect(names(sgp_object@Data), variables.to.get), with=FALSE]["VALID_CASE"], row.names=FALSE)
+        sgp.data.names <- dbListFields(tmp_sgp_data_for_analysis, "sgp_data")
+        # dbDisconnect(tmp_sgp_data_for_analysis)
 	} else {
 		tmp_sgp_data_for_analysis <- sgp_object@Data[,intersect(names(sgp_object@Data), variables.to.get), with=FALSE]["VALID_CASE"]
 		sgp.data.names <- names(tmp_sgp_data_for_analysis)
@@ -964,7 +980,6 @@ function(sgp_object,
         messageSGP("\tNOTE: Cohort data information saved to 'Logs/cohort_data_info.Rdata'.")
 	}
 
-
 	#######################################################################################################################
 	#######################################################################################################################
 	###   Percentiles, Equated Percentiles, Baseline Percentiles, Projections, Lagged Projections -  PARALLEL FLAVORS FIRST
@@ -1137,10 +1152,10 @@ function(sgp_object,
 			stopParallel(parallel.config, par.start)
 			if (!is.null(sgp.test.cohort.size)) {
 				test.ids <- unique(rbindlist(tmp_sgp_object[["SGPercentiles"]], fill=TRUE), by='ID')[['ID']]
-				if (is(tmp_sgp_data_for_analysis, "DBIObject")) {
-          con <- dbConnect(SQLite(), dbname = file.path(tempdir(), "TMP_SGP_Data.sqlite"))
-					tmp_sgp_data_for_analysis <- data.table(dbGetQuery(con, paste0("select * from sgp_data where ID in ('", paste(test.ids, collapse="', '"), "')")))
-          dbDisconnect(con)
+                if (is(tmp_sgp_data_for_analysis, "DBIObject")) {
+                    con <- dbConnect(SQLite(), dbdir = file.path(tempdir(), "TMP_SGP_Data.sqlite"))
+                    tmp_sgp_data_for_analysis <- data.table(dbGetQuery(con, paste0("select * from sgp_data where ID in ('", paste(test.ids, collapse = "', '"), "')")))
+                    dbDisconnect(con)
 					if ("YEAR_WITHIN" %in% sgp.data.names) {
 						setkey(tmp_sgp_data_for_analysis, VALID_CASE, CONTENT_AREA, YEAR, GRADE, YEAR_WITHIN)
 					} else {
@@ -1160,7 +1175,7 @@ function(sgp_object,
           if (nrow(missing.lookup) > 0){
             setkeyv(sgp_object@Data, key(missing.lookup))
             tmp_data_to_add <- sgp_object@Data[missing.lookup][VALID_CASE=="VALID_CASE",intersect(names(sgp_object@Data), variables.to.get), with=FALSE][, .SD[sample(.N, sgp.test.cohort.size)], by=key(missing.lookup)]
-            tmp_sgp_data_for_analysis <- rbindlist(list(tmp_sgp_data_for_analysis, tmp_sgp_data_for_analysis))
+            tmp_sgp_data_for_analysis <- rbindlist(list(tmp_sgp_data_for_analysis, tmp_data_to_add), use.names = TRUE)
             setkeyv(tmp_sgp_data_for_analysis, getKey(tmp_sgp_data_for_analysis))
           }
         }
@@ -1479,7 +1494,7 @@ function(sgp_object,
     if (!is.null(sgp.test.cohort.size) & !sgp.percentiles) {
       test.ids <- unique(rbindlist(tmp_sgp_object[["SGPercentiles"]], fill=TRUE), by='ID')[['ID']]
       if (is(tmp_sgp_data_for_analysis, "DBIObject")) {
-        con <- dbConnect(SQLite(), dbname = file.path(tempdir(), "TMP_SGP_Data.sqlite"))
+        con <- dbConnect(SQLite(), dbdir = file.path(tempdir(), "TMP_SGP_Data.sqlite"))
         tmp_sgp_data_for_analysis <- data.table(dbGetQuery(con, paste0("select * from sgp_data where ID in ('", paste(test.ids, collapse="', '"), "')")))
         dbDisconnect(con)
         if ("YEAR_WITHIN" %in% sgp.data.names) {
@@ -1501,7 +1516,7 @@ function(sgp_object,
         if (nrow(missing.lookup) > 0){
           setkeyv(sgp_object@Data, key(missing.lookup))
           tmp_data_to_add <- sgp_object@Data[missing.lookup][VALID_CASE=="VALID_CASE",intersect(names(sgp_object@Data), variables.to.get), with=FALSE][, .SD[sample(.N, sgp.test.cohort.size)], by=key(missing.lookup)]
-          tmp_sgp_data_for_analysis <- rbindlist(list(tmp_sgp_data_for_analysis, tmp_sgp_data_for_analysis))
+          tmp_sgp_data_for_analysis <- rbindlist(list(tmp_sgp_data_for_analysis, tmp_data_to_add), use.names = TRUE)
           setkeyv(tmp_sgp_data_for_analysis, getKey(tmp_sgp_data_for_analysis))
         }
       }
@@ -1831,8 +1846,7 @@ function(sgp_object,
 							my.subject=tail(sgp.iter[["sgp.content.areas"]], 1), my.extra.label=equate.label),
 						use.my.knots.boundaries=list(my.year=tail(sgp.iter[["sgp.panel.years"]], 1), my.subject=tail(sgp.iter[["sgp.content.areas"]], 1)),
 						performance.level.cutscores=state,
-						max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.panel.years"]], 1),
-              tail(sgp.iter[["sgp.content.areas"]], 1), state, sgp.projections.equated),
+						max.order.for.progression=getMaxOrderForProgression(tail(sgp.iter[["sgp.panel.years"]], 1), tail(sgp.iter[["sgp.content.areas"]], 1), state, sgp.projections.equated),
 						percentile.trajectory.values=lagged.percentile.trajectory.values,
 						max.forward.progression.grade=sgp.projections.max.forward.progression.grade,
 						panel.data.vnames=getPanelDataVnames("sgp.projections.lagged", sgp.iter, sgp.data.names, equate.variable),
@@ -2123,7 +2137,6 @@ function(sgp_object,
 	if (is.null(parallel.config)) {
 
 		### sgp.percentiles
-
 		if (sgp.percentiles) {
 			for (sgp.iter in rev(par.sgp.config[['sgp.percentiles']])) {
 
@@ -2173,9 +2186,9 @@ function(sgp_object,
 			if (!is.null(sgp.test.cohort.size)) {
 				test.ids <- unique(rbindlist(tmp_sgp_object[["SGPercentiles"]], fill=TRUE), by='ID')[["ID"]]
 				if (is(tmp_sgp_data_for_analysis, "DBIObject")) {
-          con <- dbConnect(SQLite(), dbname = file.path(tempdir(), "TMP_SGP_Data.sqlite"))
+                    con <- dbConnect(SQLite(), dbdir = file.path(tempdir(), "TMP_SGP_Data.sqlite"))
 					tmp_sgp_data_for_analysis <- data.table(dbGetQuery(con, paste0("select * from sgp_data where ID in ('", paste(test.ids, collapse="', '"), "')")))
-          dbDisconnect(con)
+                    dbDisconnect(con)
 					if ("YEAR_WITHIN" %in% sgp.data.names) {
 						setkey(tmp_sgp_data_for_analysis, VALID_CASE, CONTENT_AREA, YEAR, GRADE, YEAR_WITHIN)
 					} else {
@@ -2203,9 +2216,7 @@ function(sgp_object,
 			}
 		} ## END if sgp.percentiles
 
-
 		### sgp.percentiles.equated
-
 		if (sgp.percentiles.equated) {
 			for (sgp.iter in rev(par.sgp.config[['sgp.percentiles.equated']])) {
 
@@ -2254,9 +2265,7 @@ function(sgp_object,
 			}
 		} ## END if sgp.percentiles.equated
 
-
 		## sgp.percentiles.baseline
-
 		if (sgp.percentiles.baseline) {
 			for (sgp.iter in rev(par.sgp.config[['sgp.percentiles.baseline']])) {
 
@@ -2300,9 +2309,7 @@ function(sgp_object,
 			}
 		} ## END if sgp.percentiles.baseline
 
-
 		## sgp.projections
-
 		if (sgp.projections) {
 			for (sgp.iter in par.sgp.config[['sgp.projections']]) {
 
@@ -2348,9 +2355,7 @@ function(sgp_object,
 			}
 		} ## END if sgp.projections
 
-
 		## sgp.projections.baseline
-
 		if (sgp.projections.baseline) {
 			for (sgp.iter in par.sgp.config[['sgp.projections.baseline']]) {
 
@@ -2393,9 +2398,7 @@ function(sgp_object,
 			}
 		} ## END if sgp.projections.baseline
 
-
 		## sgp.projections.lagged
-
 		if (sgp.projections.lagged) {
 			for (sgp.iter in par.sgp.config[['sgp.projections.lagged']]) {
 
@@ -2441,9 +2444,7 @@ function(sgp_object,
 			}
 		} ## END sgp.projections.lagged
 
-
 		## sgp.projections.lagged.baseline
-
 		if (sgp.projections.lagged.baseline) {
 			for (sgp.iter in par.sgp.config[['sgp.projections.lagged.baseline']]) {
 
@@ -2491,8 +2492,12 @@ function(sgp_object,
 	} ## END sequential analyzeSGP
 
 
-	if (!keep.sqlite & sgp.sqlite) unlink(file.path(tempdir(), "TMP_SGP_Data.sqlite"), recursive=TRUE)
-
+    if (sgp.sqlite) {
+        dbDisconnect(tmp_sgp_data_for_analysis)
+        if (!keep.sqlite) {
+            unlink(file.path(tempdir(), "TMP_SGP_Data.sqlite"), recursive=TRUE)
+		}
+	}
 	if (!is.null(sgp.test.cohort.size) & toupper(return.sgp.test.results) != "ALL_DATA") {
 		if (!return.sgp.test.results) {
 			messageSGP(paste("Finished analyzeSGP", prettyDate(), "in", convertTime(timetakenSGP(started.at)), "\n"))
@@ -2505,7 +2510,24 @@ function(sgp_object,
 
 	sgp_object@SGP <- mergeSGP(tmp_sgp_object, sgp_object@SGP)
 
-	if (goodness.of.fit.print) gof.print(sgp_object)
+    if (goodness.of.fit.print) {
+    #   gof.print(sgp_object)
+      if (!is.null(sgp.config)) {
+        years <- content_areas <- NULL # grades <-
+        for (cfig in seq(length(sgp.config))) {
+          years <-
+            unique(c(years, tail(sgp.config[[cfig]][["sgp.panel.years"]], 1)))
+        #   grades <-
+        #     unique(c(grades, unlist(lapply(sgp.config[[cfig]][["sgp.grade.sequences"]], tail, 1))))
+          content_areas <-
+            unique(c(content_areas, tail(sgp.config[[cfig]][["sgp.content.areas"]], 1)))
+        }
+      }
+      gofPrint(sgp_object = sgp_object,
+               years = years,
+               content_areas = content_areas,
+               grades = grades)
+    }
 	setkeyv(sgp_object@Data, getKey(sgp_object)) # re-key data for combineSGP, etc.
 	sgp_object@Version[["analyzeSGP"]][[as.character(gsub("-", "_", Sys.Date()))]] <- as.character(packageVersion("SGP"))
 	messageSGP(paste("Finished analyzeSGP", prettyDate(), "in", convertTime(timetakenSGP(started.at)), "\n"))

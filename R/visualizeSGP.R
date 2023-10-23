@@ -258,7 +258,7 @@ function(sgp_object,
 					format=gaPlot.format,
 					baseline=gaPlot.iter[["BASELINE"]],
 					equated=gaPlot.iter[["EQUATED"]],
-					output.format=c("PDF", "PNG"),
+					output.format=c("PDF", "SVG"),
 					gaPlot.back.extrapolated.cuts=gaPlot.back.extrapolated.cuts,
 					gaPlot.SGPt=gaPlot.SGPt,
 					output.folder=file.path(gaPlot.folder, gaPlot.iter[["YEAR"]]))
@@ -281,7 +281,7 @@ function(sgp_object,
 						format=gaPlot.format,
 						baseline=gaPlot.iter[["BASELINE"]],
 						equated=gaPlot.iter[["EQUATED"]],
-						output.format=c("PDF", "PNG"),
+						output.format=c("PDF", "SVG"),
 						gaPlot.back.extrapolated.cuts=gaPlot.back.extrapolated.cuts,
 						gaPlot.SGPt=gaPlot.SGPt,
 						output.folder=file.path(gaPlot.folder, gaPlot.iter[["YEAR"]]))
@@ -302,7 +302,7 @@ function(sgp_object,
 						format=gaPlot.format,
 						baseline=gaPlot.iter[["BASELINE"]],
 						equated=gaPlot.iter[["EQUATED"]],
-						output.format=c("PDF", "PNG"),
+						output.format=c("PDF", "SVG"),
 						gaPlot.back.extrapolated.cuts=gaPlot.back.extrapolated.cuts,
 						gaPlot.SGPt=gaPlot.SGPt,
 						output.folder=file.path(gaPlot.folder, gaPlot.iter[["YEAR"]])))
@@ -322,7 +322,7 @@ function(sgp_object,
 						format=gaPlot.format,
 						baseline=gaPlot.iter[["BASELINE"]],
 						equated=gaPlot.iter[["EQUATED"]],
-						output.format=c("PDF", "PNG"),
+						output.format=c("PDF", "SVG"),
 						gaPlot.back.extrapolated.cuts=gaPlot.back.extrapolated.cuts,
 						gaPlot.SGPt=gaPlot.SGPt,
 						output.folder=file.path(gaPlot.folder, gaPlot.iter[["YEAR"]]))},
@@ -560,8 +560,8 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 				tmp.list <- list()
 				for (i in seq_along(sgPlot.districts)) {
 					tmp.schools <- unique(sgp_object[CJ(tmp.content_areas_domains, sgPlot.districts[i])][[paste("SCHOOL_NUMBER", tmp.last.year, sep=".")]])
-					if (any(sgPlot.schools==tmp.schools)) {
-						tmp.list[[i]] <- tmp.schools[sgPlot.schools==tmp.schools]
+					if (any(tmp.schools %in% sgPlot.schools)) {
+						tmp.list[[i]] <- tmp.schools[tmp.schools %in% sgPlot.schools]
 					} else {
 						tmp.list[[i]] <- tmp.schools
 					}
@@ -722,12 +722,12 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 				}
 				tmp.grades.content_areas.reported <- data.table(rbindlist(tmp.data.table), key=key(slot.data))
 			} else {
-				tmp.grades.reported <- as.character(unique(unlist(SGP::SGPstateData[[state]][["Student_Report_Information"]][["Grades_Reported"]])))
+				tmp.grades.reported <- as.character(unique(unlist(SGP::SGPstateData[[state]][["Student_Report_Information"]][["Grades_Reported"]][tmp.content_areas_domains])))
 				tmp.grades.content_areas.reported <- data.table(
 					VALID_CASE="VALID_CASE",
 					YEAR=tmp.last.year,
 					GRADE=tmp.grades.reported,
-					CONTENT_AREA_LABELS=names(SGP::SGPstateData[[state]][["Student_Report_Information"]][["Grades_Reported"]])[1], key=key(slot.data))
+					CONTENT_AREA_LABELS=names(SGP::SGPstateData[[state]][["Student_Report_Information"]][["Grades_Reported"]][tmp.content_areas_domains])[1], key=key(slot.data))
 			}
 			tmp.grades.content_areas.reported <- unique(slot.data, by=key(slot.data))[,key(slot.data), with=FALSE][tmp.grades.content_areas.reported, nomatch=0]
 			for (i in seq(dim(tmp.grades.content_areas.reported)[1])) {
@@ -767,8 +767,8 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 					tmp.list <- list()
 					for (i in seq_along(sgPlot.districts)) {
 						tmp.schools <- unique(slot.data[CJ("VALID_CASE", tmp.last.year, tmp.content_areas_domains, sgPlot.districts[i])][["SCHOOL_NUMBER"]])
-						if (any(sgPlot.schools==tmp.schools)) {
-							tmp.list[[i]] <- tmp.schools[sgPlot.schools==tmp.schools]
+						if (any(tmp.schools %in% sgPlot.schools)) {
+							tmp.list[[i]] <- tmp.schools[tmp.schools %in% sgPlot.schools]
 						} else {
 							tmp.list[[i]] <- tmp.schools
 						}
@@ -895,8 +895,9 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 		if (any(duplicated(sgPlot.data, by=key(sgPlot.data)))) sgPlot.data <- createUniqueLongData(sgPlot.data)
 		sgPlot.data <- ddcast(sgPlot.data, ID + CONTENT_AREA ~ YEAR,
 			value.var=setdiff(variables.to.keep, c("VALID_CASE", "ID", "CONTENT_AREA", "YEAR")), sep=".")
+		sgPlot.data[, GRADE := get(paste("GRADE", tmp.last.year, sep="."))]
 
-		variables.to.keep <- c("ID", "CONTENT_AREA", paste("CONTENT_AREA_LABELS", tmp.years.subset, sep="."),
+		variables.to.keep <- c("ID", "CONTENT_AREA", "GRADE", paste("CONTENT_AREA_LABELS", tmp.years.subset, sep="."),
 			paste("LAST_NAME", tmp.last.year, sep="."), paste("FIRST_NAME", tmp.last.year, sep="."), paste("GRADE", tmp.years.subset, sep="."),
 			paste(my.sgp, tmp.years.subset, sep="."), paste("SCALE_SCORE", tmp.years.subset, sep="."), paste("TRANSFORMED_SCALE_SCORE", tmp.years.subset, sep="."),
 			paste("ACHIEVEMENT_LEVEL", tmp.years.subset, sep="."), paste(my.sgp.level, tmp.years.subset, sep="."),
@@ -934,10 +935,11 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 			if (sgPlot.fan & any(tmp.proj.names %in% names(sgp_object@SGP[["SGProjections"]]))) {
 				tmp.list <- list()
 				for (i in tmp.proj.names) {
-					tmp.list[[i]] <- data.table(CONTENT_AREA=unlist(strsplit(i, "[.]"))[1],
-						sgp_object@SGP[["SGProjections"]][[i]][,c(1, grep("PROJ_YEAR_1", names(sgp_object@SGP[["SGProjections"]][[i]]))), with=FALSE])
+					tmp.proj.names <- grep("PROJ_YEAR_1", names(sgp_object@SGP[["SGProjections"]][[i]]), value = TRUE)
+					tmp.list[[i]] <- data.table(CONTENT_AREA = unlist(strsplit(i, "[.]"))[1],
+						sgp_object@SGP[["SGProjections"]][[i]][, c("ID", "GRADE", tmp.proj.names), with = FALSE])
 				}
-				sgPlot.data <- rbindlist(tmp.list, fill=TRUE)[sgPlot.data, on=c("ID", "CONTENT_AREA")]
+				sgPlot.data <- rbindlist(tmp.list, fill = TRUE)[sgPlot.data, on = c("ID", "CONTENT_AREA", "GRADE")]
 			} ### END if (sgPlot.fan)
 
 			### Straight projection scale score targets
@@ -946,10 +948,12 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 
 				tmp.list <- list()
 				for (i in tmp.proj.cut_score.names) {
-					tmp.list[[i]] <- data.table(CONTENT_AREA=unlist(strsplit(i, "[.]"))[1],
-						sgp_object@SGP[["SGProjections"]][[i]][,c(1, grep(paste(sgPlot.sgp.targets.timeframe, "YEAR_PROJ", sep="_"), names(sgp_object@SGP[["SGProjections"]][[i]]))), with=FALSE])
+					tmp.proj.names <- grep(paste(sgPlot.sgp.targets.timeframe, "YEAR_PROJ", sep = "_"),
+					                       names(sgp_object@SGP[["SGProjections"]][[i]]), value = TRUE)
+					tmp.list[[i]] <- data.table(CONTENT_AREA = unlist(strsplit(i, "[.]"))[1],
+						sgp_object@SGP[["SGProjections"]][[i]][, c("ID", "GRADE", tmp.proj.names), with = FALSE])
 				}
-				sgPlot.data <- rbindlist(tmp.list, fill=TRUE)[sgPlot.data, on=c("ID", "CONTENT_AREA")]
+				sgPlot.data <- rbindlist(tmp.list, fill = TRUE)[sgPlot.data, on = c("ID", "CONTENT_AREA", "GRADE")]
 			} ### END if ("sgp.projections" %in% sgPlot.sgp.targets)
 
 			### Lagged projection scale score targets
@@ -957,15 +961,19 @@ if (sgPlot.wide.data) { ### When WIDE data is provided
 			if (any(c("sgp.projections.lagged", "sgp.projections.lagged.baseline") %in% sgPlot.sgp.targets) &
 				any(tmp.proj.cut_score.names.lagged %in% names(sgp_object@SGP[["SGProjections"]]))) {
 
-				setkeyv(sgPlot.data, c("ID", "CONTENT_AREA"))
+				setkeyv(sgPlot.data, c("ID", "CONTENT_AREA", "GRADE"))
 				tmp.list <- list()
 				for (i in tmp.proj.cut_score.names.lagged) {
-					tmp.list[[i]] <- data.table(CONTENT_AREA=unlist(strsplit(i, "[.]"))[1],
-						sgp_object@SGP[["SGProjections"]][[i]][,c(1, grep(paste(sgPlot.sgp.targets.timeframe, "YEAR_PROJ", sep="_"), names(sgp_object@SGP[["SGProjections"]][[i]]))), with=FALSE],
-						key=c("ID", "CONTENT_AREA"))
+					tmp.proj.names <- grep(paste(sgPlot.sgp.targets.timeframe, "YEAR_PROJ", sep="_"),
+					                             names(sgp_object@SGP[["SGProjections"]][[i]]), value = TRUE)
+					tmp.list[[i]] <- data.table(CONTENT_AREA = unlist(strsplit(i, "[.]"))[1],
+						sgp_object@SGP[["SGProjections"]][[i]][, c("ID", "GRADE", tmp.proj.names), with = FALSE],
+						key = c("ID", "CONTENT_AREA", "GRADE"))
 				}
-				sgPlot.data <- data.table(rbindlist(tmp.list, fill=TRUE), key=c("ID", "CONTENT_AREA"))[sgPlot.data]
+				sgPlot.data <- data.table(rbindlist(tmp.list, fill = TRUE), key = c("ID", "CONTENT_AREA", "GRADE"))[sgPlot.data]
 			} ### END if ("sgp.projections.lagged" %in% sgPlot.sgp.targets)
+
+			# sgPlot.data[, GRADE := NULL]
 
 			### Transform scale scores
 
