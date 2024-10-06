@@ -1,8 +1,8 @@
 Package: SGP
 Type: Package
 Title: Student Growth Percentiles & Percentile Growth Trajectories
-Version: 2.1-0.0
-Date: 2023-10-23
+Version: 2.2-0.0
+Date: 2024-10-6
 Authors@R: c(person(given=c("Damian", "W."), family="Betebenner", email="dbetebenner@nciea.org", role=c("aut", "cre")),
 		person(given=c("Adam", "R."), family="Van Iwaarden", email="avaniwaarden@nciea.org", role="aut"),
 		person(given="Ben", family="Domingue", email="ben.domingue@gmail.com", role="aut"),
@@ -70,14 +70,16 @@ Authors@R: c(person(given=c("Damian", "W."), family="Betebenner", email="dbetebe
 		person(given="Brendan", family="Houng", role="ctb", comment="University of Melbourne, Australia, NAPLAN"),
 		person(given="Leslie", family="Rosale", role="ctb", comment="Ministry of Education, Guatemala"),
 		person(given="Nathan", family="Wall", role="ctb", comment="eMetric working with Nevada Department of Education and South Dakota Department of Education"),
+		person(given="Julia", family="English", role="ctb", comment="Massachusetts DESE"),
+		person(given="Sarah Jo", family="Torgrimson", role="ctb", comment="Massachusetts DESE"),
 		person(given="Narek", family="Sahakyan", role="ctb", comment="World Class Instruction and Design (WIDA)"))
 Maintainer: Damian W. Betebenner <dbetebenner@nciea.org>
-Depends: R (>= 4.0.0)
-Suggests: SGPdata (>= 27.0-0), knitr, rmarkdown
-Imports: Cairo, callr, colorspace, crayon, datasets, data.table (>=
-        1.14.0), digest, doParallel, equate (>= 2.0-5), foreach,
-        graphics, grid, grDevices, gridBase, iterators, gtools,
-        jsonlite, matrixStats, methods, parallel, plotly, quantreg,
+Depends: R (>= 4.1.0)
+Suggests: SGPdata (>= 28.0-0), knitr, rmarkdown
+Imports: Cairo, callr, collapse, colorspace, crayon, datasets,
+        data.table (>= 1.14.0), digest, doParallel, equate (>= 2.0-5),
+        foreach, graphics, grid, grDevices, gridBase, iterators,
+        gtools, jsonlite, matrixStats, methods, parallel, quantreg,
         randomNames (>= 0.0-5), rngtools (>= 1.5), RSQLite, sn (>=
         1.0-0), splines, stats, svglite, toOrdinal, utils
 Description: An analytic framework for the calculation of norm- and criterion-referenced academic growth estimates using large scale, longitudinal education assessment data as developed in Betebenner (2009) <doi:10.1111/j.1745-3992.2009.00161.x>.
@@ -93,7 +95,7 @@ LazyDataCompression: xz
 License: GPL-3
 ByteCompile: TRUE
 NeedsCompilation: no
-Packaged: 2023-10-23 15:05:39 UTC; conet
+Packaged: 2024-10-06 18:52:05 UTC; conet
 Author: Damian W. Betebenner [aut, cre],
   Adam R. Van Iwaarden [aut],
   Ben Domingue [aut],
@@ -169,6 +171,8 @@ Author: Damian W. Betebenner [aut, cre],
   Leslie Rosale [ctb] (Ministry of Education, Guatemala),
   Nathan Wall [ctb] (eMetric working with Nevada Department of Education
     and South Dakota Department of Education),
+  Julia English [ctb] (Massachusetts DESE),
+  Sarah Jo Torgrimson [ctb] (Massachusetts DESE),
   Narek Sahakyan [ctb] (World Class Instruction and Design (WIDA))
 Repository: CRAN
-Date/Publication: 2023-10-23 15:50:19 UTC
+Date/Publication: 2024-10-06 19:10:06 UTC

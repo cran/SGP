@@ -57,6 +57,7 @@ WY, Wyoming
 ABQ, Albuquerque
 AOB, AOB
 ATI, ATI
+CFU, CFU
 BI, Bureau of Indian Education
 CO_ORIGINAL, Colorado
 DC, Washington DC
@@ -94,6 +95,7 @@ WIDA_NH, WIDA NH
 WIDA_NM, WIDA NM
 WIDA_NV, WIDA NV
 WIDA_RI, WIDA RI
+WIDA_WA, WIDA WA
 WIDA_WI, WIDA WI
 WIDA, WIDA
 WA, Washington")

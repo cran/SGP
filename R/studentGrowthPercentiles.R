@@ -277,8 +277,8 @@ function(panel.data,         ## REQUIRED
 
 	.get.quantiles <- function(data1, data2, ranked.simex=FALSE) {
         if (is.character(ranked.simex)) {
-            reproduce.old.values <- TRUE; ranked.simex <- TRUE
-        } else reproduce.old.values <- FALSE
+            use.original.ranking.system <- TRUE; ranked.simex <- TRUE
+        } else use.original.ranking.system <- FALSE
 
         if (ranked.simex) {
           for (p in seq.int(3)) { # Additional values between the tau predicted values - 1/8th percentiles for ranking
@@ -305,13 +305,12 @@ function(panel.data,         ## REQUIRED
                 if (length(tmp.index <- which(data2>=tmp.hoss)) > 0L) {
                     if (ranked.simex) {
                         tmp[tmp.index, V1:=as.double(apply(data.table(data1 > data2, TRUE)[tmp.index], 1, function(x) which.max(x)-1L))]
-                        if (!reproduce.old.values) tmp[tmp.index, V1 := V1/8]
+                        if (!use.original.ranking.system) tmp[tmp.index, V1 := V1/8]
                     } else tmp[tmp.index, V1:=apply(data.table(data1 > data2, TRUE)[tmp.index], 1, function(x) which.max(x)-1L)]
                 }
             }
             if (convert.0and100) {
-                tmp[V1==0L, V1:=1L]
-                tmp[V1==100L, V1:=99L]
+				tmp[V1 %in% c(0L, 100L), V1 := fifelse(V1 == 0L, 1L, 99L)]
             }
             return(tmp[['V1']])
         }
@@ -353,7 +352,8 @@ function(panel.data,         ## REQUIRED
     calculate.simex.sgps,
     dependent.var.error=FALSE,
     use.cohort.for.ranking=FALSE,
-    reproduce.old.values=FALSE,
+    use.original.ranking.system=FALSE,
+    set.seed.for.sim.data=TRUE,
     verbose=FALSE) {
 
       GRADE <- CONTENT_AREA <- YEAR <- V1 <- Lambda <- tau <- b <- .SD <- TEMP <- CSEM <- VARIABLE <- NULL ## To avoid R CMD check warnings
@@ -410,8 +410,12 @@ function(panel.data,         ## REQUIRED
                                 "Version=tmp.version)")))
       } ### END rq.mtx function
 
-      createBigData <- function(tmp.data, perturb.var, L, dependent.var.error) { # Function that creates big.data object from which SIMEX SGPs are calculated
-        big.data <- rbindlist(replicate(B, tmp.data, simplify = FALSE))[, b:=rep(seq.int(B), each=n.records)]
+      createBigData <- function(tmp.data, perturb.var, L, dependent.var.error) {
+		# Function that creates big.data object from which SIMEX SGPs are calculated
+        if (set.seed.for.sim.data) {
+			set.seed(as.integer(ceiling(ifelse(is.null(sgp.percentiles.set.seed), 369, sgp.percentiles.set.seed)*L)))
+		}
+		big.data <- rbindlist(replicate(B, tmp.data, simplify = FALSE))[, b:=rep(seq.int(B), each=n.records)]
         if (dependent.var.error) csem.col.offset <- (ncol(big.data)-2)/2 else csem.col.offset <- (ncol(big.data)-1)/2
         for (perturb.var.iter in rev(seq_along(perturb.var))) {
           setnames(big.data, c(1L+perturb.var.iter, 1L+perturb.var.iter+csem.col.offset), c("VARIABLE", "CSEM"))
@@ -435,13 +439,35 @@ function(panel.data,         ## REQUIRED
                              identical(attr(f, "year_progression"), yp) &
                              identical(attr(f, "year_lags_progression"), ylp)
                          }))
-        return(table_list[[table.index]])
+
+        if (!length(table.index)) {
+            stop("\n\t\tNo matching SIMEX `ranked_simex_table` entries found for progression ",
+                 paste(gsub(" EOCT", "", paste(cap, gp)), collapse = " --> "))
+        }
+        if (length(table.index) > 1L){
+            g  <- tail(gp, 1)
+            ca <- tail(cap, 1)
+            pr <- head(gsub(" EOCT", "", paste(cap, gp)), -1) # needs separate pastes? `paste(pr, collapse = ", ")` -v- SMH...
+            msg.prior.info <- paste0(" { Prior", ifelse(length(pr) == 1L, ": ", "s: "), paste(pr, collapse = ", "), " }")
+            messageSGP(
+                c("\n\t\tMultiple matching SIMEX `ranked_simex_table` entries for", ca, if(g != "EOCT"){paste(" Grade", g)}, msg.prior.info,
+                  "\n\t\tThe first `ranked_simex_table` entry will be used, but tables with duplicate `attributes` should be investigated!!!",
+                  ifelse(identical(table_list[[table.index[1]]], table_list[[table.index[2]]]),
+                    "\n\t\tThe first SET of duplicate tables are identical, so ... that's encouraging ...\n",
+                    "\n\t\tThe first SET of duplicate tables are NOT identical\n\t\t\t\t!!! INVESTIGATE DIFFERENCES!!!\n"
+            )))
+# sapply(table_list, function(f) {
+    # paste(attr(f, "content_area_progression"),  attr(f, "grade_progression"),
+	#       attr(f, "year_progression"), attr(f, "year_lags_progression"), collapse = ", ")})
+        }
+        return(table_list[[table.index[1]]])
       }
 
       ### Check arguments/define variables
       if (is.null(dependent.var.error)) dependent.var.error <- FALSE
       if (is.null(use.cohort.for.ranking)) use.cohort.for.ranking <- FALSE
-      if (is.null(reproduce.old.values)) reproduce.old.values <- FALSE
+      if (is.null(use.original.ranking.system)) use.original.ranking.system <- FALSE
+      if (is.null(set.seed.for.sim.data)) set.seed.for.sim.data <- TRUE
       if (is.null(verbose)) verbose <- FALSE
       if (verbose) messageSGP(c("\n\tStarted SIMEX SGP calculation ", rev(content_area.progression)[1L], " Grade ", rev(tmp.gp)[1L], " ", prettyDate()))
       if (is.logical(simex.use.my.coefficient.matrices) && !simex.use.my.coefficient.matrices) simex.use.my.coefficient.matrices <- NULL
@@ -453,7 +479,7 @@ function(panel.data,         ## REQUIRED
 		fitted <- extrap <- tmp.quantiles.simex <- simex.coef.matrices <- list()
 		my.path.knots.boundaries <- get.my.knots.boundaries.path(sgp.labels$my.subject, as.character(sgp.labels$my.year))
 
-    if (!is.null(csem.data.vnames)) {
+      if (!is.null(csem.data.vnames)) {
       if (length(content_area.progression)==length(csem.data.vnames)) csem.data.vnames <- head(csem.data.vnames, -1L)
       if (length(content_area.progression) < length(csem.data.vnames)) csem.data.vnames <- tail(head(csem.data.vnames, -1L), (length(csem.data.vnames)-(length(csem.data.vnames)-length(content_area.progression)+1L))) # grep(paste(head(content_area.progression, -1L), collapse="|"), csem.data.vnames, value=TRUE)
     }
@@ -600,7 +626,7 @@ function(panel.data,         ## REQUIRED
 
 					par.start <- startParallel(tmp.par.config, 'SIMEX')
 
-					## Note, that if you use the parallel.config for SIMEX here, you can also use it for TAUS in the naive analysis
+					## Note that if you use the parallel.config for SIMEX here, you can also use it for TAUS in the naive analysis
 					## Example parallel.config argument: '... parallel.config=list(BACKEND="FOREACH", TYPE="doParallel", WORKERS=list(SIMEX = 4, TAUS = 4))'
 
 					## Calculate coefficient matricies (if needed/requested)
@@ -674,7 +700,7 @@ function(panel.data,         ## REQUIRED
                ncol=length(taus), byrow=TRUE)
 
       if (is.null(simex.use.my.coefficient.matrices)) {
-        ranked.simex.quantile.values <- .get.quantiles(extrap[[paste0("order_", k)]], tmp.data[[tmp.num.variables]], ranked.simex=ifelse(reproduce.old.values, "reproduce.old.values", TRUE))
+        ranked.simex.quantile.values <- .get.quantiles(extrap[[paste0("order_", k)]], tmp.data[[tmp.num.variables]], ranked.simex=ifelse(use.original.ranking.system, "use.original.ranking.system", TRUE))
         # simex.coef.matrices[[paste("qrmatrices", tail(tmp.gp, 1L), k, sep="_")]][[paste("ranked_simex_table", tail(tmp.gp, 1L), k, sep="_")]] <- table(ranked.simex.quantile.values)
         # simex.coef.matrices[[paste("qrmatrices", tail(tmp.gp, 1L), k, sep="_")]][[paste("n_records", tail(tmp.gp, 1L), k, sep="_")]] <- n.records
         ranked_simex_table <- table(ranked.simex.quantile.values)
@@ -723,7 +749,7 @@ function(panel.data,         ## REQUIRED
                                 extrap[[paste0("order_", k)]],
                                 tmp.data[[tmp.num.variables]],
                                     ranked.simex =
-                                        ifelse(reproduce.old.values, "reproduce.old.values", TRUE)
+                                        ifelse(use.original.ranking.system, "use.original.ranking.system", TRUE)
                                     ))/n.records
                                 ), 0))
                     ]
@@ -738,7 +764,7 @@ function(panel.data,         ## REQUIRED
                                             extrap[[paste0("order_", k)]],
                                             tmp.data[[tmp.num.variables]],
                                             ranked.simex =
-                                                ifelse(reproduce.old.values, "reproduce.old.values", TRUE)
+                                                ifelse(use.original.ranking.system, "use.original.ranking.system", TRUE)
                                           ),
                                           as.numeric(rep(names(ranked.simex.info), ranked.simex.info))))/(n.records+attr(ranked.simex.info, "n_records"))
                             ), 0)), n.records)
@@ -755,8 +781,7 @@ function(panel.data,         ## REQUIRED
 			quantile.data.simex <- data.table(rbindlist(tmp.quantiles.simex), key=c("ID", "SIMEX_ORDER"))
       # invisible(quantile.data.simex[, SGP_SIMEX_RANKED := as.integer(round(100*(rank(SGP_SIMEX, ties.method = "average")/length(SGP_SIMEX)), 0)), by = "SIMEX_ORDER"])
       if (convert.0and100) {
-        invisible(quantile.data.simex[SGP_SIMEX_RANKED==0L, SGP_SIMEX_RANKED := 1L])
-        invisible(quantile.data.simex[SGP_SIMEX_RANKED==100L, SGP_SIMEX_RANKED := 99L])
+		quantile.data.simex[SGP_SIMEX_RANKED %in% c(0L, 100L), SGP_SIMEX_RANKED := fifelse(SGP_SIMEX_RANKED == 0L, 1L, 99L)]
       }
 			setkey(quantile.data.simex, ID) # first key on ID and SIMEX_ORDER, then re-key on ID only to insure sorted order. Don't rely on rbindlist/k ordering...
 		} else { # set up empty data.table for ddcast and subsets below.
@@ -822,12 +847,12 @@ function(panel.data,         ## REQUIRED
 	if (!missing(growth.levels)) {
 		tmp.growth.levels <- list()
 		if (!is.list(growth.levels) && !is.character(growth.levels)) {
-			tmp.messages <- c(tmp.messages, "\t\tNOTE: growth.levels must be supplied as a list or character abbreviation. See help page for details. studentGrowthPercentiles will be calculated without augmented growth.levels\n")
+			tmp.messages <- c(tmp.messages, "\t\tNOTE: `growth.levels` must be supplied as a list or character abbreviation. See help page for details.\n\t\t\t`studentGrowthPercentiles` will be calculated without augmented growth levels.\n")
 			tf.growth.levels <- FALSE
 		}
 		if (is.list(growth.levels)) {
 			if (!identical(names(growth.levels), c("my.cuts", "my.levels"))) {
-				tmp.messages <- c(tmp.messages, "\t\tNOTE: Please specify an appropriate list for growth.levels. See help page for details. Student growth percentiles will be calculated without augmented growth.levels\n")
+				tmp.messages <- c(tmp.messages, "\t\tNOTE: Please specify an appropriate list for `growth.levels`. See help page for details.\n\t\t\tStudent growth percentiles will be calculated without augmented growth levels.\n")
 				tf.growth.levels <- FALSE
 			} else {
 				tmp.growth.levels <- growth.levels
@@ -836,7 +861,7 @@ function(panel.data,         ## REQUIRED
 		}
 		if (is.character(growth.levels)) {
 			if (is.null(SGP::SGPstateData[[growth.levels]][["Growth"]][["Levels"]])) {
-				tmp.messages <- c(tmp.messages, "\t\tNOTE: Growth Levels are currently not specified for the indicated state. \n\tPlease contact the SGP package administrator to have your state's data included in the package. Student growth percentiles will be calculated without augmented growth levels\n")
+				tmp.messages <- c(tmp.messages, "\t\tNOTE: Growth Levels are currently not specified for the indicated state.\n\t\t\tPlease contact the SGP package administrator to have your state's data included in the package.\n\t\t\tStudent growth percentiles will be calculated without augmented growth levels.\n")
 				tf.growth.levels <- FALSE
 			} else {
 				tmp.growth.levels[["my.cuts"]] <- SGP::SGPstateData[[growth.levels]][["Growth"]][["Cutscores"]][["Cuts"]]
@@ -1319,8 +1344,10 @@ function(panel.data,         ## REQUIRED
 	}
 
 	if (is.null(sgp.less.than.sgp.cohort.size.return) && max.cohort.size < sgp.cohort.size) {
-		tmp.messages <- paste("\t\tNOTE: Supplied data together with grade progression contains fewer than the minimum cohort size.\n\t\tOnly", max.cohort.size,
-			"valid cases provided with", sgp.cohort.size, "indicated as minimum cohort N size. Check data, function arguments and see help page for details.\n")
+		tmp.messages <-
+		    paste("\t\tNOTE: Supplied data together with grade progression contains fewer than the minimum cohort size.\n\t\tOnly",
+			      max.cohort.size, "valid cases provided with", sgp.cohort.size,
+				  "indicated as minimum cohort N size.\n\t\tCheck data, function arguments and see help page for details.\n")
 		messageSGP(paste("\tStarted studentGrowthPercentiles", started.date))
 		messageSGP(paste0("\t\tSubject: ", sgp.labels$my.subject, ", Year: ", sgp.labels$my.year, ", Grade Progression: ",
 			paste(tmp.slot.gp, collapse=", "), " ", sgp.message.label))
@@ -1411,8 +1438,10 @@ function(panel.data,         ## REQUIRED
 
         SGPercentiles[[tmp.path]] <- rbindlist(list(quantile.data, SGPercentiles[[tmp.path]]), fill=TRUE)
 
-        tmp.messages <- paste("\t\tNOTE: Supplied data together with grade progression contains fewer than the minimum cohort size.\n\t\tOnly", max.cohort.size,
-          "valid cases provided with", sgp.cohort.size, "indicated as minimum cohort N size. Check data, function arguments and see help page for details.\n")
+        tmp.messages <-
+		    paste("\t\tNOTE: Supplied data together with grade progression contains fewer than the minimum cohort size.\n\t\tOnly",
+			      max.cohort.size, "valid cases provided with", sgp.cohort.size,
+				  "indicated as minimum cohort N size.\n\t\tCheck data, function arguments and see help page for details.\n")
 
         if (print.time.taken) {
             if (calculate.sgps) cohort.n <- format(dim(quantile.data)[1L], big.mark=",") else cohort.n <- format(max.cohort.size, big.mark=",")
@@ -1530,7 +1559,8 @@ function(panel.data,         ## REQUIRED
 			calculate.simex.sgps=calculate.sgps,
 			dependent.var.error=calculate.simex$dependent.var.error,
             use.cohort.for.ranking=calculate.simex$use.cohort.for.ranking,
-			reproduce.old.values=calculate.simex$reproduce.old.values,
+			use.original.ranking.system=calculate.simex$use.original.ranking.system,
+			set.seed.for.sim.data=calculate.simex$set.seed.for.sim.data,
 			verbose=calculate.simex$verbose)
 
 		if (!is.null(quantile.data.simex[['MATRICES']])) {
